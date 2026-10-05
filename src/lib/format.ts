@@ -25,3 +25,8 @@ export function shortToday() {
   const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: T, day: "2-digit", month: "short" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
   return `${p.day} ${p.month.replace(".", "").toUpperCase()}`;
 }
+
+export function shortDate() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "short", day: "numeric", month: "short" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return `${cap(p.weekday.replace(".", ""))}, ${p.day} ${p.month.replace(".", "")}`;
+}

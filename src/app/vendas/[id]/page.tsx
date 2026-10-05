@@ -13,14 +13,15 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const supabase = await createClient();
   const { data: s } = await supabase.from("sales")
-    .select("id, number, total, status, payment_method, customer_name, seller_name, created_at, sale_items(id, name, qty, total)")
+    .select("id, number, total, status, payment_method, customer_name, seller_name, created_at, sale_items(id, name, qty, total), sale_payments(id, method, amount)")
     .eq("id", id).maybeSingle();
   if (!s) notFound();
 
   const items = s.sale_items ?? [];
   const code = saleCode(s.number), total = brl(Number(s.total)), cancelled = s.status === "cancelada";
   const method = s.payment_method ?? "Não informado";
-  const PayIcon = /dinheiro/i.test(method) ? Banknote : /pix/i.test(method) ? QrCode : CreditCard;
+  const iconFor = (x: string) => (/dinheiro/i.test(x) ? Banknote : /pix/i.test(x) ? QrCode : CreditCard);
+  const pays: { id: string; method: string; amount: number }[] = s.sale_payments?.length ? s.sale_payments : [{ id: "0", method, amount: Number(s.total) }];
   const receipt = [`Dalce Estoque · Venda ${code}`, fmtDateTime(s.created_at), "",
     ...items.map((i) => `${i.qty}x ${i.name} — ${brl(Number(i.total))}`), "", `Total: ${total}`, `Pagamento: ${cap(method)}`].join("\n");
 
@@ -58,10 +59,13 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
         <div className="flex items-center justify-between rounded-3xl border border-line bg-white p-5 text-xl font-extrabold"><span>Total</span><span>{total}</span></div>
 
         <Label>Pagamento</Label>
-        <div className="flex items-center gap-4 rounded-3xl border border-line bg-white p-4">
-          <span className="grid size-12 place-items-center rounded-xl bg-green-100 text-green-700"><PayIcon size={24} /></span>
-          <span className="flex-1 text-lg font-semibold">{cap(method)}</span>
-          <b className="text-lg">{total}</b>
+        <div className="space-y-2">
+          {pays.map((p) => { const Ic = iconFor(p.method); return (
+            <div key={p.id} className="flex items-center gap-4 rounded-3xl border border-line bg-white p-4">
+              <span className="grid size-12 place-items-center rounded-xl bg-green-100 text-green-700"><Ic size={24} /></span>
+              <span className="flex-1 text-lg font-semibold">{cap(p.method)}</span>
+              <b className="text-lg">{brl(Number(p.amount))}</b>
+            </div>); })}
         </div>
       </div>
       <SaleActions id={s.id} code={code} customer={s.customer_name} total={total} cancelled={cancelled} receipt={receipt} />
