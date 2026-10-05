@@ -2,8 +2,11 @@
 @theme {
   --color-brand: #1d4ed8;
   --color-navy: #1e2a5a;
-  --color-page: #f4f5f7;
-  --color-ink: #111111;
+  --color-page: #f4f4f6;
+  --color-ink: #16161d;
   --color-muted: #4b4f58;
+  --color-soft: #6b6f80;
+  --color-line: #e8e8ee;
+  --color-tint: #e4ecfb;
 }
-body { background: #fff; color: var(--color-ink); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: var(--color-page); color: var(--color-ink); }
