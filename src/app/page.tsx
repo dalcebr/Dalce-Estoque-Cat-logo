@@ -20,7 +20,7 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("name, stores(monthly_goal)").eq("id", user!.id).single();
   const { label, monthName, dayStart, monthStart } = nowParts();
-  const { data: sales } = await supabase.from("sales").select("total, cost, payment_method, created_at").gte("created_at", monthStart);
+  const { data: sales } = await supabase.from("sales").select("total, cost, payment_method, created_at").gte("created_at", monthStart).neq("status", "cancelada");
 
   const list = sales ?? [];
   const sum = (a: typeof list, k: "total" | "cost") => a.reduce((s, x) => s + Number(x[k]), 0);
@@ -50,7 +50,7 @@ export default async function Home() {
           style={{ background: "linear-gradient(135deg,#14306e 0%,#2a5bd7 100%)" }}>
           <div className="flex items-center justify-between text-sm font-semibold">
             <span className="uppercase tracking-wider opacity-90">Vendido hoje</span>
-            <span className="flex items-center gap-1">Detalhes <ChevronRight size={18} /></span>
+            <Link href="/vendas" className="flex items-center gap-1">Detalhes <ChevronRight size={18} /></Link>
           </div>
           <p className="mt-1 text-5xl font-extrabold tracking-tight">{brl(today)}</p>
           <p className="mt-4 text-[15px]"><b>{list.length} {list.length === 1 ? "venda" : "vendas"}</b> <span className="mx-1.5 opacity-60">·</span> <span className="opacity-90">Mês:</span> <b>{brl(month)}</b></p>

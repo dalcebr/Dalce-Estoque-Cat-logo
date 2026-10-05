@@ -15,3 +15,13 @@ export function nowParts() {
     monthStart: `${y}-${m}-01T00:00:00-03:00`,
   };
 }
+
+const T = "America/Sao_Paulo";
+export const saleCode = (n: number | null) => `#${n ?? 0}A`;
+export const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("pt-BR", { timeZone: T, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+export const fmtDateTime = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { timeZone: T, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).replace(", ", " ");
+export function shortToday() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: T, day: "2-digit", month: "short" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return `${p.day} ${p.month.replace(".", "").toUpperCase()}`;
+}

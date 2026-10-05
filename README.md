@@ -20,3 +20,6 @@ select (select id from auth.users where email = 'usuario@dalce.app'), s.id, 'Nom
 
 ## Cloudflare (depois)
 Usar `@opennextjs/cloudflare` (Workers). Nada neste projeto impede a migração.
+
+## Banco (ordem)
+Instalação nova: `schema.sql` → `003_vendas_detalhe.sql`. Já instalado: `002_payment_method.sql` (se ainda não rodou) → `003_vendas_detalhe.sql`.
