@@ -15,6 +15,7 @@ create table sales (
   store_id uuid not null references stores(id),
   total numeric(12,2) not null check (total >= 0),
   cost numeric(12,2) not null default 0 check (cost >= 0),
+  payment_method text,
   created_at timestamptz not null default now()
 );
 create index sales_store_date_idx on sales (store_id, created_at);
