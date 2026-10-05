@@ -1,20 +1,32 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+
 export async function updateSession(req: NextRequest) {
   let res = NextResponse.next({ request: req });
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    cookies: {
-      getAll: () => req.cookies.getAll(),
-      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions) {
-        list.forEach(({ name, value }) => req.cookies.set(name, value));
-        res = NextResponse.next({ request: req });
-        list.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        // CORREÇÃO AQUI: Fechando as chaves do objeto e adicionando os colchetes do array
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          // CORREÇÃO AQUI: Trocado 'list' por 'cookiesToSet'
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          // CORREÇÃO AQUI: Trocado 'list' por 'cookiesToSet'
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+        },
       },
-    },
-  });
+    }
+  );
+
   const { data: { user } } = await supabase.auth.getUser();
   const isLogin = req.nextUrl.pathname === "/login";
+
   if (!user && !isLogin) return NextResponse.redirect(new URL("/login", req.url));
   if (user && isLogin) return NextResponse.redirect(new URL("/", req.url));
+
   return res;
 }
