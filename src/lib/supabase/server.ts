@@ -10,12 +10,9 @@ export async function createClient() {
     {
       cookies: {
         getAll: () => store.getAll(),
-        // CORREÇÃO AQUI: Adicionando a tipagem explícita ao parâmetro
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              store.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => store.set(name, value, options));
           } catch {}
         },
       },
