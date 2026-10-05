@@ -1,51 +1,75 @@
 import Link from "next/link";
-import { BarChart3, Plus } from "lucide-react";
+import { ChartNoAxesColumn, ChevronRight, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import Menu from "@/components/Menu";
 import GoalCard from "@/components/GoalCard";
-import { brl, nowParts } from "@/lib/format";
+import { brl, cap, nowParts } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+const Stat = ({ label, value, sub, valueClass = "" }: { label: string; value: string; sub?: string; valueClass?: string }) => (
+  <div className="min-h-[82px] rounded-3xl border border-line bg-white p-4">
+    <p className="text-xs font-semibold uppercase tracking-wider text-soft">{label}</p>
+    <p className={`mt-1 text-2xl font-extrabold ${valueClass}`}>{value}</p>
+    {sub && <p className="mt-0.5 text-sm text-soft">{sub}</p>}
+  </div>
+);
 
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("name, stores(monthly_goal)").eq("id", user!.id).single();
-  const { hour, label, dayStart, monthStart } = nowParts();
-  const { data: sales } = await supabase.from("sales").select("total, cost, created_at").gte("created_at", monthStart);
+  const { label, monthName, dayStart, monthStart } = nowParts();
+  const { data: sales } = await supabase.from("sales").select("total, cost, payment_method, created_at").gte("created_at", monthStart);
 
   const list = sales ?? [];
   const sum = (a: typeof list, k: "total" | "cost") => a.reduce((s, x) => s + Number(x[k]), 0);
-  const today = list.filter((s) => s.created_at >= dayStart);
-  const month = sum(list, "total"), cost = sum(list, "cost"), profit = month - cost;
+  const today = sum(list.filter((s) => s.created_at >= dayStart), "total");
+  const month = sum(list, "total"), cost = sum(list, "cost");
+  const ticket = list.length ? month / list.length : 0;
+  const biggest = list.reduce<(typeof list)[number] | null>((m, s) => (!m || Number(s.total) > Number(m.total) ? s : m), null);
   const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
   const goal = store?.monthly_goal != null ? Number(store.monthly_goal) : null;
-  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const name = profile?.name?.split(" ")[0] ?? "Usuário";
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md bg-white px-5 pb-32 pt-[max(1.25rem,env(safe-area-inset-top))]">
-      <div className="flex justify-end"><Menu /></div>
-      <h1 className="mt-2 text-2xl font-bold text-black">{greeting}, {name}!</h1>
-      <p className="text-muted">{label}</p>
+    <main className="min-h-dvh bg-page pb-32">
+      <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />
+      <div className="mx-auto max-w-md px-5 pt-5">
+        <header className="flex items-start gap-4">
+          <Menu />
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand">Início · Resumo</p>
+            <h1 className="text-3xl font-extrabold">Olá, {name}</h1>
+            <p className="mt-0.5 text-soft">{label}</p>
+          </div>
+          <span className="rounded-xl bg-tint px-4 py-2 text-sm font-bold uppercase tracking-wider text-brand">Hoje</span>
+        </header>
 
-      <section className="mt-5 rounded-3xl bg-brand p-5 text-white">
-        <div className="flex justify-between text-sm"><span>vendido hoje</span><span className="font-medium">detalhes</span></div>
-        <p className="mt-1 text-4xl font-bold">{brl(sum(today, "total"))}</p>
-        <div className="mt-3 flex gap-4 text-sm"><span>Mês: {brl(month)}</span><span>{list.length} {list.length === 1 ? "venda" : "vendas"}</span></div>
-      </section>
+        <section className="mt-6 rounded-[28px] p-5 text-white shadow-[0_12px_24px_-12px_rgba(29,78,216,.6)]"
+          style={{ background: "linear-gradient(135deg,#14306e 0%,#2a5bd7 100%)" }}>
+          <div className="flex items-center justify-between text-sm font-semibold">
+            <span className="uppercase tracking-wider opacity-90">Vendido hoje</span>
+            <span className="flex items-center gap-1">Detalhes <ChevronRight size={18} /></span>
+          </div>
+          <p className="mt-1 text-5xl font-extrabold tracking-tight">{brl(today)}</p>
+          <p className="mt-4 text-[15px]"><b>{list.length} {list.length === 1 ? "venda" : "vendas"}</b> <span className="mx-1.5 opacity-60">·</span> <span className="opacity-90">Mês:</span> <b>{brl(month)}</b></p>
+        </section>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4"><p className="text-sm text-muted">Custo</p><p className="mt-1 text-lg font-bold text-black">{brl(cost)}</p></div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4"><p className="text-sm text-muted">Lucro</p><p className="mt-1 text-lg font-bold text-green-600">{brl(profit)}</p></div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Stat label="Custo" value={brl(cost)} />
+          <Stat label="Lucro" value={brl(month - cost)} valueClass="text-green-700" />
+          <Stat label="Ticket médio" value={brl(ticket)} />
+          <Stat label="Maior pagamento" value={brl(biggest ? Number(biggest.total) : 0)} sub={biggest?.payment_method ? cap(biggest.payment_method) : undefined} />
+        </div>
+
+        <div className="mt-3"><GoalCard goal={goal} sold={month} monthName={monthName} /></div>
       </div>
 
-      <div className="mt-3"><GoalCard goal={goal} sold={month} /></div>
-
-      <nav className="fixed inset-x-0 bottom-0 bg-white/95 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
-        <div className="mx-auto grid max-w-md grid-cols-2 gap-3">
-          <Link href="/relatorios" className="flex items-center justify-center gap-2 rounded-xl border border-brand bg-white py-3 font-semibold text-brand"><BarChart3 size={20} /> Relatórios</Link>
-          <Link href="/vendas/nova" className="flex items-center justify-center gap-2 rounded-xl bg-brand py-3 font-semibold text-white"><Plus size={20} /> Nova venda</Link>
+      <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
+        <div className="mx-auto grid max-w-md grid-cols-[5fr_6fr] gap-3">
+          <Link href="/relatorios" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-white py-4 text-lg font-bold text-brand"><ChartNoAxesColumn size={22} strokeWidth={3} /> Relatórios</Link>
+          <Link href="/vendas/nova" className="flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-lg font-bold text-white"><Plus size={24} /> Nova venda</Link>
         </div>
       </nav>
     </main>
