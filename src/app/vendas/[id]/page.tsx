@@ -36,7 +36,7 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
             <span className={`rounded-full px-3.5 py-1.5 text-sm font-bold uppercase ${cancelled ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{cancelled ? "Cancelada" : "Finalizada"}</span>
             <span className="font-semibold text-soft">{items.length} {items.length === 1 ? "item" : "itens"}</span>
           </div>
-          <p className="mt-4 text-5xl font-extrabold tracking-tight">{total}</p>
+          <p className="mt-4 text-4xl font-extrabold tracking-tight">{total}</p>
           <ul className="mt-6 space-y-3 text-lg text-soft">
             <li className="flex items-center gap-3"><CalendarDays size={22} />{fmtDateTime(s.created_at)}</li>
             <li className="flex items-center gap-3"><IdCard size={22} />Vendedor · {s.seller_name ?? "Não informado"}</li>

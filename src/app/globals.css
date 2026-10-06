@@ -10,3 +10,4 @@
   --color-tint: #e4ecfb;
 }
 body { background: var(--color-page); color: var(--color-ink); }
+html { font-size: 14px; }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChartNoAxesColumn, ChevronRight, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import Menu from "@/components/Menu";
+import AppMenu from "@/components/AppMenu";
 import GoalCard from "@/components/GoalCard";
 import { brl, cap, nowParts } from "@/lib/format";
 
@@ -37,7 +37,7 @@ export default async function Home() {
       <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />
       <div className="mx-auto max-w-md px-5 pt-5">
         <header className="flex items-start gap-4">
-          <Menu />
+          <AppMenu />
           <div className="min-w-0 flex-1 leading-tight">
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand">Início · Resumo</p>
             <h1 className="text-3xl font-extrabold">Olá, {name}</h1>
@@ -52,7 +52,7 @@ export default async function Home() {
             <span className="uppercase tracking-wider opacity-90">Vendido hoje</span>
             <Link href="/vendas" className="flex items-center gap-1">Detalhes <ChevronRight size={18} /></Link>
           </div>
-          <p className="mt-1 text-5xl font-extrabold tracking-tight">{brl(today)}</p>
+          <p className="mt-1 text-4xl font-extrabold tracking-tight">{brl(today)}</p>
           <p className="mt-4 text-[15px]"><b>{list.length} {list.length === 1 ? "venda" : "vendas"}</b> <span className="mx-1.5 opacity-60">·</span> <span className="opacity-90">Mês:</span> <b>{brl(month)}</b></p>
         </section>
 

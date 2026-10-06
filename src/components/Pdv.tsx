@@ -3,7 +3,6 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, Banknote, Check, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, Delete, Plus, Printer, QrCode, ScanLine, Search, Share2, ShoppingCart, Trash2, User, X, Zap, Minus } from "lucide-react";
-import Menu from "@/components/Menu";
 import { brl } from "@/lib/format";
 import { createSale } from "@/app/vendas/nova/actions";
 
@@ -60,7 +59,7 @@ function Customer({ value, set }: { value: string; set: (v: string) => void }) {
   );
 }
 
-export default function Pdv({ products, dateLabel }: { products: Product[]; dateLabel: string }) {
+export default function Pdv({ products, dateLabel, menu }: { products: Product[]; dateLabel: string; menu: ReactNode }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("catalog");
   const [lines, setLines] = useState<Line[]>([]);
@@ -116,7 +115,7 @@ export default function Pdv({ products, dateLabel }: { products: Product[]; date
       <div className="mt-auto grid size-56 place-items-center rounded-[48px] bg-white/10"><div className="grid size-44 place-items-center rounded-[40px] bg-white/15"><div className="grid size-36 place-items-center rounded-[40px] bg-white text-green-700"><Check size={64} strokeWidth={3} /></div></div></div>
       <h1 className="mt-8 text-4xl font-extrabold">Venda concluída!</h1>
       <p className="mt-8 text-sm font-bold uppercase tracking-[0.2em] text-white/60">Total da venda</p>
-      <p className="mt-2 text-6xl font-extrabold">{m(total)}</p>
+      <p className="mt-2 text-5xl font-extrabold">{m(total)}</p>
       <div className="mt-auto w-full max-w-md space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => window.print()} className="flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/15 py-4 text-lg font-bold"><Printer size={22} /> Imprimir</button>
@@ -135,7 +134,7 @@ export default function Pdv({ products, dateLabel }: { products: Product[]; date
           ? <span className="flex items-center gap-3 rounded-full border border-green-300 bg-green-100 py-2.5 pl-2.5 pr-6 text-lg font-extrabold uppercase tracking-[0.15em] text-green-700"><span className="grid size-10 place-items-center rounded-full bg-green-700 text-white"><Check size={20} /></span>Tudo pago</span>
           : <span className="rounded-full bg-amber-100 px-6 py-3 text-lg font-extrabold text-amber-700">Faltam {m(remaining)}</span>}
         <p className="mt-5 text-sm font-bold uppercase tracking-[0.2em] text-soft">Total da venda</p>
-        <p className="text-6xl font-extrabold tracking-tight">{m(total)}</p>
+        <p className="text-5xl font-extrabold tracking-tight">{m(total)}</p>
       </div>
       <h2 className="mb-2 mt-8 px-1 text-sm font-bold uppercase tracking-[0.18em] text-soft">Pagamentos recebidos</h2>
       <section className="rounded-3xl border border-line bg-white p-4">
@@ -160,7 +159,7 @@ export default function Pdv({ products, dateLabel }: { products: Product[]; date
       <Head eyebrow={`Pagamento · ${meth(method).n}`} title="Quanto o cliente vai pagar?" onBack={() => { setTyped(null); setStep("pay"); }} />
       <div className="my-auto flex flex-col items-center py-6">
         <p className="text-sm font-bold uppercase tracking-[0.15em] text-soft">Valor a receber</p>
-        <p className="mt-2 text-6xl font-extrabold tracking-tight">{m(amount)}</p>
+        <p className="mt-2 text-5xl font-extrabold tracking-tight">{m(amount)}</p>
         <span className="mt-5 rounded-full bg-green-100 px-6 py-3 text-lg font-bold text-green-700">
           {amount >= remaining ? <>Após este pagamento: quitado ✓{change > 0 && ` · troco ${m(change)}`}</> : `Ainda faltam ${m(remaining - amount)}`}
         </span>
@@ -183,7 +182,7 @@ export default function Pdv({ products, dateLabel }: { products: Product[]; date
     <main className={`${shell} pb-8`}>
       <Head eyebrow="Venda · Pagamento" title={<>Como o <span className="text-brand">cliente</span> vai pagar?</>} onBack={() => setStep(pays.length ? "close" : "cart")} />
       <p className="mt-8 text-center text-xl text-soft">O cliente tem a pagar</p>
-      <p className="mt-2 text-center text-7xl font-extrabold tracking-tight">{m(remaining)}</p>
+      <p className="mt-2 text-center text-5xl font-extrabold tracking-tight">{m(remaining)}</p>
       <div className="mt-10 grid grid-cols-2 gap-4">
         {METHODS.map((x) => (
           <button key={x.k} onClick={() => { setMethod(x.k); setTyped(null); setStep("amount"); }} className="flex min-h-40 flex-col items-start rounded-3xl border border-line bg-white p-5 text-left">
@@ -222,7 +221,7 @@ export default function Pdv({ products, dateLabel }: { products: Product[]; date
 
   return (
     <main className={`${shell} pb-32`}>
-      <Head left={<Menu />} eyebrow="Ponto de venda" meta={dateLabel} title="O que vai vender?" />
+      <Head left={menu} eyebrow="Ponto de venda" meta={dateLabel} title="O que vai vender?" />
       <Customer value={customer} set={setCustomer} />
       <div className="mt-4 flex gap-3">
         <label className="flex flex-1 items-center gap-3 rounded-3xl border border-line bg-white px-5 py-4 text-soft"><Search size={22} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar produto ou código" className="w-full bg-transparent text-lg text-ink outline-none placeholder:text-soft" /></label>
