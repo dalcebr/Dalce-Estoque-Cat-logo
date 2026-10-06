@@ -1,7 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { signIn } from "./actions";
-const field = "w-full rounded-lg border border-brand bg-white px-4 py-3 text-brand placeholder:text-brand/50 outline-none focus:ring-2 focus:ring-brand/40";
+const field = "w-full rounded-lg border border-brand bg-surface px-4 py-3 text-brand placeholder:text-brand/50 outline-none focus:ring-2 focus:ring-brand/40";
 export default function LoginForm() {
   const [state, action, pending] = useActionState(signIn, undefined);
   return (

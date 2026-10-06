@@ -1,6 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { createProduct } from "./actions";
-const f = "w-full rounded-2xl border border-line bg-white px-4 py-3.5 text-lg outline-none focus:border-brand";
+const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
 export default function NovoProduto() {
   return (
     <main className="mx-auto min-h-dvh max-w-md bg-page px-5 pt-5">

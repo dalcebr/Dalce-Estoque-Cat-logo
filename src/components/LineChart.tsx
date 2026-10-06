@@ -30,14 +30,14 @@ export default function LineChart({ labels, cur, prev, curName, prevName }: Prop
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Gráfico de vendas no período">
         {[0, 1, 2, 3, 4].map((k) => (
           <g key={k}>
-            <line x1={L} x2={R} y1={y(k * step)} y2={y(k * step)} stroke="#e8e8ee" />
-            <text x={L - 8} y={y(k * step) + 4} textAnchor="end" fontSize="10" fill="#6b6f80">R$ {k * step}</text>
+            <line x1={L} x2={R} y1={y(k * step)} y2={y(k * step)} className="stroke-line" />
+            <text x={L - 8} y={y(k * step) + 4} textAnchor="end" fontSize="10" className="fill-soft">R$ {k * step}</text>
           </g>))}
         <path d={`${smooth(c)} L${x(n - 1)},${B} L${x(0)},${B}Z`} fill="#15803d" opacity=".12" />
         <path d={smooth(p)} fill="none" stroke="#1d4ed8" strokeWidth="2" />
         <path d={smooth(c)} fill="none" stroke="#15803d" strokeWidth="2.5" />
         {c.map(([cx, cy], i) => cur[i] > 0 && <circle key={i} cx={cx} cy={cy} r="3" fill="#15803d" />)}
-        {tickIdx.map((i) => <text key={i} x={x(i)} y={B + 18} textAnchor="middle" fontSize="10" fill="#6b6f80">{labels[i]}</text>)}
+        {tickIdx.map((i) => <text key={i} x={x(i)} y={B + 18} textAnchor="middle" fontSize="10" className="fill-soft">{labels[i]}</text>)}
       </svg>
     </div>
   );

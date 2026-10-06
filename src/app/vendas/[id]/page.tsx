@@ -31,7 +31,7 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
       <div className="mx-auto max-w-md px-5 pt-5">
         <PageHeader eyebrow={`Venda · ${code}`} title="Detalhe da venda" back="/vendas" />
 
-        <section className="mt-6 rounded-[28px] border border-line bg-white p-5">
+        <section className="mt-6 rounded-[28px] border border-line bg-surface p-5">
           <div className="flex items-center justify-between">
             <span className={`rounded-full px-3.5 py-1.5 text-sm font-bold uppercase ${cancelled ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{cancelled ? "Cancelada" : "Finalizada"}</span>
             <span className="font-semibold text-soft">{items.length} {items.length === 1 ? "item" : "itens"}</span>
@@ -47,7 +47,7 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
         <Label>Itens</Label>
         <div className="space-y-2">
           {items.map((i) => (
-            <div key={i.id} className="flex items-center gap-4 rounded-3xl border border-line bg-white p-4">
+            <div key={i.id} className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4">
               <span className="grid size-11 place-items-center rounded-xl bg-tint text-lg font-extrabold text-brand">{i.qty}x</span>
               <span className="flex-1 text-lg font-semibold">{i.name}</span>
               <b className="text-lg">{brl(Number(i.total))}</b>
@@ -56,12 +56,12 @@ export default async function SaleDetail({ params }: { params: Promise<{ id: str
         </div>
 
         <Label>Resumo</Label>
-        <div className="flex items-center justify-between rounded-3xl border border-line bg-white p-5 text-xl font-extrabold"><span>Total</span><span>{total}</span></div>
+        <div className="flex items-center justify-between rounded-3xl border border-line bg-surface p-5 text-xl font-extrabold"><span>Total</span><span>{total}</span></div>
 
         <Label>Pagamento</Label>
         <div className="space-y-2">
           {pays.map((p) => { const Ic = iconFor(p.method); return (
-            <div key={p.id} className="flex items-center gap-4 rounded-3xl border border-line bg-white p-4">
+            <div key={p.id} className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4">
               <span className="grid size-12 place-items-center rounded-xl bg-green-100 text-green-700"><Ic size={24} /></span>
               <span className="flex-1 text-lg font-semibold">{cap(p.method)}</span>
               <b className="text-lg">{brl(Number(p.amount))}</b>

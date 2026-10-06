@@ -7,6 +7,14 @@ const font = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600
 export const metadata: Metadata = { title: "Dalce Estoque", description: "Seu negócio mais organizado e lucrativo" };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
+// Aplica o tema antes da primeira pintura (evita "piscar"): usa a escolha salva ou o tema do aparelho.
+const themeScript = `try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (<html lang="pt-BR"><body className={font.className}>{children}</body></html>);
+  return (
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
+      <body className={font.className}>{children}</body>
+    </html>
+  );
 }

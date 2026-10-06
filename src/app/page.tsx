@@ -8,7 +8,7 @@ import { brl, cap, nowParts } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 const Stat = ({ label, value, sub, valueClass = "" }: { label: string; value: string; sub?: string; valueClass?: string }) => (
-  <div className="min-h-[82px] rounded-3xl border border-line bg-white p-4">
+  <div className="min-h-[82px] rounded-3xl border border-line bg-surface p-4">
     <p className="text-xs font-semibold uppercase tracking-wider text-soft">{label}</p>
     <p className={`mt-1 text-2xl font-extrabold ${valueClass}`}>{value}</p>
     {sub && <p className="mt-0.5 text-sm text-soft">{sub}</p>}
@@ -66,9 +66,9 @@ export default async function Home() {
         <div className="mt-3"><GoalCard goal={goal} sold={month} monthName={monthName} /></div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
+      <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
         <div className="mx-auto grid max-w-md grid-cols-[5fr_6fr] gap-3">
-          <Link href="/relatorios" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-white py-4 text-lg font-bold text-brand"><ChartNoAxesColumn size={22} strokeWidth={3} /> Relatórios</Link>
+          <Link href="/relatorios" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-surface py-4 text-lg font-bold text-brand"><ChartNoAxesColumn size={22} strokeWidth={3} /> Relatórios</Link>
           <Link href="/vendas/nova" className="flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-lg font-bold text-white"><Plus size={24} /> Nova venda</Link>
         </div>
       </nav>

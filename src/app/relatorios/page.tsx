@@ -18,7 +18,7 @@ const COLORS: Record<string, string> = { dinheiro: "#15803d", débito: "#0284c7"
 type Sale = { total: number; cost: number; created_at: string; payment_method: string | null; sale_items: { name: string; qty: number; total: number }[]; sale_payments: { method: string; amount: number }[] };
 
 const Card = ({ label, value, cls = "" }: { label: string; value: string; cls?: string }) => (
-  <div className="rounded-3xl border border-line bg-white p-4"><p className="text-soft">{label}</p><p className={`mt-1 text-2xl font-extrabold ${cls}`}>{value}</p></div>
+  <div className="rounded-3xl border border-line bg-surface p-4"><p className="text-soft">{label}</p><p className={`mt-1 text-2xl font-extrabold ${cls}`}>{value}</p></div>
 );
 
 export default async function Relatorios({ searchParams }: { searchParams: Promise<{ p?: string; de?: string; ate?: string }> }) {
@@ -76,7 +76,7 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
       <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />
       <div className="mx-auto max-w-md px-5 pt-5">
         <PageHeader eyebrow="Relatórios · Dashboard" title="Como foram as vendas?" back="/" sub={`${r.label} · comparando com ${r.prevLabel}`}
-          right={<Link href={`/relatorios/filtros${qs}`} aria-label="Filtros" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-white shadow-sm"><SlidersHorizontal size={22} /></Link>} />
+          right={<Link href={`/relatorios/filtros${qs}`} aria-label="Filtros" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-surface shadow-sm"><SlidersHorizontal size={22} /></Link>} />
 
         <section className="mt-5 rounded-[28px] p-5 text-white shadow-[0_12px_24px_-12px_rgba(29,78,216,.6)]" style={{ background: "linear-gradient(135deg,#14306e 0%,#2a5bd7 100%)" }}>
           <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-90">Total de vendas</p>
@@ -91,12 +91,12 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
           <Card label="Venda custo" value={brl(cost)} />
         </div>
 
-        <section className="mt-3 rounded-3xl border border-line bg-white p-5">
+        <section className="mt-3 rounded-3xl border border-line bg-surface p-5">
           <h2 className="mb-3 text-lg font-extrabold">Vendas no período</h2>
           <LineChart labels={labels.slice(lo, hi + 1)} cur={cur.slice(lo, hi + 1)} prev={prev.slice(lo, hi + 1)} curName={r.label} prevName={cap(r.prevLabel)} />
         </section>
 
-        <section className="mt-3 rounded-3xl border border-line bg-white p-5">
+        <section className="mt-3 rounded-3xl border border-line bg-surface p-5">
           <h2 className="mb-4 text-lg font-extrabold">Tipos de pagamento</h2>
           {payList.length === 0 ? <p className="text-soft">Sem pagamentos no período.</p> : (
             <div className="flex items-center gap-5">
@@ -111,7 +111,7 @@ export default async function Relatorios({ searchParams }: { searchParams: Promi
             </div>)}
         </section>
 
-        <section className="mt-3 rounded-3xl border border-line bg-white p-5">
+        <section className="mt-3 rounded-3xl border border-line bg-surface p-5">
           <h2 className="mb-3 text-lg font-extrabold">Mais vendidos</h2>
           {top.length === 0 ? <p className="text-soft">Sem itens no período.</p> : (
             <ul className="divide-y divide-line">

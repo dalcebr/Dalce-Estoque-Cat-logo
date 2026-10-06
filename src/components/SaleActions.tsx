@@ -26,7 +26,7 @@ export default function SaleActions({ id, code, customer, total, cancelled, rece
     <>
       <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-page px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
         <div className="mx-auto grid max-w-md grid-cols-[2fr_3fr] gap-3">
-          <button onClick={() => setOpen(true)} className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-white py-4 text-lg font-bold text-brand"><Ellipsis size={24} /> Opções</button>
+          <button onClick={() => setOpen(true)} className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-surface py-4 text-lg font-bold text-brand"><Ellipsis size={24} /> Opções</button>
           <button onClick={share} className="flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-lg font-bold text-white"><Share2 size={22} /> Compartilhar</button>
         </div>
       </nav>

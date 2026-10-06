@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Box, ChevronRight, DollarSign, FileText, FolderPlus, House, LogOut, Menu as MenuIcon, MessageCircle, Settings, ShoppingBag, ShoppingCart, Store, Diamond, type LucideIcon } from "lucide-react";
+import { Box, ChevronRight, DollarSign, FileText, FolderPlus, House, LogOut, Menu as MenuIcon, MessageCircle, Settings, ShoppingCart, Store, Diamond, Moon, Sun, type LucideIcon } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 
 type Item = { n: string; s?: string; href: string; Icon: LucideIcon; c: string; more?: boolean };
@@ -9,8 +9,7 @@ const soon = (n: string) => `/em-breve?p=${encodeURIComponent(n)}`;
 const OPERACAO: Item[] = [
   { n: "Início", s: "resumo do dia", href: "/", Icon: House, c: "bg-tint text-brand" },
   { n: "Venda", s: "balcão aberto", href: "/vendas/nova", Icon: ShoppingCart, c: "bg-tint text-brand" },
-  { n: "Pedidos", s: "em aberto", href: soon("Pedidos"), Icon: ShoppingBag, c: "bg-amber-100 text-amber-700" },
-  { n: "Cadastros", href: "/produtos/novo", Icon: FolderPlus, c: "bg-teal-100 text-teal-700", more: true },
+  { n: "Cadastros", href: "/cadastros", Icon: FolderPlus, c: "bg-teal-100 text-teal-700", more: true },
   { n: "Fiado", s: "contas a receber", href: soon("Fiado"), Icon: DollarSign, c: "bg-amber-100 text-amber-700" },
   { n: "Estoque", href: soon("Estoque"), Icon: Box, c: "bg-teal-100 text-teal-700", more: true },
   { n: "Relatórios", href: "/relatorios", Icon: FileText, c: "bg-rose-100 text-rose-700", more: true },
@@ -20,7 +19,7 @@ const SISTEMA: Item[] = [
   { n: "Ajustes", href: soon("Ajustes"), Icon: Settings, c: "bg-slate-100 text-slate-600", more: true },
 ];
 
-function Section({ title, items, close }: { title: string; items: Item[]; close: () => void }) {
+function Section({ title, items, close, children }: { title: string; items: Item[]; close: () => void; children?: ReactNode }) {
   return (
     <section className="px-4 pb-2 pt-5">
       <h2 className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.18em] text-soft">{title}</h2>
@@ -30,6 +29,7 @@ function Section({ title, items, close }: { title: string; items: Item[]; close:
           <span className="flex-1 leading-tight"><b className="block text-lg">{n}</b>{s && <span className="text-soft">{s}</span>}</span>
           {more && <ChevronRight size={20} className="text-soft/70" />}
         </Link>))}
+      {children}
     </section>
   );
 }
@@ -37,6 +37,13 @@ function Section({ title, items, close }: { title: string; items: Item[]; close:
 export default function Menu({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const [dark, setDark] = useState(false);
+  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  const toggle = () => {
+    const d = !dark; setDark(d);
+    document.documentElement.classList.toggle("dark", d);
+    try { localStorage.setItem("theme", d ? "dark" : "light"); } catch {}
+  };
   const initials = name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "U";
 
   useEffect(() => {
@@ -47,11 +54,11 @@ export default function Menu({ name }: { name: string }) {
 
   return (
     <>
-      <button aria-label="Menu" aria-expanded={open} onClick={() => setOpen(true)} className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-white text-ink shadow-sm"><MenuIcon size={24} strokeWidth={2.5} /></button>
+      <button aria-label="Menu" aria-expanded={open} onClick={() => setOpen(true)} className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-surface text-ink shadow-sm"><MenuIcon size={24} strokeWidth={2.5} /></button>
 
       <div className={`fixed inset-0 z-40 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
         <div onClick={close} className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`} />
-        <aside className={`absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside className={`absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-surface shadow-2xl transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex items-center gap-4 px-5 pb-6 pt-[max(1.75rem,env(safe-area-inset-top))] text-white" style={{ background: "linear-gradient(135deg,#14306e 0%,#2a5bd7 100%)" }}>
             <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/20 text-2xl font-extrabold">{initials[0]}</span>
             <div className="min-w-0 flex-1">
@@ -63,7 +70,13 @@ export default function Menu({ name }: { name: string }) {
 
           <nav className="flex-1 overflow-y-auto">
             <Section title="Operação" items={OPERACAO} close={close} />
-            <Section title="Sistema" items={SISTEMA} close={close} />
+            <Section title="Sistema" items={SISTEMA} close={close}>
+              <button role="switch" aria-checked={dark} onClick={toggle} className="flex w-full items-center gap-4 rounded-2xl px-2 py-2.5 text-left">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600">{dark ? <Moon size={22} /> : <Sun size={22} />}</span>
+                <span className="flex-1 leading-tight"><b className="block text-lg">Modo escuro</b><span className="text-soft">{dark ? "ativado" : "desativado"}</span></span>
+                <span className={`h-7 w-12 shrink-0 rounded-full p-0.5 transition-colors ${dark ? "bg-brand" : "bg-line"}`}><span className={`block size-6 rounded-full bg-white shadow transition-transform ${dark ? "translate-x-5" : ""}`} /></span>
+              </button>
+            </Section>
           </nav>
 
           <div className="border-t border-line">

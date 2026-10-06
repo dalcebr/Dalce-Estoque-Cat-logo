@@ -9,7 +9,7 @@ export default function GoalCard({ goal, sold, monthName }: { goal: number | nul
   const pct = goal ? Math.round((sold / goal) * 100) : 0;
   const R = 24, C = 2 * Math.PI * R;
   return (
-    <section className="rounded-3xl border border-line bg-white p-4">
+    <section className="rounded-3xl border border-line bg-surface p-4">
       <button type="button" onClick={() => setEditing(!editing)} className="flex w-full items-center gap-4 text-left">
         <div className="relative size-16 shrink-0">
           <svg viewBox="0 0 64 64" className="size-16 -rotate-90">

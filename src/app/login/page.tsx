@@ -7,7 +7,7 @@ export default function LoginPage() {
         <Mail size={18} /> Suporte
       </a>
       <div className="w-full max-w-sm text-center">
-        <h1 className="text-4xl font-bold text-black">Dalce Estoque</h1>
+        <h1 className="text-4xl font-bold text-ink">Dalce Estoque</h1>
         <p className="mt-2 text-muted">Seu negócio mais organizado e lucrativo</p>
         <LoginForm />
       </div>

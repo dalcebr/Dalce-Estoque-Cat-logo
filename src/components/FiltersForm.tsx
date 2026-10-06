@@ -17,7 +17,7 @@ export default function FiltersForm({ today, initialPreset, initialFrom, initial
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col bg-page px-5 pb-28 pt-5">
       <header className="flex items-center gap-4">
-        <Link href="/relatorios" aria-label="Voltar" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-white shadow-sm"><ChevronLeft size={24} strokeWidth={2.5} /></Link>
+        <Link href="/relatorios" aria-label="Voltar" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-surface shadow-sm"><ChevronLeft size={24} strokeWidth={2.5} /></Link>
         <div className="flex-1 leading-tight"><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Relatórios · Filtros</p><h1 className="text-3xl font-extrabold">O que quer filtrar?</h1></div>
         <button onClick={() => pick("hoje")} className="px-2 text-lg font-bold text-brand">Limpar</button>
       </header>
@@ -25,11 +25,11 @@ export default function FiltersForm({ today, initialPreset, initialFrom, initial
       <h2 className="mb-3 mt-7 text-xs font-bold uppercase tracking-[0.18em] text-soft">Período</h2>
       <div className="grid grid-cols-2 gap-3">
         {PRESETS.map(([k, l]) => (
-          <button key={k} onClick={() => pick(k)} className={`rounded-2xl border py-4 text-lg font-bold ${preset === k ? "border-brand bg-brand text-white" : "border-line bg-white"}`}>{l}</button>))}
+          <button key={k} onClick={() => pick(k)} className={`rounded-2xl border py-4 text-lg font-bold ${preset === k ? "border-brand bg-brand text-white" : "border-line bg-surface"}`}>{l}</button>))}
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3">
         {([["De", from, setFrom], ["Até", to, setTo]] as const).map(([l, v, set]) => (
-          <label key={l} className="rounded-3xl border border-line bg-white p-4">
+          <label key={l} className="rounded-3xl border border-line bg-surface p-4">
             <span className="text-xs font-bold uppercase tracking-[0.18em] text-soft">{l}</span>
             <span className="mt-1 flex items-center gap-2 text-brand"><CalendarDays size={20} className="shrink-0" />
               <input type="date" value={v} onChange={(e) => { set(e.target.value); setPreset(null); }} className="w-full min-w-0 bg-transparent font-bold text-ink outline-none" /></span>

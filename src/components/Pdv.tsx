@@ -27,12 +27,12 @@ const tile = (c: string) => ({ background: `linear-gradient(180deg,rgba(0,0,0,0)
 function Head({ eyebrow, title, onBack, left, meta }: { eyebrow: string; title: ReactNode; onBack?: () => void; left?: ReactNode; meta?: string }) {
   return (
     <header className="flex items-center gap-4">
-      {left ?? <button onClick={onBack} aria-label="Voltar" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-white shadow-sm"><ChevronLeft size={26} strokeWidth={2.5} /></button>}
+      {left ?? <button onClick={onBack} aria-label="Voltar" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-surface shadow-sm"><ChevronLeft size={26} strokeWidth={2.5} /></button>}
       <div className="min-w-0 flex-1 leading-tight">
         <div className="flex justify-between"><p className="text-sm font-bold uppercase tracking-[0.18em] text-brand">{eyebrow}</p>{meta && <span className="text-sm font-semibold text-soft">{meta}</span>}</div>
         <h1 className="text-3xl font-extrabold">{title}</h1>
       </div>
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-tint text-brand ring-4 ring-white"><User size={22} /></span>
+      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-tint text-brand ring-4 ring-page"><User size={22} /></span>
     </header>
   );
 }
@@ -50,7 +50,7 @@ function CobrarBar({ count, total, onClick }: { count: number; total: number; on
 
 function Customer({ value, set }: { value: string; set: (v: string) => void }) {
   const [open, setOpen] = useState(false);
-  if (open) return <input autoFocus defaultValue={value} placeholder="Nome do cliente" onBlur={(e) => { set(e.target.value.trim()); setOpen(false); }} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} className="mt-4 w-full rounded-2xl border border-brand bg-white px-4 py-3 text-lg outline-none" />;
+  if (open) return <input autoFocus defaultValue={value} placeholder="Nome do cliente" onBlur={(e) => { set(e.target.value.trim()); setOpen(false); }} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} className="mt-4 w-full rounded-2xl border border-brand bg-surface px-4 py-3 text-lg outline-none" />;
   return (
     <button onClick={() => setOpen(true)} className="mt-4 flex items-center gap-3 text-lg font-bold text-brand">
       <span className="grid size-9 place-items-center rounded-full border-2 border-brand/50"><Plus size={20} /></span>
@@ -112,7 +112,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
   if (step === "done") return (
     <main className="fixed inset-0 z-50 flex flex-col items-center px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10 text-white" style={{ background: "linear-gradient(180deg,#16a34a,#14532d)" }}>
       <span className="rounded-full border border-white/30 bg-white/10 px-6 py-2.5 text-sm font-bold uppercase tracking-[0.2em]">Venda {done?.code} · {done?.time}</span>
-      <div className="mt-auto grid size-56 place-items-center rounded-[48px] bg-white/10"><div className="grid size-44 place-items-center rounded-[40px] bg-white/15"><div className="grid size-36 place-items-center rounded-[40px] bg-white text-green-700"><Check size={64} strokeWidth={3} /></div></div></div>
+      <div className="mt-auto grid size-56 place-items-center rounded-[48px] bg-white/10"><div className="grid size-44 place-items-center rounded-[40px] bg-white/15"><div className="grid size-36 place-items-center rounded-[40px] bg-[#fff] text-[#15803d]"><Check size={64} strokeWidth={3} /></div></div></div>
       <h1 className="mt-8 text-4xl font-extrabold">Venda concluída!</h1>
       <p className="mt-8 text-sm font-bold uppercase tracking-[0.2em] text-white/60">Total da venda</p>
       <p className="mt-2 text-5xl font-extrabold">{m(total)}</p>
@@ -121,7 +121,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
           <button onClick={() => window.print()} className="flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/15 py-4 text-lg font-bold"><Printer size={22} /> Imprimir</button>
           <button onClick={share} className="flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/15 py-4 text-lg font-bold"><Share2 size={22} /> Compartilhar</button>
         </div>
-        <button onClick={reset} className="flex w-full items-center justify-center gap-2 rounded-3xl bg-white py-5 text-2xl font-extrabold text-green-700"><Plus size={26} /> Nova venda</button>
+        <button onClick={reset} className="flex w-full items-center justify-center gap-2 rounded-3xl bg-[#fff] py-5 text-2xl font-extrabold text-[#15803d]"><Plus size={26} /> Nova venda</button>
       </div>
     </main>
   );
@@ -131,13 +131,13 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       <Head eyebrow="Venda · Fechamento" title="Confira e feche a venda" onBack={() => setStep("cart")} />
       <div className="mt-6 flex flex-col items-center">
         {remaining === 0
-          ? <span className="flex items-center gap-3 rounded-full border border-green-300 bg-green-100 py-2.5 pl-2.5 pr-6 text-lg font-extrabold uppercase tracking-[0.15em] text-green-700"><span className="grid size-10 place-items-center rounded-full bg-green-700 text-white"><Check size={20} /></span>Tudo pago</span>
+          ? <span className="flex items-center gap-3 rounded-full border border-green-300 bg-green-100 py-2.5 pl-2.5 pr-6 text-lg font-extrabold uppercase tracking-[0.15em] text-green-700"><span className="grid size-10 place-items-center rounded-full bg-[#15803d] text-white"><Check size={20} /></span>Tudo pago</span>
           : <span className="rounded-full bg-amber-100 px-6 py-3 text-lg font-extrabold text-amber-700">Faltam {m(remaining)}</span>}
         <p className="mt-5 text-sm font-bold uppercase tracking-[0.2em] text-soft">Total da venda</p>
         <p className="text-5xl font-extrabold tracking-tight">{m(total)}</p>
       </div>
       <h2 className="mb-2 mt-8 px-1 text-sm font-bold uppercase tracking-[0.18em] text-soft">Pagamentos recebidos</h2>
-      <section className="rounded-3xl border border-line bg-white p-4">
+      <section className="rounded-3xl border border-line bg-surface p-4">
         {pays.map((p, i) => { const M = meth(p.method); return (
           <div key={i} className="mb-3 flex items-center gap-4"><span className={`grid size-12 place-items-center rounded-xl ${M.c}`}><M.Icon size={24} /></span><b className="flex-1 text-lg">{M.n}</b><b className="text-lg">{m(p.amount)}</b>
             <button aria-label="Remover" onClick={() => setPays(pays.filter((_, j) => j !== i))} className="grid size-10 place-items-center rounded-xl border border-line bg-page text-soft"><X size={18} /></button></div>); })}
@@ -145,8 +145,8 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
         {remaining > 0 && <button onClick={() => setStep("pay")} className="mt-3 w-full rounded-xl border-2 border-brand py-3 font-bold text-brand">+ Adicionar pagamento</button>}
       </section>
       <h2 className="mb-2 mt-7 px-1 text-sm font-bold uppercase tracking-[0.18em] text-soft">Observação</h2>
-      {showNote ? <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-3xl border border-brand bg-white p-4 text-lg outline-none" />
-        : <button onClick={() => setShowNote(true)} className="flex w-full items-center justify-between rounded-3xl border border-line bg-white p-5 text-lg text-soft">Adicionar observação <Plus className="text-brand" /></button>}
+      {showNote ? <textarea autoFocus value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-3xl border border-brand bg-surface p-4 text-lg outline-none" />
+        : <button onClick={() => setShowNote(true)} className="flex w-full items-center justify-between rounded-3xl border border-line bg-surface p-5 text-lg text-soft">Adicionar observação <Plus className="text-brand" /></button>}
       {error && <p role="alert" className="mt-3 text-red-600">{error}</p>}
       <div className="fixed inset-x-0 bottom-0 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <button disabled={remaining > 0 || busy} onClick={finish} className="mx-auto flex w-full max-w-md items-center justify-center gap-3 rounded-[28px] bg-green-600 py-5 text-xl font-extrabold text-white shadow-lg disabled:opacity-45"><Check size={26} /> {busy ? "Salvando..." : `Finalizar venda · ${m(total)}`}</button>
@@ -169,10 +169,10 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2.5">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => <button key={d} onClick={() => digit(d)} className="rounded-3xl border border-line bg-white py-4 text-4xl font-semibold">{d}</button>)}
-        <button onClick={() => setTyped("0")} className="rounded-3xl border border-line bg-white py-4 text-2xl font-bold text-brand">limpar</button>
-        <button onClick={() => digit("0")} className="rounded-3xl border border-line bg-white py-4 text-4xl font-semibold">0</button>
-        <button onClick={back} aria-label="Apagar" className="grid place-items-center rounded-3xl border border-line bg-white text-brand"><Delete size={30} /></button>
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => <button key={d} onClick={() => digit(d)} className="rounded-3xl border border-line bg-surface py-4 text-4xl font-semibold">{d}</button>)}
+        <button onClick={() => setTyped("0")} className="rounded-3xl border border-line bg-surface py-4 text-2xl font-bold text-brand">limpar</button>
+        <button onClick={() => digit("0")} className="rounded-3xl border border-line bg-surface py-4 text-4xl font-semibold">0</button>
+        <button onClick={back} aria-label="Apagar" className="grid place-items-center rounded-3xl border border-line bg-surface text-brand"><Delete size={30} /></button>
       </div>
       <button disabled={applied <= 0} onClick={receive} className="mt-4 w-full rounded-[28px] bg-brand py-5 text-xl font-extrabold text-white shadow-lg disabled:opacity-45">Receber {m(applied)} no {meth(method).n.toLowerCase()}</button>
     </main>
@@ -185,7 +185,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       <p className="mt-2 text-center text-5xl font-extrabold tracking-tight">{m(remaining)}</p>
       <div className="mt-10 grid grid-cols-2 gap-4">
         {METHODS.map((x) => (
-          <button key={x.k} onClick={() => { setMethod(x.k); setTyped(null); setStep("amount"); }} className="flex min-h-40 flex-col items-start rounded-3xl border border-line bg-white p-5 text-left">
+          <button key={x.k} onClick={() => { setMethod(x.k); setTyped(null); setStep("amount"); }} className="flex min-h-40 flex-col items-start rounded-3xl border border-line bg-surface p-5 text-left">
             <span className={`grid size-14 place-items-center rounded-2xl ${x.c}`}><x.Icon size={28} /></span>
             <b className="mt-5 text-2xl font-extrabold">{x.n}</b><span className="text-lg text-soft">{x.s}</span>
           </button>))}
@@ -199,14 +199,14 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       <Customer value={customer} set={setCustomer} />
       <div className="mt-4 space-y-3">
         {lines.map((l) => (
-          <div key={l.key} className="flex items-center gap-4 rounded-3xl border border-line bg-white p-4">
+          <div key={l.key} className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4">
             <span className="grid size-14 shrink-0 place-items-center rounded-2xl text-xl font-extrabold text-white" style={{ background: l.color }}>{l.name.slice(0, 2).toUpperCase()}</span>
             <div className="min-w-0 flex-1"><b className="block truncate text-lg">{l.name}</b><span className="text-soft">{m(l.price)}</span></div>
             <div className="text-right">
               <div className="flex items-center gap-1 rounded-xl border border-line bg-page p-1">
                 <button aria-label="Diminuir" onClick={() => step_(l.key, -1)} className="grid size-9 place-items-center text-soft"><Minus size={18} /></button>
                 <b className="w-6 text-center text-lg">{l.qty}</b>
-                <button aria-label="Aumentar" onClick={() => step_(l.key, 1)} className="grid size-9 place-items-center rounded-lg bg-ink text-white"><Plus size={18} /></button>
+                <button aria-label="Aumentar" onClick={() => step_(l.key, 1)} className="grid size-9 place-items-center rounded-lg bg-strong text-on-strong"><Plus size={18} /></button>
               </div>
               <b className="mt-1.5 block">{m(l.price * l.qty)}</b>
             </div>
@@ -214,7 +214,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       </div>
       <div className="mt-auto flex items-center justify-between px-1 pb-3 pt-6 text-lg font-semibold"><span className="text-soft">{count} {count === 1 ? "item" : "itens"}</span>
         <button onClick={() => { setLines([]); setStep("catalog"); }} className="flex items-center gap-2 text-red-700"><Trash2 size={20} /> Limpar carrinho</button></div>
-      <div className="mb-24 flex items-center gap-4 rounded-3xl border border-line bg-white p-5 text-lg text-soft opacity-60"><ChevronRight size={22} /> Desconto e salvar pedido</div>
+      <div className="mb-24 flex items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-lg text-soft opacity-60"><ChevronRight size={22} /> Desconto e salvar pedido</div>
       <CobrarBar count={count} total={total} onClick={() => { setPays([]); setStep("pay"); }} />
     </main>
   );
@@ -224,12 +224,12 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       <Head left={menu} eyebrow="Ponto de venda" meta={dateLabel} title="O que vai vender?" />
       <Customer value={customer} set={setCustomer} />
       <div className="mt-4 flex gap-3">
-        <label className="flex flex-1 items-center gap-3 rounded-3xl border border-line bg-white px-5 py-4 text-soft"><Search size={22} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar produto ou código" className="w-full bg-transparent text-lg text-ink outline-none placeholder:text-soft" /></label>
+        <label className="flex flex-1 items-center gap-3 rounded-3xl border border-line bg-surface px-5 py-4 text-soft"><Search size={22} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar produto ou código" className="w-full bg-transparent text-lg text-ink outline-none placeholder:text-soft" /></label>
         <span className="grid size-16 shrink-0 place-items-center rounded-3xl bg-brand text-white shadow-lg"><ScanLine size={28} /></span>
       </div>
       <div className="mt-4 flex gap-2 overflow-x-auto">
-        <button onClick={() => setCat(null)} className={`shrink-0 rounded-2xl px-6 py-3.5 text-lg font-semibold ${!cat ? "bg-ink text-white" : "border border-line bg-white text-soft"}`}>Todos</button>
-        {cats.map(([n, c]) => <button key={n} onClick={() => setCat(n)} className={`flex shrink-0 items-center gap-2.5 rounded-2xl px-5 py-3.5 text-lg font-semibold ${cat === n ? "bg-ink text-white" : "border border-line bg-white text-soft"}`}><span className="size-3.5 rounded-full" style={{ background: c }} />{n}</button>)}
+        <button onClick={() => setCat(null)} className={`shrink-0 rounded-2xl px-6 py-3.5 text-lg font-semibold ${!cat ? "bg-strong text-on-strong" : "border border-line bg-surface text-soft"}`}>Todos</button>
+        {cats.map(([n, c]) => <button key={n} onClick={() => setCat(n)} className={`flex shrink-0 items-center gap-2.5 rounded-2xl px-5 py-3.5 text-lg font-semibold ${cat === n ? "bg-strong text-on-strong" : "border border-line bg-surface text-soft"}`}><span className="size-3.5 rounded-full" style={{ background: c }} />{n}</button>)}
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3">
         <button onClick={quick} className="flex aspect-[9/10] flex-col justify-between rounded-3xl p-3 text-left text-white" style={{ background: "#1e40af" }}>
@@ -237,7 +237,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
         </button>
         {shown.map((p) => { const n = lines.find((l) => l.key === p.id)?.qty ?? 0; return (
           <button key={p.id} onClick={() => add(p)} className={`relative flex aspect-[9/10] flex-col justify-end rounded-3xl p-3 text-left text-white ${n ? "ring-4 ring-ink" : ""}`} style={tile(p.color ?? GRAY)}>
-            {n > 0 && <span className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-ink text-lg font-extrabold">{n}</span>}
+            {n > 0 && <span className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-strong text-on-strong text-lg font-extrabold">{n}</span>}
             <b className="text-lg leading-tight">{p.name}</b><b className="text-lg">{m(p.price)}</b>
           </button>); })}
         <Link href="/produtos/novo" className="relative flex aspect-[9/10] flex-col justify-between rounded-3xl p-3 text-white" style={{ background: "linear-gradient(180deg,#252438,#33324a)" }}>
