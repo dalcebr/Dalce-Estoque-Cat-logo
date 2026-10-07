@@ -25,16 +25,19 @@ export async function setPlan(storeId: string, plan: string, days: number): Prom
   return { ok: true, msg: "Plano atualizado." };
 }
 
-/** Ativa ou suspende o acesso da loja. */
+/**
+ * Ativa ou suspende o acesso da loja.
+ * Usa a RPC admin_set_active: reativar NÃO sobrescreve o plano do cliente
+ * (antes forçava "pro", apagando o plano real contratado).
+ */
 export async function toggleStore(storeId: string, active: boolean): Promise<AdminResult> {
   const admin = await requireAdmin();
   if (!admin) return { error: "Ação não permitida." };
-  const { error } = await admin.supabase
-    .from("stores")
-    .update({ active, plan: active ? "pro" : "blocked", updated_at: new Date().toISOString() })
-    .eq("id", storeId);
+  const { error } = await admin.supabase.rpc("admin_set_active", {
+    p_store: storeId,
+    p_active: active,
+  });
   if (error) return { error: "Não foi possível atualizar a loja." };
-  await logAction(admin.supabase, storeId, active ? "loja.ativada" : "loja.suspensa");
   revalidatePath("/admin");
   return { ok: true, msg: active ? "Loja ativada." : "Loja suspensa." };
 }

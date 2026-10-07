@@ -12,6 +12,9 @@ export default function LoginPage() {
         <h1 className="text-4xl font-bold text-ink">Dalce Estoque</h1>
         <p className="mt-2 text-muted">Seu negócio mais organizado e lucrativo</p>
         <LoginForm />
+        <p className="mt-4 text-sm">
+          <Link href="/recuperar-senha" className="font-semibold text-soft">Esqueci minha senha</Link>
+        </p>
         <p className="mt-6 text-sm text-soft">
           Ainda não tem conta?{" "}
           <Link href="/cadastro" className="font-bold text-brand">Criar loja grátis</Link>

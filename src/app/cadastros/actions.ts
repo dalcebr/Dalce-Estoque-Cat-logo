@@ -7,13 +7,20 @@ import { logAction } from "@/lib/audit";
 const str = (fd: FormData, k: string, max = 120) => String(fd.get(k) ?? "").trim().slice(0, max);
 const esc = (s: string) => s.replace(/[%_\\]/g, "\\$&");
 
+/** Aceita apenas URLs do nosso bucket de Storage (ou vazio). Bloqueia data: e URLs externas. */
+function safeImage(v: string): string | null {
+  if (!v) return null;
+  if (v.startsWith("data:image/")) return null; // base64 legado não é mais aceito
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/catalogo\//i.test(v)) return null;
+  return v.slice(0, 500);
+}
+
 export async function saveProduct(fd: FormData) {
   const id = str(fd, "id"), name = str(fd, "name", 80);
   const price = num(fd.get("price")), cost = num(fd.get("cost"));
   if (!name || !Number.isFinite(price) || price <= 0 || !Number.isFinite(cost) || cost < 0) return;
-  let image = String(fd.get("image") ?? "");
-  if (image && (!image.startsWith("data:image/") || image.length > 150_000)) image = "";
-  const row = { name, price, cost, stock: Math.trunc(num(fd.get("stock"))) || 0, min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0), image: image || null, category_id: str(fd, "category_id") || null };
+  const image = safeImage(String(fd.get("image") ?? ""));
+  const row = { name, price, cost, stock: Math.trunc(num(fd.get("stock"))) || 0, min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0), image, category_id: str(fd, "category_id") || null };
   const s = await getStore();
   if (!s) return;
   if (id) await s.supabase.from("products").update(row).eq("id", id);

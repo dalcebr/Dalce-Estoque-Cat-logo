@@ -1,6 +1,8 @@
 "use server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export type SignUpState = { error?: string } | undefined;
 
@@ -18,6 +20,11 @@ export async function signUp(_: SignUpState, fd: FormData): Promise<SignUpState>
   if (!EMAIL_RE.test(email)) return { error: "Informe um e-mail válido." };
   if (password.length < 6) return { error: "A senha precisa ter pelo menos 6 caracteres." };
   if (password !== confirm) return { error: "As senhas não conferem." };
+
+  // evita criação em massa de contas: 5 cadastros por IP a cada hora
+  const ip = clientIp(await headers());
+  const rl = rateLimit(`signup:${ip}`, 5, 60 * 60_000);
+  if (!rl.ok) return { error: `Muitas tentativas. Tente novamente em ${Math.ceil(rl.retryAfter / 60)} min.` };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({ email, password });

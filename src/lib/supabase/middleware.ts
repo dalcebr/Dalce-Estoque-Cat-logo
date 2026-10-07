@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-const PUBLIC = ["/login", "/cadastro", "/c/", "/bloqueado", "/assinatura"];
+const PUBLIC = ["/login", "/cadastro", "/c/", "/bloqueado", "/assinatura", "/recuperar-senha", "/redefinir-senha"];
 
 export async function updateSession(req: NextRequest) {
   let res = NextResponse.next({ request: req });
@@ -25,7 +25,7 @@ export async function updateSession(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = req.nextUrl.pathname;
   const isPublic = PUBLIC.some((p) => path === p || path.startsWith(p));
-  const isAuthPage = path === "/login" || path === "/cadastro";
+  const isAuthPage = path === "/login" || path === "/cadastro" || path === "/recuperar-senha";
 
   if (!user) {
     if (isPublic) return res;

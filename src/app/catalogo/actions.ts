@@ -17,7 +17,9 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
   const email = (i.email ?? "").trim();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "E-mail inválido." };
   const logo = i.logo ?? "";
-  if (logo && (!logo.startsWith("data:image/") || logo.length > 300_000)) return { error: "Logo inválido ou grande demais." };
+  if (logo && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/catalogo\//i.test(logo)) {
+    return { error: "Logo inválido. Envie a imagem novamente." };
+  }
 
   const s = await getStore();
   if (!s) return { error: "Sessão expirada. Entre novamente." };

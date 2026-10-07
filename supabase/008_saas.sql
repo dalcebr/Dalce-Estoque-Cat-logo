@@ -16,10 +16,6 @@ create or replace function current_store_id() returns uuid
 language sql stable security definer set search_path = public as
 $$ select store_id from profiles where id = auth.uid() $$;
 
-create or replace function is_super_admin() returns boolean
-language sql stable security definer set search_path = public as
-$$ select coalesce((select is_super_admin from profiles where id = auth.uid()), false) $$;
-
 create or replace function store_active(p_store uuid) returns boolean
 language sql stable security definer set search_path = public as
 $$ select coalesce((select active and (trial_ends_at is null or trial_ends_at > now())
@@ -46,6 +42,12 @@ alter table profiles
   add column if not exists is_super_admin boolean not null default false,
   add column if not exists role text not null default 'owner',
   add column if not exists created_at timestamptz not null default now();
+
+-- is_super_admin() só pode ser criada DEPOIS da coluna existir (o Postgres
+-- valida o corpo das funções SQL no momento da criação).
+create or replace function is_super_admin() returns boolean
+language sql stable security definer set search_path = public as
+$$ select coalesce((select is_super_admin from profiles where id = auth.uid()), false) $$;
 
 -- lojas existentes: 14 dias de teste a partir de agora
 update stores set trial_ends_at = now() + interval '14 days' where trial_ends_at is null and plan = 'trial';

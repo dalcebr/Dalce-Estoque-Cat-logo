@@ -98,9 +98,14 @@ export default function Pdv({ products, dateLabel, menu, customers }: { products
 
   async function finish() {
     setBusy(true); setError("");
-    const r = await createSale({ items: lines.map((l) => ({ productId: l.productId, name: l.name, qty: l.qty, price: l.price / 100 })), payments: pays.map((p) => ({ method: p.method, amount: p.amount / 100 })), customer, note });
-    setBusy(false);
-    if ("error" in r) setError(r.error); else { setDone({ code: r.code, time: r.time }); setStep("done"); }
+    try {
+      const r = await createSale({ items: lines.map((l) => ({ productId: l.productId, name: l.name, qty: l.qty, price: l.price / 100 })), payments: pays.map((p) => ({ method: p.method, amount: p.amount / 100 })), customer, note });
+      if ("error" in r) setError(r.error); else { setDone({ code: r.code, time: r.time }); setStep("done"); }
+    } catch {
+      setError("Sem conexão. Verifique a internet e tente novamente.");
+    } finally {
+      setBusy(false);
+    }
   }
   const receipt = () => [`Dalce Estoque · Venda ${done?.code}`, ...lines.map((l) => `${l.qty}x ${l.name} — ${m(l.price * l.qty)}`), "", `Total: ${m(total)}`, ...pays.map((p) => `${meth(p.method).n}: ${m(p.amount)}`)].join("\n");
   async function share() {

@@ -13,5 +13,5 @@ export default async function Catalogo() {
   const initial = { ...DEFAULTS } as Record<string, unknown>;
   for (const k of Object.keys(DEFAULTS)) if (c && c[k] != null) initial[k] = c[k];
   if (!initial.slug) initial.slug = slugify(st?.name ?? "");
-  return <CatalogForm initial={initial as unknown as CatalogSettings} open={!!c?.active && !!c?.slug} />;
+  return <CatalogForm initial={initial as unknown as CatalogSettings} open={!!c?.active && !!c?.slug} storeId={(p?.store_id as string) ?? ""} />;
 }

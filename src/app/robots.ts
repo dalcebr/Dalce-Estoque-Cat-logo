@@ -5,7 +5,25 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: ["/", "/c/"], disallow: ["/admin", "/ajustes", "/vendas", "/estoque", "/fiado", "/cadastros", "/relatorios", "/catalogo", "/assinatura", "/bloqueado"] },
+      {
+        userAgent: "*",
+        allow: ["/", "/c/"],
+        disallow: [
+          "/admin",
+          "/ajustes",
+          "/vendas",
+          "/estoque",
+          "/fiado",
+          "/cadastros",
+          "/relatorios",
+          "/catalogo",
+          "/assinatura",
+          "/bloqueado",
+          "/api/",
+          "/recuperar-senha",
+          "/redefinir-senha",
+        ],
+      },
     ],
     sitemap: `${APP_URL}/sitemap.xml`,
   };
