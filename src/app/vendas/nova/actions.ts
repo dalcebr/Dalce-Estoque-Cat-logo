@@ -20,7 +20,7 @@ export async function createSale(input: { items: Item[]; payments: Pay[]; custom
   const map = new Map((prods ?? []).map((p: { id: string; name: string; price: number; cost: number }) => [p.id, p]));
 
   let total = 0, cost = 0;
-  const rows: { name: string; qty: number; total: number }[] = [];
+  const rows: { product_id: string | null; name: string; qty: number; total: number }[] = [];
   for (const i of input.items) {
     const qty = Math.max(1, Math.floor(i.qty));
     const p = i.productId ? map.get(i.productId) : null;
@@ -29,13 +29,14 @@ export async function createSale(input: { items: Item[]; payments: Pay[]; custom
     if (!Number.isFinite(unit) || unit < 0) return { error: "Valor inválido." };
     const line = r2(unit * qty);
     total += line; cost += p ? Number(p.cost) * qty : 0;
-    rows.push({ name: p ? p.name : "Venda rápida", qty, total: line });
+    rows.push({ product_id: p ? p.id : null, name: p ? p.name : "Venda rápida", qty, total: line });
   }
   total = r2(total);
   const paid = r2(input.payments.reduce((s, p) => s + p.amount, 0));
   if (!rows.length || total <= 0) return { error: "Carrinho vazio." };
   if (input.payments.some((p) => !(p.amount > 0)) || Math.abs(paid - total) > 0.009) return { error: "Os pagamentos não fecham o total." };
 
+  if (input.payments.some((p) => p.method === "fiado") && !input.customer?.trim()) return { error: "Identifique o cliente para vender no fiado." };
   const main = [...input.payments].sort((a, b) => b.amount - a.amount)[0];
   const { data: sale, error } = await supabase.from("sales").insert({
     store_id: profile.store_id, total, cost: r2(cost), payment_method: main.method,
@@ -46,7 +47,9 @@ export async function createSale(input: { items: Item[]; payments: Pay[]; custom
   const sid = profile.store_id;
   const a = await supabase.from("sale_items").insert(rows.map((r) => ({ ...r, sale_id: sale.id, store_id: sid })));
   const b = await supabase.from("sale_payments").insert(input.payments.map((p) => ({ method: p.method, amount: r2(p.amount), sale_id: sale.id, store_id: sid })));
-  if (a.error || b.error) return { error: "Venda salva, mas houve erro nos itens ou pagamentos." };
+  const stock = rows.filter((r) => r.product_id).map((r) => ({ productId: r.product_id, qty: r.qty }));
+  const c = stock.length ? await supabase.rpc("apply_stock", { items: stock }) : { error: null };
+  if (a.error || b.error || c.error) return { error: "Venda salva, mas houve erro nos itens ou pagamentos." };
 
   revalidatePath("/"); revalidatePath("/vendas");
   return { ok: true, code: saleCode(sale.number), time: fmtTime(sale.created_at) };

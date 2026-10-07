@@ -27,6 +27,7 @@ export async function createProduct(fd: FormData) {
       category_id = n?.id ?? null;
     }
   }
-  await supabase.from("products").insert({ store_id: profile.store_id, name, price, cost, category_id });
+  const stock = Math.trunc(num(fd.get("stock"))) || 0, min_stock = Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0);
+  await supabase.from("products").insert({ store_id: profile.store_id, name, price, cost, category_id, stock, min_stock });
   redirect("/vendas/nova");
 }

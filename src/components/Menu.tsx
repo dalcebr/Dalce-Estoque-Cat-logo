@@ -10,13 +10,13 @@ const OPERACAO: Item[] = [
   { n: "Início", s: "resumo do dia", href: "/", Icon: House, c: "bg-tint text-brand" },
   { n: "Venda", s: "balcão aberto", href: "/vendas/nova", Icon: ShoppingCart, c: "bg-tint text-brand" },
   { n: "Cadastros", href: "/cadastros", Icon: FolderPlus, c: "bg-teal-100 text-teal-700", more: true },
-  { n: "Fiado", s: "contas a receber", href: soon("Fiado"), Icon: DollarSign, c: "bg-amber-100 text-amber-700" },
-  { n: "Estoque", href: soon("Estoque"), Icon: Box, c: "bg-teal-100 text-teal-700", more: true },
+  { n: "Fiado", s: "contas a receber", href: "/fiado", Icon: DollarSign, c: "bg-amber-100 text-amber-700" },
+  { n: "Estoque", href: "/estoque", Icon: Box, c: "bg-teal-100 text-teal-700", more: true },
   { n: "Relatórios", href: "/relatorios", Icon: FileText, c: "bg-rose-100 text-rose-700", more: true },
 ];
 const SISTEMA: Item[] = [
   { n: "Catálogo online", href: soon("Catálogo online"), Icon: Store, c: "bg-slate-100 text-slate-600", more: true },
-  { n: "Ajustes", href: soon("Ajustes"), Icon: Settings, c: "bg-slate-100 text-slate-600", more: true },
+  { n: "Ajustes", href: "/ajustes", Icon: Settings, c: "bg-slate-100 text-slate-600", more: true },
 ];
 
 function Section({ title, items, close, children }: { title: string; items: Item[]; close: () => void; children?: ReactNode }) {

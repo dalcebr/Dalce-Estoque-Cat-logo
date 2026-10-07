@@ -25,3 +25,4 @@ Usar `@opennextjs/cloudflare` (Workers). Nada neste projeto impede a migração.
 Instalação nova: `schema.sql` → `003_vendas_detalhe.sql`. Já instalado: `002_payment_method.sql` (se ainda não rodou) → `003_vendas_detalhe.sql`.
 
 Ordem completa dos SQLs: schema.sql → 003_vendas_detalhe.sql → 004_pdv.sql.
+Ordem completa dos SQLs: schema.sql → 003 → 004 → 005_estoque_fiado.sql.

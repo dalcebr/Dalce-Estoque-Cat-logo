@@ -185,7 +185,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
       <p className="mt-2 text-center text-5xl font-extrabold tracking-tight">{m(remaining)}</p>
       <div className="mt-10 grid grid-cols-2 gap-4">
         {METHODS.map((x) => (
-          <button key={x.k} onClick={() => { setMethod(x.k); setTyped(null); setStep("amount"); }} className="flex min-h-40 flex-col items-start rounded-3xl border border-line bg-surface p-5 text-left">
+          <button key={x.k} onClick={() => { if (x.k === "fiado" && !customer.trim()) { alert("Identifique o cliente antes de vender no fiado."); return; } setMethod(x.k); setTyped(null); setStep("amount"); }} className="flex min-h-40 flex-col items-start rounded-3xl border border-line bg-surface p-5 text-left">
             <span className={`grid size-14 place-items-center rounded-2xl ${x.c}`}><x.Icon size={28} /></span>
             <b className="mt-5 text-2xl font-extrabold">{x.n}</b><span className="text-lg text-soft">{x.s}</span>
           </button>))}
