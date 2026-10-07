@@ -5,7 +5,6 @@ import { Box, ChevronRight, DollarSign, FileText, FolderPlus, House, LogOut, Men
 import { signOut } from "@/app/login/actions";
 
 type Item = { n: string; s?: string; href: string; Icon: LucideIcon; c: string; more?: boolean };
-const soon = (n: string) => `/em-breve?p=${encodeURIComponent(n)}`;
 const OPERACAO: Item[] = [
   { n: "Início", s: "resumo do dia", href: "/", Icon: House, c: "bg-tint text-brand" },
   { n: "Venda", s: "balcão aberto", href: "/vendas/nova", Icon: ShoppingCart, c: "bg-tint text-brand" },
@@ -15,7 +14,7 @@ const OPERACAO: Item[] = [
   { n: "Relatórios", href: "/relatorios", Icon: FileText, c: "bg-rose-100 text-rose-700", more: true },
 ];
 const SISTEMA: Item[] = [
-  { n: "Catálogo online", href: soon("Catálogo online"), Icon: Store, c: "bg-slate-100 text-slate-600", more: true },
+  { n: "Catálogo online", href: "/catalogo", Icon: Store, c: "bg-slate-100 text-slate-600", more: true },
   { n: "Ajustes", href: "/ajustes", Icon: Settings, c: "bg-slate-100 text-slate-600", more: true },
 ];
 

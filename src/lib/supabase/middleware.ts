@@ -22,7 +22,8 @@ export async function updateSession(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const isLogin = req.nextUrl.pathname === "/login";
 
-  if (!user && !isLogin) return NextResponse.redirect(new URL("/login", req.url));
+  const isPublic = req.nextUrl.pathname.startsWith("/c/"); // vitrine pública do catálogo
+  if (!user && !isLogin && !isPublic) return NextResponse.redirect(new URL("/login", req.url));
   if (user && isLogin) return NextResponse.redirect(new URL("/", req.url));
 
   return res;
