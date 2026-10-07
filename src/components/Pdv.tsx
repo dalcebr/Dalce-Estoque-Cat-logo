@@ -48,9 +48,9 @@ function CobrarBar({ count, total, onClick }: { count: number; total: number; on
   );
 }
 
-function Customer({ value, set }: { value: string; set: (v: string) => void }) {
+function Customer({ value, set, names }: { value: string; set: (v: string) => void; names: string[] }) {
   const [open, setOpen] = useState(false);
-  if (open) return <input autoFocus defaultValue={value} placeholder="Nome do cliente" onBlur={(e) => { set(e.target.value.trim()); setOpen(false); }} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} className="mt-4 w-full rounded-2xl border border-brand bg-surface px-4 py-3 text-lg outline-none" />;
+  if (open) return <><datalist id="clientes">{names.map((n) => <option key={n} value={n} />)}</datalist><input list="clientes" autoFocus defaultValue={value} placeholder="Nome do cliente" onBlur={(e) => { set(e.target.value.trim()); setOpen(false); }} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} className="mt-4 w-full rounded-2xl border border-brand bg-surface px-4 py-3 text-lg outline-none" /></>;
   return (
     <button onClick={() => setOpen(true)} className="mt-4 flex items-center gap-3 text-lg font-bold text-brand">
       <span className="grid size-9 place-items-center rounded-full border-2 border-brand/50"><Plus size={20} /></span>
@@ -59,7 +59,7 @@ function Customer({ value, set }: { value: string; set: (v: string) => void }) {
   );
 }
 
-export default function Pdv({ products, dateLabel, menu }: { products: Product[]; dateLabel: string; menu: ReactNode }) {
+export default function Pdv({ products, dateLabel, menu, customers }: { products: Product[]; dateLabel: string; menu: ReactNode; customers: string[] }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("catalog");
   const [lines, setLines] = useState<Line[]>([]);
@@ -196,7 +196,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
   if (step === "cart") return (
     <main className={`${shell} pb-32`}>
       <Head eyebrow="Venda · Carrinho" title="Revise a venda" onBack={() => setStep("catalog")} />
-      <Customer value={customer} set={setCustomer} />
+      <Customer value={customer} set={setCustomer} names={customers} />
       <div className="mt-4 space-y-3">
         {lines.map((l) => (
           <div key={l.key} className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4">
@@ -222,7 +222,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
   return (
     <main className={`${shell} pb-32`}>
       <Head left={menu} eyebrow="Ponto de venda" meta={dateLabel} title="O que vai vender?" />
-      <Customer value={customer} set={setCustomer} />
+      <Customer value={customer} set={setCustomer} names={customers} />
       <div className="mt-4 flex gap-3">
         <label className="flex flex-1 items-center gap-3 rounded-3xl border border-line bg-surface px-5 py-4 text-soft"><Search size={22} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar produto ou código" className="w-full bg-transparent text-lg text-ink outline-none placeholder:text-soft" /></label>
         <span className="grid size-16 shrink-0 place-items-center rounded-3xl bg-brand text-white shadow-lg"><ScanLine size={28} /></span>
@@ -240,7 +240,7 @@ export default function Pdv({ products, dateLabel, menu }: { products: Product[]
             {n > 0 && <span className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-strong text-on-strong text-lg font-extrabold">{n}</span>}
             <b className="text-lg leading-tight">{p.name}</b><b className="text-lg">{m(p.price)}</b>
           </button>); })}
-        <Link href="/produtos/novo" className="relative flex aspect-[9/10] flex-col justify-between rounded-3xl p-3 text-white" style={{ background: "linear-gradient(180deg,#252438,#33324a)" }}>
+        <Link href="/cadastros/produtos/novo" className="relative flex aspect-[9/10] flex-col justify-between rounded-3xl p-3 text-white" style={{ background: "linear-gradient(180deg,#252438,#33324a)" }}>
           <span><b className="block text-xl leading-tight">Novo produto</b><span className="text-sm text-white/70">cadastrar item</span></span>
           <span className="grid size-12 self-end place-items-center rounded-xl bg-brand"><Plus /></span>
         </Link>

@@ -27,3 +27,4 @@ Instalação nova: `schema.sql` → `003_vendas_detalhe.sql`. Já instalado: `00
 Ordem completa dos SQLs: schema.sql → 003_vendas_detalhe.sql → 004_pdv.sql.
 Ordem completa dos SQLs: schema.sql → 003 → 004 → 005_estoque_fiado.sql.
 Ordem completa dos SQLs: schema.sql → 003 → 004 → 005 → 006_catalogo.sql.
+Ordem completa dos SQLs: schema.sql → 003 → 004 → 005 → 006 → 007_cadastros.sql.

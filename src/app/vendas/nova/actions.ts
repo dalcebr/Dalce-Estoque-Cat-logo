@@ -47,6 +47,11 @@ export async function createSale(input: { items: Item[]; payments: Pay[]; custom
   const sid = profile.store_id;
   const a = await supabase.from("sale_items").insert(rows.map((r) => ({ ...r, sale_id: sale.id, store_id: sid })));
   const b = await supabase.from("sale_payments").insert(input.payments.map((p) => ({ method: p.method, amount: r2(p.amount), sale_id: sale.id, store_id: sid })));
+  const cname = input.customer?.trim();
+  if (cname) {
+    const { data: ex } = await supabase.from("customers").select("id").ilike("name", cname.replace(/[%_\\]/g, "\\$&")).maybeSingle();
+    if (!ex) await supabase.from("customers").insert({ store_id: sid, name: cname });
+  }
   const stock = rows.filter((r) => r.product_id).map((r) => ({ productId: r.product_id, qty: r.qty }));
   const c = stock.length ? await supabase.rpc("apply_stock", { items: stock }) : { error: null };
   if (a.error || b.error || c.error) return { error: "Venda salva, mas houve erro nos itens ou pagamentos." };

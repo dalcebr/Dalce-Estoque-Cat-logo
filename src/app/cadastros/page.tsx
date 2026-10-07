@@ -3,10 +3,10 @@ import { Archive, Bookmark, ChevronRight, LayoutGrid, Users, type LucideIcon } f
 import AppMenu from "@/components/AppMenu";
 
 const ITEMS: { n: string; s: string; href: string; Icon: LucideIcon; c: string }[] = [
-  { n: "Cliente", s: "Sua base de clientes", href: "/em-breve?p=Cliente", Icon: Users, c: "bg-teal-100 text-teal-700" },
-  { n: "Produto", s: "Itens que você vende", href: "/produtos/novo", Icon: Archive, c: "bg-green-100 text-green-700" },
-  { n: "Categoria", s: "Organize o catálogo", href: "/em-breve?p=Categoria", Icon: LayoutGrid, c: "bg-amber-100 text-amber-700" },
-  { n: "Variações", s: "Grades: cor, tamanho…", href: "/em-breve?p=Variações", Icon: Bookmark, c: "bg-indigo-100 text-indigo-700" },
+  { n: "Cliente", s: "Sua base de clientes", href: "/cadastros/clientes", Icon: Users, c: "bg-teal-100 text-teal-700" },
+  { n: "Produto", s: "Itens que você vende", href: "/cadastros/produtos", Icon: Archive, c: "bg-green-100 text-green-700" },
+  { n: "Categoria", s: "Organize o catálogo", href: "/cadastros/categorias", Icon: LayoutGrid, c: "bg-amber-100 text-amber-700" },
+  { n: "Variações", s: "Grades: cor, tamanho…", href: "/cadastros/variacoes", Icon: Bookmark, c: "bg-indigo-100 text-indigo-700" },
 ];
 
 export default function Cadastros() {

@@ -12,5 +12,6 @@ export default async function NovaVenda() {
     const c = Array.isArray(p.categories) ? p.categories[0] : p.categories;
     return { id: p.id, name: p.name, price: Math.round(Number(p.price) * 100), cat: c?.name ?? null, color: c?.color ?? null };
   });
-  return <Pdv products={products} dateLabel={shortDate()} menu={<AppMenu />} />;
+  const { data: cs } = await supabase.from("customers").select("name").order("name");
+  return <Pdv products={products} dateLabel={shortDate()} menu={<AppMenu />} customers={(cs ?? []).map((c: { name: string }) => c.name)} />;
 }
