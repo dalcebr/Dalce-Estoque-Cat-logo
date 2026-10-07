@@ -1,10 +1,7 @@
-export default function Loading() {
+export default function RootLoading() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-page">
-      <div className="flex flex-col items-center gap-4">
-        <span className="size-10 animate-spin rounded-full border-4 border-line border-t-brand" />
-        <p className="text-soft">Carregando…</p>
-      </div>
+      <div className="size-10 animate-spin rounded-full border-4 border-tint border-t-brand" />
     </main>
   );
 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import CadList, { type CadRow } from "@/components/CadList";
 import { brl } from "@/lib/format";
+import { resolveImageUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 type Row = { id: string; name: string; price: number; image: string | null; categories: { name: string } | { name: string }[] | null };
@@ -15,7 +16,7 @@ export default async function Produtos() {
   const rows: CadRow[] = ((data ?? []) as Row[]).map((p): CadRow => {
     const c = Array.isArray(p.categories) ? p.categories[0] : p.categories;
     return { id: p.id, href: `/cadastros/produtos/${p.id}`, title: p.name, sub: c?.name ?? "Sem categoria", search: `${p.name} ${c?.name ?? ""}`, group: c?.name ?? null, n: Number(p.price),
-      left: p.image ? { k: "img", src: p.image } : { k: "chip", t: p.name[0]?.toUpperCase() ?? "?" }, right: { t: brl(Number(p.price)) } };
+      left: p.image ? { k: "img", src: resolveImageUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, "product-images", p.image) } : { k: "chip", t: p.name[0]?.toUpperCase() ?? "?" }, right: { t: brl(Number(p.price)) } };
   });
   return (
     <main className="min-h-dvh bg-page pb-36">

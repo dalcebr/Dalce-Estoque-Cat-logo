@@ -1,14 +1,8 @@
 {
   "name": "dalce-estoque",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "SaaS de gestão para pequenos negócios: PDV, estoque, fiado, relatórios e catálogo online.",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
-  },
+  "scripts": { "dev": "next dev", "build": "next build", "start": "next start" },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.0",

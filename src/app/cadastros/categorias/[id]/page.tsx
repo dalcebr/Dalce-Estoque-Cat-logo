@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import DeleteButton from "@/components/DeleteButton";
+import SubmitButton from "@/components/SubmitButton";
 import { deleteCategory, saveCategory } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function Categoria({ params, searchParams }: { params: Prom
           <div className="flex flex-wrap gap-3">{COLORS.map((k) => (
             <label key={k} className="cursor-pointer"><input type="radio" name="color" value={k} defaultChecked={k.toLowerCase() === c.color.toLowerCase()} className="peer sr-only" />
               <span className="block size-11 rounded-full ring-offset-2 ring-offset-page peer-checked:ring-4 peer-checked:ring-ink" style={{ background: k }} /></label>))}</div></div>
-        <button className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white">Salvar categoria</button>
+        <SubmitButton>Salvar categoria</SubmitButton>
       </form>
       {!isNew && <DeleteButton action={deleteCategory.bind(null, id)} label="Excluir categoria" confirmText="Excluir esta categoria? Os produtos dela ficam sem categoria." />}
     </main>

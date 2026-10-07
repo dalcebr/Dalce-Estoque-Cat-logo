@@ -1,131 +1,98 @@
-# ENVIRONMENT_VARIABLES.md
+# Variaveis de Ambiente
 
-Inventário completo das variáveis de ambiente do **Dalce Estoque**.
+Referencia completa de todas as variaveis de ambiente do Dalce Estoque.
 
----
-
-## Resumo
-
-| Variável | Obrigatória | Pública? | Segredo? | Ambientes |
-|---|---|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | ✅ Sim | ❌ Não | Todos |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | ✅ Sim | ❌ Não | Todos |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | ❌ Não | ✅ **Sim** | Somente Production |
-| `NEXT_PUBLIC_APP_URL` | ✅ | ✅ Sim | ❌ Não | Todos |
-| `NEXT_PUBLIC_APP_NAME` | ➖ | ✅ Sim | ❌ Não | Todos |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | ➖ | ✅ Sim | ❌ Não | Todos |
-
-> **Regra:** toda variável com prefixo `NEXT_PUBLIC_` é embutida no bundle do navegador
-> e **qualquer pessoa pode lê-la**. Nunca coloque segredos com esse prefixo.
-
----
-
-## Detalhamento
+## Variaveis Obrigatorias
 
 ### `NEXT_PUBLIC_SUPABASE_URL`
 
-- **Finalidade**: URL do projeto Supabase. Usada pelo cliente (navegador) e pelo servidor.
-- **Obrigatória**: sim.
-- **Onde obter**: Supabase → **Project Settings → API → Project URL**.
-- **Onde configurar**: `.env.local` (dev) e Vercel → Environment Variables (todos os ambientes).
-- **Pode aparecer no frontend**: sim.
-- **É segredo**: não.
-- **Exemplo fictício**: `https://abcdefghijklmnop.supabase.co`
+- **Descricao**: URL do projeto Supabase
+- **Obrigatoria**: Sim
+- **Exemplo**: `https://abcdefghijkl.supabase.co`
+- **Onde encontrar**: Supabase Dashboard > Settings > API > Project URL
+- **Usada em**: Server e Client (prefixo `NEXT_PUBLIC_`)
+- **Notas**: Nunca inclua barra final. E exposta no client, mas isso e seguro pois o acesso e controlado por RLS.
 
 ### `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-- **Finalidade**: chave pública do Supabase. Todas as consultas passam por RLS.
-- **Obrigatória**: sim.
-- **Onde obter**: Supabase → **Project Settings → API → anon public**.
-- **Onde configurar**: `.env.local` e Vercel (todos os ambientes).
-- **Pode aparecer no frontend**: sim (é feita para isso).
-- **É segredo**: não — mas só é segura porque o RLS está ativo. **Nunca desative o RLS.**
-- **Exemplo fictício**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.exemplo.exemplo`
+- **Descricao**: Chave anonima (publica) do Supabase
+- **Obrigatoria**: Sim
+- **Exemplo**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+- **Onde encontrar**: Supabase Dashboard > Settings > API > anon public
+- **Usada em**: Server e Client (prefixo `NEXT_PUBLIC_`)
+- **Notas**: Essa chave e segura para expor no client. Ela so permite operacoes autorizadas pelas RLS policies. **NAO** confunda com a `service_role` key.
 
-### `SUPABASE_SERVICE_ROLE_KEY`
+## Variaveis que NAO sao usadas
 
-- **Finalidade**: permite ao painel do super admin redefinir senhas de clientes.
-  **Ignora o RLS** — dá acesso total ao banco.
-- **Obrigatória**: sim (para o painel admin funcionar por completo).
-- **Onde obter**: Supabase → **Project Settings → API → service_role**.
-- **Onde configurar**: `.env.local` (dev) e Vercel → **somente Production**.
-- **Pode aparecer no frontend**: ❌ **NUNCA**.
-- **É segredo**: ✅ **SIM — o mais crítico do sistema.**
-- **Exemplo fictício**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.servico.servico`
+O projeto **NAO** usa estas variaveis (ao contrario do que e comum em projetos Supabase):
 
-> ⚠️ Se esta chave vazar, qualquer pessoa lê e altera os dados de **todas** as lojas.
-> Se isso acontecer: **rotacione a chave imediatamente** no Supabase (Project Settings →
-> API → Reset service_role key) e atualize na Vercel.
+| Variavel | Motivo |
+|----------|--------|
+| `SUPABASE_SERVICE_ROLE_KEY` | Nao e necessaria. O app sempre opera como o usuario autenticado, via RLS. |
+| `SUPABASE_DB_URL` | Nao ha conexao direta ao banco. Tudo via client SDK. |
+| `DATABASE_URL` | Nao usa ORM (Prisma, Drizzle, etc.) |
+| `NEXT_PUBLIC_SITE_URL` | A URL e inferida do request. |
 
-### `NEXT_PUBLIC_APP_URL`
+## Onde Configurar
 
-- **Finalidade**: URL pública do app. Usada no sitemap, robots e links absolutos.
-- **Obrigatória**: sim (em produção).
-- **Onde obter**: o seu domínio.
-- **Onde configurar**: `.env.local` e Vercel.
-- **Pode aparecer no frontend**: sim.
-- **É segredo**: não.
-- **Exemplo fictício**: `https://app.seudominio.com`
+### Desenvolvimento Local
 
-### `NEXT_PUBLIC_APP_NAME`
+Crie `.env.local` na raiz do projeto:
 
-- **Finalidade**: nome exibido na interface e nos metadados.
-- **Obrigatória**: não (padrão: `Dalce Estoque`).
-- **Onde configurar**: `.env.local` e Vercel.
-- **Pode aparecer no frontend**: sim.
-- **É segredo**: não.
-- **Exemplo fictício**: `Dalce Estoque`
+```bash
+cp .env.example .env.local
+```
 
-### `NEXT_PUBLIC_SUPPORT_EMAIL`
+Edite com seus valores:
 
-- **Finalidade**: e-mail de suporte mostrado ao cliente.
-- **Obrigatória**: não.
-- **Onde configurar**: `.env.local` e Vercel.
-- **Pode aparecer no frontend**: sim.
-- **É segredo**: não.
-- **Exemplo fictício**: `suporte@seudominio.com`
+```
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijkl.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
----
+> **IMPORTANTE**: `.env.local` esta no `.gitignore` e nunca deve ser commitado.
 
-## Como configurar
+### Vercel (Producao)
 
-### Desenvolvimento local
+1. Va no projeto na Vercel
+2. **Settings > Environment Variables**
+3. Adicione cada variavel para os ambientes desejados:
+   - **Production**: credenciais do Supabase de producao
+   - **Preview**: credenciais do Supabase de staging (opcional)
+   - **Development**: mesmas de production ou staging
 
-1. Copie o modelo:
-   ```bash
-   cp .env.example .env.local
-   ```
-2. Preencha com os valores reais do seu projeto Supabase.
-3. **Nunca** commite o `.env.local` (já está no `.gitignore`).
+### GitHub Actions (CI)
 
-### Produção (Vercel)
+1. Va em **Settings > Secrets and variables > Actions**
+2. Adicione como **Repository secrets**
+3. Reference no workflow como `${{ secrets.NOME_DA_VARIAVEL }}`
 
-1. **Settings → Environment Variables**.
-2. Adicione cada variável e marque os ambientes corretos.
-3. `SUPABASE_SERVICE_ROLE_KEY` → **somente Production**.
-4. Após adicionar/alterar, faça **Redeploy** (variáveis só valem no próximo build).
+## Seguranca
 
----
+### O que NUNCA fazer
 
-## Segurança
+- Nunca commite `.env.local` ou `.env.production`
+- Nunca use a `service_role` key no client
+- Nunca exponha a `service_role` key em variaveis `NEXT_PUBLIC_*`
+- Nunca cole credenciais em issues, PRs ou mensagens publicas
 
-- [ ] Nenhuma variável `NEXT_PUBLIC_*` contém segredo.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` só existe no servidor e só em Production.
-- [ ] `.env.local` está no `.gitignore`.
-- [ ] `.env.example` contém apenas placeholders.
-- [ ] Nenhuma chave real no histórico do Git.
-- [ ] Chaves rotacionadas se houver suspeita de vazamento.
+### Rotacao de chaves
 
----
+Se uma chave for comprometida:
 
-## Variáveis futuras (não usadas hoje)
+1. Va em Supabase > Settings > API
+2. Clique em **Generate new JWT secret** (isso invalida ambas as chaves)
+3. Copie as novas chaves
+4. Atualize em todos os ambientes:
+   - `.env.local`
+   - Vercel Environment Variables
+   - GitHub Secrets
+5. Faca redeploy na Vercel
 
-Se você adicionar integrações, documente aqui. Exemplos:
+## Referencia Rapida
 
-| Variável | Uso | Segredo? |
-|---|---|---|
-| `RESEND_API_KEY` | Envio de e-mails transacionais | ✅ Sim |
-| `UPSTASH_REDIS_REST_URL` | Rate limiting distribuído | ❌ Não |
-| `UPSTASH_REDIS_REST_TOKEN` | Rate limiting distribuído | ✅ Sim |
-| `STRIPE_SECRET_KEY` | Cobrança recorrente | ✅ Sim |
-| `NEXT_PUBLIC_GA_ID` | Google Analytics global | ❌ Não |
+```bash
+# .env.local (copie e preencha)
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+```

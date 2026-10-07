@@ -1,8 +1,21 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/cadastro", "/c/", "/bloqueado", "/assinatura", "/recuperar-senha", "/redefinir-senha"];
+const securityHeaders: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Strict-Transport-Security":
+    "max-age=63072000; includeSubDomains; preload",
+};
+
+function applySecurityHeaders(res: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    res.headers.set(key, value);
+  }
+  return res;
+}
 
 export async function updateSession(req: NextRequest) {
   let res = NextResponse.next({ request: req });
@@ -13,45 +26,45 @@ export async function updateSession(req: NextRequest) {
     {
       cookies: {
         getAll: () => req.cookies.getAll(),
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options: CookieOptions;
+          }[],
+        ) {
+          cookiesToSet.forEach(({ name, value }) =>
+            req.cookies.set(name, value),
+          );
           res = NextResponse.next({ request: req });
-          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options),
+          );
         },
       },
-    }
+    },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const path = req.nextUrl.pathname;
-  const isPublic = PUBLIC.some((p) => path === p || path.startsWith(p));
-  const isAuthPage = path === "/login" || path === "/cadastro" || path === "/recuperar-senha";
+  const isPublic = req.nextUrl.pathname.startsWith("/c/");
+  const isLogin = req.nextUrl.pathname === "/login";
 
-  if (!user) {
-    if (isPublic) return res;
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-  if (isAuthPage) return NextResponse.redirect(new URL("/", req.url));
-
-  // loja vencida/bloqueada: mantém acesso apenas às telas de regularização
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_super_admin, stores(plan, active, trial_ends_at, plan_ends_at)")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile && !profile.is_super_admin) {
-    const st = (Array.isArray(profile.stores) ? profile.stores[0] : profile.stores) as
-      | { plan: string; active: boolean; trial_ends_at: string | null; plan_ends_at: string | null }
-      | null;
-    if (st) {
-      const limit = st.plan === "trial" ? st.trial_ends_at : st.plan_ends_at;
-      const expired = !st.active || st.plan === "blocked" || (!!limit && new Date(limit).getTime() <= Date.now());
-      const allowed = path === "/bloqueado" || path === "/assinatura" || path.startsWith("/c/");
-      if (expired && !allowed) return NextResponse.redirect(new URL("/bloqueado", req.url));
-      if (!expired && path === "/bloqueado") return NextResponse.redirect(new URL("/", req.url));
-    }
+  // Public catalog routes: apply security headers, skip auth
+  if (isPublic) {
+    return applySecurityHeaders(res);
   }
 
-  return res;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user && !isLogin)
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/login", req.url)),
+    );
+  if (user && isLogin)
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/", req.url)),
+    );
+
+  return applySecurityHeaders(res);
 }

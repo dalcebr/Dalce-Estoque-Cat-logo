@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { ChartNoAxesColumn, ChevronRight, Plus, Sparkles } from "lucide-react";
+import { ChartNoAxesColumn, ChevronRight, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import AppMenu from "@/components/AppMenu";
 import GoalCard from "@/components/GoalCard";
-import { getAccount } from "@/lib/account";
-import { daysLeft, planOf } from "@/lib/plans";
 import { brl, cap, nowParts } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +17,6 @@ const Stat = ({ label, value, sub, valueClass = "" }: { label: string; value: st
 
 export default async function Home() {
   const supabase = await createClient();
-  const account = await getAccount();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("name, stores(monthly_goal)").eq("id", user!.id).single();
   const { label, monthName, dayStart, monthStart } = nowParts();
@@ -34,16 +31,6 @@ export default async function Home() {
   const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
   const goal = store?.monthly_goal != null ? Number(store.monthly_goal) : null;
   const name = profile?.name?.split(" ")[0] ?? "Usuário";
-
-  const plan = planOf(account?.plan);
-  const limit = account?.plan === "trial" ? account?.trialEndsAt : account?.planEndsAt;
-  const left = daysLeft(limit ?? null);
-  const planLabel =
-    account?.status === "blocked" ? "Acesso suspenso"
-    : account?.status === "expired" ? "Plano vencido"
-    : account?.plan === "trial" ? `Teste grátis · ${left ?? 0} dia(s)`
-    : `${plan.name} · ${left ?? "∞"} dia(s)`;
-  const planTone = account?.status === "expired" || account?.status === "blocked" ? "bg-red-100 text-red-700" : "bg-tint text-brand";
 
   return (
     <main className="min-h-dvh bg-page pb-32">
@@ -77,15 +64,6 @@ export default async function Home() {
         </div>
 
         <div className="mt-3"><GoalCard goal={goal} sold={month} monthName={monthName} /></div>
-
-        <Link href="/assinatura" className="mt-3 flex items-center gap-3 rounded-3xl border border-line bg-surface px-5 py-4 active:bg-page">
-          <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${planTone}`}><Sparkles size={22} /></span>
-          <span className="min-w-0 flex-1 leading-tight">
-            <b className="block text-lg font-extrabold">{planLabel}</b>
-            <span className="text-soft">{account?.storeName ?? "Minha loja"} · toque para ver os planos</span>
-          </span>
-          <ChevronRight size={20} className="text-soft/70" />
-        </Link>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 border-t border-line bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">

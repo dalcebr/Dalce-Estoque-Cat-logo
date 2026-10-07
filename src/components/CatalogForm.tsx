@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, ChevronRight, ExternalLink, Eye, EyeOff, ImagePlus, Info, Loader2, Palette, Save, Store } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, Eye, EyeOff, ImagePlus, Info, Palette, Save, Store } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { saveCatalog } from "@/app/catalogo/actions";
 import { THEMES, type CatalogSettings, type StockMode } from "@/lib/catalog";
-import { uploadImage, deleteImageByUrl } from "@/lib/image";
+import { createBrowserSupabase } from "@/lib/supabase/client";
+import { uploadImage, resolveImageUrl } from "@/lib/storage";
 
 const box = "w-full rounded-3xl border border-line bg-surface px-5 py-4 text-lg outline-none focus:border-brand";
 const Sep = ({ t }: { t: string }) => <div className="my-7 flex items-center gap-4"><i className="h-px flex-1 bg-line" /><span className="text-xs font-bold uppercase tracking-[0.18em] text-soft">{t}</span><i className="h-px flex-1 bg-line" /></div>;
@@ -19,10 +20,13 @@ const OPTS: { k: StockMode; n: string; s: string; Icon: typeof Eye }[] = [
   { k: "unavailable", n: "Exibir como indisponível", s: "Aparece, mas sem comprar", Icon: Info },
 ];
 
+const LOGO_BUCKET = "catalog-logos";
+const LOGO_MAX_PX = 256;
+
 export default function CatalogForm({ initial, open, storeId }: { initial: CatalogSettings; open: boolean; storeId: string }) {
   const [v, setV] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [msg, setMsg] = useState<{ t: string; err?: boolean } | null>(null);
   const [themes, setThemes] = useState(false);
   const [host, setHost] = useState("");
@@ -31,20 +35,6 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
   const set = <K extends keyof CatalogSettings>(k: K, x: CatalogSettings[K]) => setV((s) => ({ ...s, [k]: x }));
   const theme = THEMES.find((t) => t.k === v.theme) ?? THEMES[0];
   const sw = (cols: readonly string[]) => <span className="flex">{cols.map((c) => <i key={c} className="h-6 w-6 first:rounded-l-md last:rounded-r-md" style={{ background: c }} />)}</span>;
-
-  async function pickLogo(f: File) {
-    setLogoBusy(true); setMsg(null);
-    const r = await uploadImage(f, storeId, "logo");
-    setLogoBusy(false);
-    if ("error" in r) { setMsg({ t: r.error, err: true }); return; }
-    if (v.logo && v.logo !== r.url) void deleteImageByUrl(v.logo);
-    set("logo", r.url);
-  }
-
-  function removeLogo() {
-    if (v.logo) void deleteImageByUrl(v.logo);
-    set("logo", "");
-  }
 
   async function save() {
     setBusy(true); setMsg(null);
@@ -58,15 +48,24 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
       <PageHeader eyebrow="Ajustes · Catálogo" title="Como sua loja aparece?" back="/" />
 
       <section className="mt-6 grid min-h-40 place-items-center rounded-[28px] bg-line/50 p-5">
-        {v.logo && <img src={v.logo} alt="Logo da loja" className="mb-3 size-20 rounded-2xl bg-surface object-contain" />}
+        {v.logo && <img src={resolveImageUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, LOGO_BUCKET, v.logo)} alt="Logo da loja" className="mb-3 size-20 rounded-2xl bg-surface object-contain" />}
         <div className="flex gap-2">
-          <button disabled={logoBusy} onClick={() => file.current?.click()} className="flex items-center gap-2 rounded-2xl bg-surface px-5 py-3.5 text-lg font-semibold text-brand disabled:opacity-60">
-            {logoBusy ? <Loader2 size={22} className="animate-spin" /> : <ImagePlus size={22} />}
-            {logoBusy ? "Enviando..." : v.logo ? "Trocar logo" : "Adicionar logo"}
-          </button>
-          {v.logo && !logoBusy && <button onClick={removeLogo} className="rounded-2xl bg-surface px-4 py-3.5 font-semibold text-red-700">Remover</button>}
+          <button disabled={logoUploading} onClick={() => file.current?.click()} className="flex items-center gap-2 rounded-2xl bg-surface px-5 py-3.5 text-lg font-semibold text-brand disabled:opacity-60"><ImagePlus size={22} />{logoUploading ? "Enviando..." : v.logo ? "Trocar logo" : "Adicionar logo"}</button>
+          {v.logo && <button onClick={() => set("logo", "")} className="rounded-2xl bg-surface px-4 py-3.5 font-semibold text-red-700">Remover</button>}
         </div>
-        <input ref={file} type="file" accept="image/*" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) await pickLogo(f); e.target.value = ""; }} />
+        <input ref={file} type="file" accept="image/*" hidden onChange={async (e) => {
+          const f = e.target.files?.[0];
+          if (f) {
+            setLogoUploading(true);
+            try {
+              const supabase = createBrowserSupabase();
+              const path = await uploadImage(supabase, LOGO_BUCKET, storeId, f, LOGO_MAX_PX);
+              set("logo", path);
+            } catch (err) { console.error("Logo upload failed", err); }
+            finally { setLogoUploading(false); }
+          }
+          e.target.value = "";
+        }} />
       </section>
 
       <button role="switch" aria-checked={v.active} onClick={() => set("active", !v.active)} className="mt-5 flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-left">

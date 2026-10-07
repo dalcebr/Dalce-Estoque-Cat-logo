@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
+import SubmitButton from "@/components/SubmitButton";
 import { saveCustomer } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function Cliente({ params, searchParams }: { params: Promis
         <label className="block"><L t="Telefone · WhatsApp" /><input name="phone" inputMode="tel" defaultValue={c.phone} placeholder="(11) 99999-9999" className={f} /></label>
         <label className="block"><L t="CPF" /><input name="cpf" inputMode="numeric" defaultValue={c.cpf} placeholder="Somente números" className={f} /></label>
         {erro && <p role="alert" className="text-red-700">{ERROS[erro] ?? "Não foi possível salvar."}</p>}
-        <button className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white">Salvar cliente</button>
+        <SubmitButton>Salvar cliente</SubmitButton>
       </form>
       {!isNew && <Link href={`/fiado/${encodeURIComponent(c.name)}`} className="mt-3 block rounded-2xl border-2 border-brand py-3.5 text-center text-lg font-bold text-brand">Ver fiado do cliente</Link>}
     </main>

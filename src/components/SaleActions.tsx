@@ -8,7 +8,6 @@ type Props = { id: string; code: string; customer: string | null; total: string;
 
 export default function SaleActions({ id, code, customer, total, cancelled, receipt }: Props) {
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const router = useRouter();
 
   async function share() {
@@ -17,11 +16,8 @@ export default function SaleActions({ id, code, customer, total, cancelled, rece
     else { await navigator.clipboard.writeText(receipt); alert("Recibo copiado."); }
   }
   async function cancel() {
-    if (!confirm("Cancelar esta venda? Ela deixa de entrar nos totais e o estoque volta.")) return;
-    setBusy(true);
-    const r = await cancelSale(id);
-    setBusy(false);
-    if ("error" in r) { alert(r.error); return; }
+    if (!confirm("Cancelar esta venda? Ela deixa de entrar nos totais.")) return;
+    await cancelSale(id);
     setOpen(false);
     router.refresh();
   }
@@ -42,9 +38,9 @@ export default function SaleActions({ id, code, customer, total, cancelled, rece
             <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em] text-brand">Opções · {code}</p>
             <h2 className="text-2xl font-extrabold">{customer ?? "Sem cliente"} · {total}</h2>
             <div className="mt-5 space-y-5">
-              <button disabled={cancelled || busy} onClick={cancel} className="flex w-full items-center gap-4 text-left disabled:opacity-40">
+              <button disabled={cancelled} onClick={cancel} className="flex w-full items-center gap-4 text-left disabled:opacity-40">
                 <span className="grid size-14 place-items-center rounded-2xl bg-red-100 text-red-600"><XCircle size={28} /></span>
-                <span className="flex-1"><b className="block text-lg">{busy ? "Cancelando..." : "Cancelar venda"}</b><span className="text-soft">Devolve o estoque dos itens</span></span>
+                <span className="flex-1"><b className="block text-lg">Cancelar venda</b><span className="text-soft">Estorna maquininha e NF-e quando houver</span></span>
                 <ChevronRight className="text-soft" />
               </button>
               <div className="flex items-center gap-4 opacity-40">

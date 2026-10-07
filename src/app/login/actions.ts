@@ -1,32 +1,18 @@
 "use server";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { clientIp, rateLimit, rateLimitReset } from "@/lib/rate-limit";
+import { sanitizeText } from "@/lib/validation";
 
-export type LoginState = { error?: string } | undefined;
-
-export async function signIn(_: LoginState, fd: FormData): Promise<LoginState> {
-  const raw = String(fd.get("usuario") ?? "").trim().toLowerCase();
+export async function signIn(_: { error?: string } | undefined, fd: FormData) {
+  const user = sanitizeText(String(fd.get("usuario") ?? ""), 60).toLowerCase();
   const password = String(fd.get("senha") ?? "");
-  if (!raw || !password) return { error: "Informe usuário e senha." };
-
-  // proteção contra força bruta: 10 tentativas por IP a cada 5 minutos
-  const ip = clientIp(await headers());
-  const key = `login:${ip}`;
-  const rl = rateLimit(key, 10, 5 * 60_000);
-  if (!rl.ok) {
-    return { error: `Muitas tentativas. Tente novamente em ${rl.retryAfter}s.` };
-  }
-
-  // aceita tanto o e-mail completo quanto o apelido antigo (usuario@dalce.app)
-  const email = raw.includes("@") ? raw : `${raw}@dalce.app`;
+  if (!user || !password || password.length > 128) return { error: "Informe usuário e senha." };
+  // Prevent injection via the constructed email
+  if (!/^[a-z0-9._-]+$/.test(user)) return { error: "Usuário inválido." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email: `${user}@dalce.app`, password });
   if (error) return { error: "Usuário ou senha inválidos." };
-
-  rateLimitReset(key);
   redirect("/");
 }
 

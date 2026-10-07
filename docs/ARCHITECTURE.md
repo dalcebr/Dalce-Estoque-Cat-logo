@@ -1,179 +1,252 @@
-# ARCHITECTURE.md
+# Arquitetura do Sistema
 
-Arquitetura do **Dalce Estoque** — SaaS multi-tenant de gestão (PDV, estoque, fiado,
-relatórios) com catálogo digital público.
+## Visao Geral
 
----
+O Dalce Estoque segue o padrao do Next.js 15 App Router com Server Components e Server Actions. Nao existe API REST separada: todas as mutacoes sao feitas via Server Actions e todas as leituras sao feitas em Server Components diretamente no banco via Supabase client.
 
-## 1. Visão geral
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                        NAVEGADOR                             │
-│  React 19 · Next.js App Router · Tailwind CSS 4              │
-│  (mobile-first, tema claro/escuro)                           │
-└───────────────┬─────────────────────────────────────────────┘
-                │ HTTPS
-┌───────────────▼─────────────────────────────────────────────┐
-│                    VERCEL (Next.js 15)                       │
-│                                                              │
-│  ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐  │
-│  │ Server         │  │ Route        │  │ Middleware      │  │
-│  │ Components     │  │ Handlers     │  │ (sessão/rotas)  │  │
-│  │ + Server       │  │ /api/health  │  │                 │  │
-│  │ Actions        │  │              │  │                 │  │
-│  └───────┬────────┘  └──────┬───────┘  └────────┬────────┘  │
-└──────────┼──────────────────┼───────────────────┼───────────┘
-           │                  │                   │
-           │        @supabase/ssr (cookies)       │
-           ▼                  ▼                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│                        SUPABASE                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │ Auth         │  │ Postgres     │  │ Storage          │   │
-│  │ (sessão)     │  │ + RLS        │  │ (bucket catalogo)│   │
-│  └──────────────┘  └──────────────┘  └──────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+```
+Browser (React 19)
+    |
+    v
+Next.js App Router (Vercel Edge/Node)
+    |
+    +-- Server Components (leitura de dados)
+    +-- Server Actions (mutacoes)
+    |
+    v
+Supabase (PostgreSQL + Auth + RLS)
 ```
 
-**Não há backend separado.** As server actions e route handlers do Next.js são o backend.
-Isso reduz superfície de ataque, latência e custo de manutenção.
+## Estrutura de Pastas
 
----
-
-## 2. Stack
-
-| Camada | Tecnologia | Por quê |
-|---|---|---|
-| Framework | Next.js 15 (App Router) | SSR, server actions, streaming, deploy simples |
-| UI | React 19 + Tailwind CSS 4 | Componentização e estilos utilitários |
-| Ícones | lucide-react | Consistência visual |
-| Banco | PostgreSQL (Supabase) | Relacional + RLS nativo |
-| Auth | Supabase Auth | Sessão via cookies, recuperação de senha |
-| Storage | Supabase Storage | Imagens de produto e logo |
-| Deploy | Vercel | Integração nativa com Next.js |
-| DNS/CDN | Cloudflare (opcional) | DNS, SSL, proteção |
-
----
-
-## 3. Multi-tenancy
-
-O isolamento entre lojas é a **prioridade máxima** do sistema.
-
-### Modelo
-
-- Cada loja é uma linha em `stores`.
-- Cada usuário é uma linha em `profiles`, com `store_id` apontando para sua loja.
-- **Todas** as tabelas de dados têm `store_id`.
-
-### Camadas de proteção
-
-1. **RLS (Row Level Security)** — a camada principal. Toda tabela tem políticas que
-   filtram por `store_id = current_store_id()`. Mesmo com bug no código, o banco recusa.
-2. **`current_store_id()`** — função `security definer` com `search_path` fixo que
-   resolve a loja do usuário autenticado a partir de `auth.uid()`.
-3. **Server actions** — usam `getStore()` (que lê o perfil do usuário) e nunca confiam
-   em `store_id` vindo do cliente.
-4. **Funções transacionais** — `create_sale`, `cancel_sale`, `apply_stock`, `receive_fiado`
-   validam `store_id` explicitamente, impedindo IDOR.
-5. **Storage** — políticas exigem que a primeira pasta do arquivo seja o `store_id`.
-
-### Fluxo de uma requisição autenticada
-
-```text
-1. Middleware valida a sessão (cookie) e o status da loja.
-2. Server action chama getStore() → obtém { supabase, storeId }.
-3. A consulta ao Postgres passa pelo RLS, que filtra por store_id.
-4. O resultado nunca contém dados de outra loja.
+```
+dalce-estoque/
+├── src/
+│   ├── app/                      # App Router (paginas e actions)
+│   │   ├── page.tsx              # Dashboard principal (vendas do dia/mes, meta)
+│   │   ├── actions.ts            # Action: setGoal
+│   │   ├── layout.tsx            # Layout raiz com menu lateral
+│   │   ├── login/                # Tela de login
+│   │   │   ├── page.tsx
+│   │   │   ├── actions.ts        # signIn, signOut
+│   │   │   └── LoginForm.tsx     # Formulario client-side
+│   │   ├── vendas/               # Modulo de vendas
+│   │   │   ├── page.tsx          # Lista de vendas
+│   │   │   ├── actions.ts        # cancelSale
+│   │   │   ├── nova/
+│   │   │   │   ├── page.tsx      # PDV (nova venda)
+│   │   │   │   └── actions.ts    # createSale
+│   │   │   └── [id]/page.tsx     # Detalhe da venda
+│   │   ├── estoque/              # Controle de estoque
+│   │   │   ├── page.tsx          # Lista de produtos com estoque
+│   │   │   ├── actions.ts        # updateProduct
+│   │   │   └── [id]/page.tsx     # Edicao de produto (estoque)
+│   │   ├── cadastros/            # CRUD de cadastros
+│   │   │   ├── page.tsx          # Menu de cadastros
+│   │   │   ├── actions.ts        # saveProduct, saveCategory, saveCustomer, etc.
+│   │   │   ├── produtos/         # Produtos
+│   │   │   ├── categorias/       # Categorias
+│   │   │   ├── clientes/         # Clientes
+│   │   │   └── variacoes/        # Grupos de variacao
+│   │   ├── catalogo/             # Configuracao do catalogo digital
+│   │   │   ├── page.tsx
+│   │   │   └── actions.ts        # saveCatalog
+│   │   ├── c/[slug]/page.tsx     # Catalogo publico (vitrine)
+│   │   ├── fiado/                # Controle de fiado
+│   │   │   ├── page.tsx          # Lista de devedores
+│   │   │   ├── actions.ts        # receiveFiado
+│   │   │   └── [name]/page.tsx   # Historico por cliente
+│   │   ├── relatorios/           # Relatorios
+│   │   │   ├── page.tsx
+│   │   │   └── filtros/page.tsx
+│   │   └── ajustes/              # Configuracoes
+│   │       ├── page.tsx
+│   │       ├── actions.ts        # updateStore
+│   │       ├── loja/page.tsx
+│   │       └── geral/page.tsx
+│   ├── components/               # Componentes reutilizaveis
+│   │   ├── AppMenu.tsx           # Menu lateral do app
+│   │   ├── Pdv.tsx               # Componente PDV (ponto de venda)
+│   │   ├── CatalogForm.tsx       # Formulario do catalogo
+│   │   ├── ProductForm.tsx       # Formulario de produto
+│   │   ├── StockList.tsx         # Lista de estoque
+│   │   ├── SalesList.tsx         # Lista de vendas
+│   │   ├── GoalCard.tsx          # Card de meta mensal
+│   │   ├── LineChart.tsx         # Grafico de linhas
+│   │   └── ...
+│   ├── lib/                      # Utilitarios e configuracao
+│   │   ├── supabase/
+│   │   │   ├── server.ts         # Supabase client (server-side)
+│   │   │   ├── client.ts         # Supabase client (client-side)
+│   │   │   └── middleware.ts     # Gerenciamento de sessao
+│   │   ├── store.ts              # Helper getStore() para obter store_id
+│   │   ├── validation.ts         # Validacao e sanitizacao de entrada
+│   │   ├── format.ts             # Formatacao BRL, datas, fuso horario
+│   │   ├── catalog.ts            # Temas e tipos do catalogo
+│   │   ├── image.ts              # Resize de imagem client-side
+│   │   ├── rate-limit.ts         # Rate limiter in-memory
+│   │   ├── fiado.ts              # Logica de calculo de fiado
+│   │   └── range.ts              # Ranges de data para relatorios
+│   └── middleware.ts             # Middleware principal (auth + rate limit)
+├── supabase/                     # Migrations SQL
+│   ├── schema.sql                # Schema base
+│   ├── 002_payment_method.sql    # Migracao: coluna payment_method
+│   ├── 003_vendas_detalhe.sql    # Detalhes de venda, sale_items
+│   ├── 004_pdv.sql               # Categorias, produtos, sale_payments
+│   ├── 005_estoque_fiado.sql     # Estoque, fiado_receipts, RPCs
+│   ├── 006_catalogo.sql          # catalog_settings, public_catalog()
+│   ├── 007_cadastros.sql         # Clientes, variacoes, imagens
+│   └── 008_security_hardening.sql # Correcoes de seguranca RLS
+├── next.config.ts                # Config Next.js com CSP e security headers
+├── package.json
+├── tsconfig.json
+└── .env.example
 ```
 
----
+## Multi-Tenancy
 
-## 4. Estrutura de pastas
+### Estrategia: Row-Level Security (RLS) por Loja
 
-```text
-src/
-├── app/
-│   ├── (rotas)/              # páginas por área: pdv, estoque, vendas, fiado, etc.
-│   ├── api/health/           # health check
-│   ├── actions.ts            # actions globais
-│   ├── layout.tsx            # layout raiz (tema, fontes)
-│   ├── error.tsx             # erro global
-│   ├── not-found.tsx         # 404
-│   └── loading.tsx           # loading global
-├── components/               # componentes reutilizáveis
-├── lib/
-│   ├── supabase/             # clientes (browser, server, admin, middleware)
-│   ├── store.ts              # getStore() — contexto da loja
-│   ├── plans.ts              # planos e status da assinatura
-│   ├── image.ts              # upload/compressão de imagens
-│   ├── rate-limit.ts         # rate limiting em memória
-│   ├── audit.ts              # log de ações
-│   └── format.ts             # formatação (moeda, data)
-└── middleware.ts             # proteção de rotas
+Cada tabela de dados tem uma coluna `store_id` que referencia a tabela `stores`. O PostgreSQL usa RLS para garantir que cada usuario so acessa dados da sua propria loja.
+
+### Funcao `current_store_id()`
+
+```sql
+CREATE OR REPLACE FUNCTION current_store_id() RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
+$$ SELECT store_id FROM profiles WHERE id = auth.uid() $$;
 ```
 
----
+Esta funcao:
+1. Usa `auth.uid()` para pegar o ID do usuario autenticado
+2. Consulta a tabela `profiles` para obter o `store_id` do usuario
+3. Retorna o UUID da loja
+4. E `SECURITY DEFINER` para poder ler `profiles` mesmo com RLS ativo
+5. E `STABLE` para otimizacao de performance (cache por transacao)
 
-## 5. Fluxos principais
+### Policies RLS
 
-### Venda (PDV)
+Todas as tabelas de dados seguem o mesmo padrao:
 
-```text
-Cliente monta carrinho → escolhe pagamento → createSale()
-  → RPC create_sale (transação única no Postgres):
-      valida itens e preços no banco
-      valida pagamentos (soma = total)
-      insere venda + itens + pagamentos
-      baixa estoque
-      cadastra cliente novo
-  → tudo ou nada (atômico)
+```sql
+CREATE POLICY "nome_da_policy" ON tabela
+  FOR ALL
+  USING (store_id = current_store_id())
+  WITH CHECK (store_id = current_store_id());
 ```
 
-### Catálogo público
+Isso garante:
+- **SELECT**: So retorna linhas onde `store_id` = loja do usuario
+- **INSERT**: So permite inserir com `store_id` = loja do usuario
+- **UPDATE**: So permite editar linhas da loja do usuario
+- **DELETE**: So permite excluir linhas da loja do usuario
 
-```text
-Lojista configura em /catalogo → saveCatalog()
-  → grava em catalog_settings (slug único, tema, logo, redes)
-  → publica em /c/<slug> (página pública, sem autenticação)
-  → aparece no sitemap
+### Hierarquia de Dados
+
+```
+stores (loja)
+  ├── profiles (usuarios vinculados)
+  ├── categories (categorias de produto)
+  ├── products (produtos)
+  ├── sales (vendas)
+  │   ├── sale_items (itens da venda)
+  │   └── sale_payments (pagamentos da venda)
+  ├── customers (clientes)
+  ├── fiado_receipts (recebimentos de fiado)
+  ├── catalog_settings (config do catalogo)
+  └── variation_groups (grupos de variacao)
 ```
 
-### Assinatura
+## Fluxo de Autenticacao
 
-```text
-Trial de 14 dias → expira → middleware redireciona para /bloqueado
-  → lojista regulariza em /assinatura
-  → super admin ativa em /admin
+### Login Sintetico
+
+O sistema usa email sintetico para simplificar o login:
+
+1. Usuario digita apenas `meunome` e senha
+2. O sistema constroi o email: `meunome@dalce.app`
+3. Autentica via `supabase.auth.signInWithPassword()`
+4. O middleware redireciona para `/` se autenticado ou `/login` se nao
+
+```
+Usuario: "joao"
+    |
+    v
+Email construido: "joao@dalce.app"
+    |
+    v
+Supabase Auth (signInWithPassword)
+    |
+    v
+Cookie de sessao (via @supabase/ssr)
+    |
+    v
+Middleware valida sessao em cada request
 ```
 
----
+### Validacao de Username
 
-## 6. Decisões de arquitetura
+O username e validado com regex `^[a-z0-9._-]+$` para evitar injecao no email construido.
 
-| Decisão | Motivo |
-|---|---|
-| Sem backend separado | Menos superfície de ataque, menos infra, deploy único |
-| RLS como base do isolamento | Proteção no banco, não só no código |
-| Funções PL/pgSQL para transações | Atomicidade real (venda completa ou nada) |
-| Imagens no Storage (não base64) | Não incha o banco, cacheável por CDN, escala |
-| Rate limiting em memória | Simples, sem dependência; trocar por Redis se escalar |
-| Sem MongoDB | Postgres + RLS cobre tudo com mais segurança (ver `MONGODB_SETUP.md`) |
+## Fluxo de Dados (Exemplo: Criar Venda)
 
----
+```
+1. PDV (client) monta carrinho e pagamentos
+    |
+2. Chama Server Action createSale()
+    |
+3. Valida sessao (getUser)
+    |
+4. Busca profile (store_id)
+    |
+5. Valida todos os inputs (UUID, numeros, texto)
+    |
+6. Busca produtos do banco (verifica store_id)
+    |
+7. Recalcula precos a partir do banco (evita manipulacao client-side)
+    |
+8. Insere: sales -> sale_items -> sale_payments
+    |
+9. Auto-cadastra cliente se nao existir
+    |
+10. Baixa estoque via RPC apply_stock()
+    |
+11. Revalida cache e retorna codigo da venda
+```
 
-## 7. Escalabilidade
+## Catalogo Publico
 
-O que já está pronto:
+O catalogo digital e acessivel em `/c/[slug]` sem autenticacao.
 
-- Índices nas consultas mais pesadas (fiado, relatórios, vendas por data).
-- Consultas sempre filtradas por `store_id` (usa índice).
-- Imagens servidas por CDN (Storage).
-- Server components reduzem JS no cliente.
+### Como Funciona
 
-O que fazer quando crescer:
+1. A rota `/c/*` e marcada como publica no middleware (sem auth)
+2. A pagina chama a RPC `public_catalog(slug)` com `SECURITY DEFINER`
+3. A funcao retorna apenas dados necessarios (sem dados sensiveis)
+4. O slug e validado (3-30 caracteres, lowercase alfanumerico)
+5. So retorna dados se `catalog_settings.active = true`
 
-1. **Rate limiting distribuído** → Upstash Redis.
-2. **Cache de catálogo** → `revalidate` + CDN.
-3. **Relatórios pesados** → views materializadas ou agregações pré-calculadas.
-4. **Plano Supabase** → subir de Free para Pro conforme volume.
+### Seguranca do Catalogo Publico
+
+- A funcao e `SECURITY DEFINER` (ignora RLS intencionalmente)
+- Nao expoe estoque exato (apenas `available: true/false`)
+- Remove campos internos (`store_id`, `slug`, `active`, `updated_at`)
+- Valida tamanho do slug de entrada
+
+## Imagens
+
+Imagens de produto sao armazenadas como base64 no banco (campo `image` em `products`):
+
+1. Usuario seleciona imagem no formulario
+2. `resizeImage()` redimensiona client-side (Canvas API)
+3. Converte para WebP com qualidade 0.85
+4. Envia como data URI no FormData
+5. Server Action valida tamanho (<150KB encoded)
+6. DB constraint adicional: `length(image) < 512000`
+
+## Locale e Fuso Horario
+
+- Moeda: BRL (`R$ 1.234,56`)
+- Fuso: `America/Sao_Paulo` (UTC-3)
+- Formato de data: `dd/mm/aaaa HH:mm`
+- Formato numerico brasileiro: `1.234,56` (ponto como separador de milhar, virgula decimal)

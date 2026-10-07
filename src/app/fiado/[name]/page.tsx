@@ -1,8 +1,8 @@
 import PageHeader from "@/components/PageHeader";
-import FiadoReceiveForm from "@/components/FiadoReceiveForm";
 import { createClient } from "@/lib/supabase/server";
 import { brl, cap, fmtDateTime } from "@/lib/format";
 import { esc } from "@/lib/fiado";
+import { receiveFiado } from "../actions";
 
 export const dynamic = "force-dynamic";
 type Sale = { created_at: string };
@@ -20,6 +20,7 @@ export default async function FiadoCliente({ params }: { params: Promise<{ name:
     ...((rc ?? []) as { amount: number; method: string; created_at: string }[]).map((r) => ({ at: r.created_at, v: -Number(r.amount), t: `Recebido · ${cap(r.method)}` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const bal = ev.reduce((s, e) => s + e.v, 0);
+  const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
   return (
     <main className="mx-auto min-h-dvh max-w-md bg-page px-5 pb-10 pt-5">
       <PageHeader eyebrow="Fiado · Cliente" title={name} back="/fiado" />
@@ -27,7 +28,13 @@ export default async function FiadoCliente({ params }: { params: Promise<{ name:
         <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-90">{bal > 0.004 ? "Em aberto" : bal < -0.004 ? "Crédito do cliente" : "Sem débito"}</p>
         <p className="mt-1 text-4xl font-extrabold">{brl(Math.abs(bal))}</p>
       </section>
-      <FiadoReceiveForm name={name} />
+      <form action={receiveFiado} className="mt-3 space-y-3 rounded-3xl border border-line bg-surface p-4">
+        <h2 className="text-lg font-extrabold">Receber pagamento</h2>
+        <input type="hidden" name="name" value={name} />
+        <input name="amount" required inputMode="decimal" placeholder="Valor (R$)" className={f} />
+        <select name="method" className={f}>{["dinheiro", "pix", "débito", "crédito"].map((m) => <option key={m} value={m}>{cap(m)}</option>)}</select>
+        <button className="w-full rounded-2xl bg-brand py-3.5 text-lg font-bold text-white">Registrar recebimento</button>
+      </form>
       <h2 className="mb-2 mt-6 px-1 text-xs font-bold uppercase tracking-[0.18em] text-soft">Histórico</h2>
       <ul className="divide-y divide-line overflow-hidden rounded-3xl border border-line bg-surface">
         {ev.map((e, i) => (<li key={i} className="flex items-center justify-between px-5 py-3.5"><span><b className="block">{e.t}</b><span className="text-sm text-soft">{fmtDateTime(e.at)}</span></span><b className={e.v > 0 ? "text-red-700" : "text-green-700"}>{e.v > 0 ? "-" : "+"}{brl(Math.abs(e.v))}</b></li>))}

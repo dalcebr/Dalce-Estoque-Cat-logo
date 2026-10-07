@@ -1,33 +1,49 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  poweredByHeader: false,
-  reactStrictMode: true,
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' www.googletagmanager.com www.google-analytics.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: *.supabase.co",
+  "font-src 'self'",
+  "connect-src 'self' *.supabase.co www.google-analytics.com",
+  "worker-src 'self' blob:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+];
 
-  // Imagens remotas do Supabase Storage (evita <img> cru quando quiser usar next/image)
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: cspDirectives.join("; "),
+  },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=()",
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+];
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
-    ],
+    formats: ["image/webp", "image/avif"],
   },
 
   async headers() {
     return [
       {
         source: "/(.*)",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-          { key: "X-DNS-Prefetch-Control", value: "on" },
-        ],
-      },
-      {
-        // o health check nunca deve ser cacheado
-        source: "/api/health",
-        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+        headers: securityHeaders,
       },
     ];
   },

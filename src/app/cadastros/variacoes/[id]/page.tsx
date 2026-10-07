@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import DeleteButton from "@/components/DeleteButton";
+import SubmitButton from "@/components/SubmitButton";
 import { deleteVariation, saveVariation } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export default async function Variacao({ params, searchParams }: { params: Promi
         <label className="block"><L t="Nome do grupo" /><input name="name" required maxLength={40} defaultValue={g.name} placeholder="Ex.: Tamanho" className={f} /></label>
         <label className="block"><L t="Opções" /><textarea name="options" required rows={4} defaultValue={g.options.join(", ")} placeholder="Ex.: P, M, G, GG (separe por vírgula ou linha)" className={f} /></label>
         {erro && <p role="alert" className="text-red-700">Informe o nome e pelo menos uma opção.</p>}
-        <button className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white">Salvar variação</button>
+        <SubmitButton>Salvar variação</SubmitButton>
       </form>
       {!isNew && <DeleteButton action={deleteVariation.bind(null, id)} label="Excluir variação" confirmText="Excluir este grupo de variações?" />}
     </main>

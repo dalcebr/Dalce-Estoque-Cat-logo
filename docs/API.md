@@ -1,140 +1,260 @@
-# API.md
+# Referencia de Server Actions
 
-O **Dalce Estoque** não expõe uma API REST tradicional. O backend é composto por
-**Server Actions** (chamadas RPC do Next.js) e **funções PL/pgSQL** no Supabase.
+O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe API REST separada. Todas as actions requerem autenticacao (exceto onde indicado).
 
-Isso é intencional: reduz a superfície de ataque, elimina CORS e mantém a autorização
-no mesmo lugar que a lógica.
+## Autenticacao
 
----
+### `signIn(prevState, formData)` - Login
 
-## 1. Route Handlers (HTTP)
+- **Arquivo**: `src/app/login/actions.ts`
+- **Auth**: Nao requer (e a action de login)
+- **Parametros** (FormData):
+  - `usuario` (string): Nome de usuario (sem `@dalce.app`). Aceita: `a-z`, `0-9`, `.`, `_`, `-`
+  - `senha` (string): Senha do usuario (max 128 caracteres)
+- **Retorno**: `{ error?: string }` ou redirect para `/`
+- **Validacoes**:
+  - Username deve corresponder a `^[a-z0-9._-]+$`
+  - Senha nao pode ser vazia nem exceder 128 caracteres
+- **Comportamento**: Constroi email sintetico (`usuario@dalce.app`) e autentica via Supabase Auth
 
-### `GET /api/health`
+### `signOut()` - Logout
 
-Health check para monitoramento externo.
+- **Arquivo**: `src/app/login/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros**: Nenhum
+- **Retorno**: Redirect para `/login`
 
-| Item | Valor |
-|---|---|
-| Autenticação | Nenhuma (público) |
-| Autorização | N/A |
-| Parâmetros | Nenhum |
-| Resposta 200 | `{ status: "ok", db: "ok", uptime, latencyMs, timestamp }` |
-| Resposta 503 | `{ status: "degradado", db: "erro", ... }` |
-| Cache | `no-store` |
-| Dados sensíveis | Nenhum (só confirma que o Postgres responde) |
+## Dashboard
 
-**Uso:** configure UptimeRobot/Better Stack apontando para `https://app.seudominio.com/api/health`.
+### `setGoal(formData)` - Definir meta mensal
 
----
+- **Arquivo**: `src/app/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `meta` (string): Valor da meta em formato brasileiro (`1.000,50`). Deve ser > 0 e <= 100.000.000
+- **Retorno**: Nenhum (revalida `/`)
+- **Comportamento**: Atualiza `stores.monthly_goal` para a loja do usuario
 
-## 2. Server Actions
+## Vendas
 
-Todas as actions são chamadas via POST pelo Next.js (proteção CSRF nativa). A
-autorização é sempre validada no servidor.
+### `createSale(input)` - Criar nova venda
 
-### Autenticação
+- **Arquivo**: `src/app/vendas/nova/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (objeto):
+  ```typescript
+  {
+    items: Array<{
+      productId?: string;  // UUID do produto (opcional para venda rapida)
+      name: string;        // Nome do item
+      qty: number;         // Quantidade (>= 1)
+      price: number;       // Preco unitario (>= 0)
+    }>;
+    payments: Array<{
+      method: string;      // "dinheiro" | "pix" | "debito" | "credito" | "fiado" | "outro"
+      amount: number;      // Valor pago (> 0)
+    }>;
+    customer?: string;     // Nome do cliente (obrigatorio se fiado)
+    note?: string;         // Observacao (max 500 chars)
+  }
+  ```
+- **Retorno**: `{ ok: true, code: string, time: string }` ou `{ error: string }`
+- **Validacoes**:
+  - Max 200 itens, max 10 pagamentos
+  - UUIDs de produto validados
+  - Precos recalculados a partir do banco (para produtos cadastrados)
+  - Soma dos pagamentos deve bater com total
+  - Fiado requer nome do cliente
+- **Efeitos colaterais**:
+  - Insere `sales`, `sale_items`, `sale_payments`
+  - Auto-cadastra cliente se nao existir
+  - Baixa estoque via RPC `apply_stock()`
+  - Revalida `/` e `/vendas`
 
-| Action | Arquivo | Validação | Rate limit |
-|---|---|---|---|
-| `signIn` | `login/actions.ts` | e-mail + senha | 10 / 5 min por IP |
-| `signUp` | `cadastro/actions.ts` | nome, e-mail, senha (≥6) | 5 / hora por IP |
-| `requestPasswordReset` | `recuperar-senha/actions.ts` | e-mail | 5 / hora por IP |
-| `updatePassword` | `redefinir-senha/actions.ts` | senha (≥6), sessão válida | — |
-| `signOut` | `actions.ts` | sessão | — |
+### `cancelSale(id)` - Cancelar venda
 
-### Vendas
+- **Arquivo**: `src/app/vendas/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros**:
+  - `id` (string): UUID da venda
+- **Retorno**: Nenhum
+- **Validacoes**: UUID validado
+- **Comportamento**: Chama RPC `cancel_sale()` que:
+  - Verifica que a venda e da loja do usuario
+  - Verifica status `finalizada`
+  - Devolve estoque dos itens
+  - Muda status para `cancelada`
 
-| Action | Arquivo | Autorização | Observação |
-|---|---|---|---|
-| `createSale` | `vendas/nova/actions.ts` | sessão + loja ativa | RPC transacional `create_sale` |
-| `cancelSale` | `vendas/actions.ts` | sessão + `store_id` | RPC `cancel_sale` (devolve estoque) |
+## Estoque
 
-### Estoque e produtos
+### `updateProduct(formData)` - Atualizar produto (via estoque)
 
-| Action | Arquivo | Autorização |
-|---|---|---|
-| `saveProduct` | `cadastros/actions.ts` | sessão + RLS |
-| `archiveProduct` | `cadastros/actions.ts` | sessão + RLS |
-| `saveCategory` / `deleteCategory` | `cadastros/actions.ts` | sessão + RLS |
-| `saveCustomer` | `cadastros/actions.ts` | sessão + RLS |
-| `saveVariation` / `deleteVariation` | `cadastros/actions.ts` | sessão + RLS |
-| `adjustStock` | `estoque/actions.ts` | sessão + RLS |
+- **Arquivo**: `src/app/estoque/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `id` (string): UUID do produto
+  - `name` (string): Nome (max 80 chars)
+  - `price` (string): Preco de venda (formato BR)
+  - `cost` (string): Custo (formato BR)
+  - `stock` (string): Quantidade em estoque
+  - `min_stock` (string): Estoque minimo
+- **Retorno**: Redirect para `/estoque`
+- **Validacoes**: UUID, nome nao vazio, preco >= 0, custo >= 0, stock finito
 
-### Fiado
+## Fiado
 
-| Action | Arquivo | Autorização |
-|---|---|---|
-| `receiveFiado` | `fiado/actions.ts` | sessão + RPC `receive_fiado` |
+### `receiveFiado(formData)` - Registrar recebimento de fiado
 
-### Catálogo
+- **Arquivo**: `src/app/fiado/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `name` (string): Nome do cliente
+  - `amount` (string): Valor recebido (formato BR, > 0)
+  - `method` (string): Metodo de pagamento (default: `dinheiro`)
+- **Retorno**: Nenhum (revalida `/fiado`)
 
-| Action | Arquivo | Autorização |
-|---|---|---|
-| `saveCatalog` | `catalogo/actions.ts` | sessão + RLS |
+## Catalogo
 
-### Ajustes
+### `saveCatalog(settings)` - Salvar configuracoes do catalogo
 
-| Action | Arquivo | Autorização |
-|---|---|---|
-| `saveStore` | `ajustes/actions.ts` | sessão + RLS |
+- **Arquivo**: `src/app/catalogo/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (objeto CatalogSettings):
+  ```typescript
+  {
+    active: boolean;       // Catalogo ativo?
+    slug: string;          // Link personalizado (3-30 chars, lowercase alfanumerico)
+    logo: string;          // Logo em base64 (max 300KB)
+    phone: string;         // Telefone (max 20 chars)
+    email: string;         // Email de contato
+    stock_mode: "all" | "hide" | "unavailable";  // Modo de exibicao de estoque
+    instagram: string;     // Username Instagram
+    facebook: string;      // Username Facebook
+    analytics_id: string;  // Google Analytics ID (formato G-XXXXXXXXXX)
+    highlight: string;     // Destaque (max 120 chars)
+    top_text: string;      // Texto superior (max 500 chars)
+    about: string;         // Sobre a loja (max 1500 chars)
+    theme: string;         // Tema: "azul" | "noite" | "vibrante" | "floresta"
+  }
+  ```
+- **Retorno**: `{ ok: true, slug: string }` ou `{ error: string }`
+- **Validacoes**:
+  - Slug: minimo 3 caracteres se ativo
+  - Logo: deve comecar com `data:image/` e ter < 300KB
+  - Email: formato basico de email
+  - Analytics ID: formato `G-XXXXXXXXXX`
+  - Redes sociais: `^[A-Za-z0-9._-]{0,60}$`
+- **Comportamento**: Upsert em `catalog_settings`
 
-### Admin (super admin)
+## Cadastros
 
-| Action | Arquivo | Autorização |
-|---|---|---|
-| `setPlan` | `admin/actions.ts` | `is_super_admin` (servidor) |
-| `toggleStore` | `admin/actions.ts` | `is_super_admin` (servidor) |
-| `resetOwnerPassword` | `admin/actions.ts` | `is_super_admin` + `service_role` |
+### `saveProduct(formData)` - Criar/editar produto
 
----
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `id` (string, opcional): UUID para edicao. Vazio para criacao
+  - `name` (string): Nome do produto (max 80 chars)
+  - `price` (string): Preco (formato BR, > 0)
+  - `cost` (string): Custo (formato BR, >= 0)
+  - `stock` (string): Estoque
+  - `min_stock` (string): Estoque minimo
+  - `image` (string, opcional): Imagem base64 (max 150KB, deve comecar com `data:image/`)
+  - `category_id` (string, opcional): UUID da categoria
+- **Retorno**: Redirect para `/cadastros/produtos`
 
-## 3. Funções RPC (Postgres)
+### `archiveProduct(id)` - Arquivar produto
 
-Chamadas via `supabase.rpc(...)`. Todas são `security definer` com `search_path` fixo.
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros**:
+  - `id` (string): UUID do produto
+- **Retorno**: Redirect para `/cadastros/produtos`
+- **Comportamento**: Define `active = false` no produto
 
-| Função | Parâmetros | Retorno | Valida |
-|---|---|---|---|
-| `create_sale` | `p_items jsonb, p_payments jsonb, p_customer text, p_note text` | `jsonb` (id, number, created_at, total) | loja ativa, itens, pagamentos, estoque |
-| `cancel_sale` | `p_sale uuid` | `void` | `store_id`, idempotência |
-| `apply_stock` | `items jsonb` | `void` | `store_id` do produto |
-| `receive_fiado` | `p_name text, p_amount numeric, p_method text` | `void` | loja, valor, método |
-| `admin_set_plan` | `p_store uuid, p_plan text, p_days int` | `void` | `is_super_admin` |
-| `admin_set_active` | `p_store uuid, p_active boolean` | `void` | `is_super_admin` |
-| `current_store_id` | — | `uuid` | `auth.uid()` |
-| `is_super_admin` | — | `boolean` | `auth.uid()` |
-| `store_active` | `p_store uuid` | `boolean` | — |
+### `saveCategory(formData)` - Criar/editar categoria
 
-### Erros de negócio (mensagens seguras de exibir)
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `id` (string, opcional): UUID para edicao
+  - `name` (string): Nome (max 40 chars)
+  - `color` (string): Cor hexadecimal (`#RRGGBB`)
+- **Retorno**: Redirect para `/cadastros/categorias`
+- **Erro especial**: Redirect com `?erro=nome` se nome duplicado na loja
 
-- `carrinho vazio`
-- `os pagamentos não fecham o total`
-- `identifique o cliente para vender no fiado`
-- `produto indisponível`
-- `valor inválido`
-- `loja inativa`
+### `deleteCategory(id)` - Excluir categoria
 
----
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros**:
+  - `id` (string): UUID da categoria
+- **Retorno**: Redirect para `/cadastros/categorias`
+- **Comportamento**: Produtos dessa categoria ficam sem categoria (`ON DELETE SET NULL`)
 
-## 4. Riscos e mitigações
+### `saveCustomer(formData)` - Criar/editar cliente
 
-| Risco | Mitigação |
-|---|---|
-| Chamar action sem sessão | Toda action valida `auth.getUser()` |
-| Passar `store_id` de outra loja | Actions ignoram; RLS filtra |
-| IDOR em IDs de recurso | RLS + validação de `store_id` nas RPCs |
-| Força bruta no login | Rate limiting por IP |
-| Spam de cadastro | Rate limiting por IP |
-| Abuso de upload | Limite de tamanho + tipo + pasta isolada |
-| CSRF | Proteção nativa das server actions |
-| Vazamento via API pública | Só `/api/health` é público e não expõe dados |
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `id` (string, opcional): UUID para edicao
+  - `name` (string): Nome (max 80 chars, obrigatorio para criacao)
+  - `phone` (string, opcional): Telefone (max 20 chars)
+  - `cpf` (string, opcional): CPF (11 digitos)
+- **Retorno**: Redirect para `/cadastros/clientes`
+- **Erros especiais**: Redirect com `?erro=cpf` (CPF invalido) ou `?erro=nome` (nome duplicado)
+- **Nota**: Na edicao, nome nao pode ser alterado (somente telefone e CPF)
 
----
+### `saveVariation(formData)` - Criar/editar grupo de variacao
 
-## 5. Convenções
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `id` (string, opcional): UUID para edicao
+  - `name` (string): Nome do grupo (max 40 chars)
+  - `options` (string): Opcoes separadas por quebra de linha, virgula ou ponto-e-virgula (max 30 chars cada, max 50 opcoes)
+- **Retorno**: Redirect para `/cadastros/variacoes`
 
-- **Erros**: retornam `{ error: string }` com mensagem amigável (nunca stack trace).
-- **Sucesso**: retornam `{ ok: true, ... }`.
-- **Validação**: sempre no servidor, mesmo que o cliente já valide.
-- **Revalidação**: `revalidatePath` após mutações para atualizar o cache.
-- **Auditoria**: ações importantes chamam `logAction()`.
+### `deleteVariation(id)` - Excluir grupo de variacao
+
+- **Arquivo**: `src/app/cadastros/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros**:
+  - `id` (string): UUID do grupo
+- **Retorno**: Redirect para `/cadastros/variacoes`
+
+## Ajustes
+
+### `updateStore(formData)` - Atualizar nome da loja
+
+- **Arquivo**: `src/app/ajustes/actions.ts`
+- **Auth**: Requer autenticacao
+- **Parametros** (FormData):
+  - `name` (string): Novo nome da loja
+- **Retorno**: Redirect para `/ajustes`
+
+## Funcoes RPC (Banco)
+
+Chamadas via `supabase.rpc()`:
+
+### `apply_stock(items jsonb)`
+
+- **Descricao**: Baixa estoque de produtos apos venda
+- **Seguranca**: SECURITY INVOKER (RLS aplica)
+- **Input**: Array JSON de `{ productId: UUID, qty: integer }`
+- **Verificacao**: Cada produto deve pertencer a loja do usuario
+- **Erro**: Exception se produto nao encontrado na loja
+
+### `cancel_sale(p_sale uuid)`
+
+- **Descricao**: Cancela venda e devolve estoque
+- **Seguranca**: SECURITY INVOKER
+- **Verificacao**: Venda deve ser da loja do usuario e estar `finalizada`
+- **Efeito**: Restaura estoque e muda status para `cancelada`
+
+### `public_catalog(p_slug text)`
+
+- **Descricao**: Retorna dados publicos do catalogo para vitrine
+- **Seguranca**: SECURITY DEFINER (acesso publico intencional)
+- **Acesso**: Concedido a roles `anon` e `authenticated`
+- **Retorno**: JSONB com `{ name, settings, products }` ou null

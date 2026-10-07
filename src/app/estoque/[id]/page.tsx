@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
+import SubmitButton from "@/components/SubmitButton";
 import { updateProduct } from "../actions";
 
 const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
@@ -22,7 +23,7 @@ export default async function EditarProduto({ params }: { params: Promise<{ id: 
         <label className="block"><L t="Custo (R$)" /><input name="cost" inputMode="decimal" defaultValue={dec(Number(p.cost))} className={f} /></label>
         <label className="block"><L t="Quantidade em estoque" /><input name="stock" inputMode="numeric" defaultValue={p.stock} className={f} /></label>
         <label className="block"><L t="Estoque mínimo (alerta de baixo)" /><input name="min_stock" inputMode="numeric" defaultValue={p.min_stock} className={f} /></label>
-        <button className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white">Salvar</button>
+        <SubmitButton>Salvar</SubmitButton>
       </form>
     </main>
   );

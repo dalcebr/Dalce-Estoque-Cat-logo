@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import ProductForm, { type ProductInit } from "@/components/ProductForm";
@@ -12,9 +12,12 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   const { id } = await params;
   const isNew = id === "novo";
   const supabase = await createClient();
+  // Get current user's store_id for storage uploads
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: prof } = await supabase.from("profiles").select("store_id").eq("id", user!.id).single();
-  const storeId = (prof?.store_id as string) ?? "";
+  if (!user) redirect("/login");
+  const { data: profile } = await supabase.from("profiles").select("store_id").eq("id", user.id).single();
+  if (!profile) redirect("/login");
+  const storeId = profile.store_id as string;
   const { data: cats } = await supabase.from("categories").select("id, name").order("name");
   let init: ProductInit = { name: "", price: "", cost: "", stock: "0", min_stock: "0", category_id: "", image: "" };
   if (!isNew) {

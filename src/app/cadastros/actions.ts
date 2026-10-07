@@ -2,104 +2,142 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getStore, num } from "@/lib/store";
-import { logAction } from "@/lib/audit";
+import { isValidUUID, sanitizeText } from "@/lib/validation";
 
-const str = (fd: FormData, k: string, max = 120) => String(fd.get(k) ?? "").trim().slice(0, max);
+const str = (fd: FormData, k: string, max = 120) => sanitizeText(String(fd.get(k) ?? ""), max);
 const esc = (s: string) => s.replace(/[%_\\]/g, "\\$&");
 
-/** Aceita apenas URLs do nosso bucket de Storage (ou vazio). Bloqueia data: e URLs externas. */
-function safeImage(v: string): string | null {
-  if (!v) return null;
-  if (v.startsWith("data:image/")) return null; // base64 legado não é mais aceito
-  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/catalogo\//i.test(v)) return null;
-  return v.slice(0, 500);
-}
-
 export async function saveProduct(fd: FormData) {
-  const id = str(fd, "id"), name = str(fd, "name", 80);
+  const s = await getStore();
+  if (!s) return void redirect("/login");
+
+  const id = str(fd, "id", 36);
+  if (id && !isValidUUID(id)) return;
+
+  const name = str(fd, "name", 80);
   const price = num(fd.get("price")), cost = num(fd.get("cost"));
   if (!name || !Number.isFinite(price) || price <= 0 || !Number.isFinite(cost) || cost < 0) return;
-  const image = safeImage(String(fd.get("image") ?? ""));
-  const row = { name, price, cost, stock: Math.trunc(num(fd.get("stock"))) || 0, min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0), image, category_id: str(fd, "category_id") || null };
-  const s = await getStore();
-  if (!s) return;
-  if (id) await s.supabase.from("products").update(row).eq("id", id);
-  else await s.supabase.from("products").insert({ ...row, store_id: s.storeId });
-  await logAction(s.supabase, s.storeId, id ? "produto.editado" : "produto.criado", name);
+
+  let image = String(fd.get("image") ?? "");
+  // Accept legacy base64 data URLs OR new storage paths ({uuid}/{uuid}.webp)
+  if (image) {
+    const isBase64 = image.startsWith("data:image/");
+    const isStoragePath = /^[0-9a-f-]+\/[0-9a-f-]+\.webp$/i.test(image);
+    if (!isBase64 && !isStoragePath) image = "";
+    if (isBase64 && image.length > 150_000) image = "";
+  }
+
+  const categoryId = str(fd, "category_id", 36) || null;
+  if (categoryId && !isValidUUID(categoryId)) return;
+
+  const row = {
+    name, price, cost,
+    stock: Math.trunc(num(fd.get("stock"))) || 0,
+    min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0),
+    image: image || null,
+    category_id: categoryId,
+  };
+
+  if (id) {
+    await s.supabase.from("products").update(row).eq("id", id).eq("store_id", s.storeId);
+  } else {
+    await s.supabase.from("products").insert({ ...row, store_id: s.storeId });
+  }
   revalidatePath("/cadastros/produtos"); revalidatePath("/estoque");
   redirect("/cadastros/produtos");
 }
+
 export async function archiveProduct(id: string) {
+  if (typeof id !== "string" || !isValidUUID(id)) return;
   const s = await getStore();
-  if (s) {
-    const { data: p } = await s.supabase.from("products").select("name").eq("id", id).maybeSingle();
-    await s.supabase.from("products").update({ active: false }).eq("id", id);
-    await logAction(s.supabase, s.storeId, "produto.arquivado", p?.name ?? id);
-  }
+  if (!s) return void redirect("/login");
+  await s.supabase.from("products").update({ active: false }).eq("id", id).eq("store_id", s.storeId);
   revalidatePath("/cadastros/produtos"); revalidatePath("/estoque");
   redirect("/cadastros/produtos");
 }
 
 export async function saveCategory(fd: FormData) {
-  const id = str(fd, "id"), name = str(fd, "name", 40), color = str(fd, "color", 7);
-  if (!name || !/^#[0-9a-f]{6}$/i.test(color)) return;
   const s = await getStore();
-  if (!s) return;
-  const { error } = id ? await s.supabase.from("categories").update({ name, color }).eq("id", id) : await s.supabase.from("categories").insert({ name, color, store_id: s.storeId });
+  if (!s) return void redirect("/login");
+
+  const id = str(fd, "id", 36);
+  if (id && !isValidUUID(id)) return;
+
+  const name = str(fd, "name", 40), color = str(fd, "color", 7);
+  if (!name || !/^#[0-9a-f]{6}$/i.test(color)) return;
+
+  const { error } = id
+    ? await s.supabase.from("categories").update({ name, color }).eq("id", id).eq("store_id", s.storeId)
+    : await s.supabase.from("categories").insert({ name, color, store_id: s.storeId });
   if (error?.code === "23505") redirect(`/cadastros/categorias/${id || "novo"}?erro=nome`);
-  await logAction(s.supabase, s.storeId, id ? "categoria.editada" : "categoria.criada", name);
   revalidatePath("/cadastros/categorias"); revalidatePath("/cadastros/produtos");
   redirect("/cadastros/categorias");
 }
+
 export async function deleteCategory(id: string) {
+  if (typeof id !== "string" || !isValidUUID(id)) return;
   const s = await getStore();
-  if (s) {
-    const { data: c } = await s.supabase.from("categories").select("name").eq("id", id).maybeSingle();
-    await s.supabase.from("categories").delete().eq("id", id);
-    await logAction(s.supabase, s.storeId, "categoria.excluida", c?.name ?? id);
-  }
+  if (!s) return void redirect("/login");
+  await s.supabase.from("categories").delete().eq("id", id).eq("store_id", s.storeId);
   revalidatePath("/cadastros/categorias"); revalidatePath("/cadastros/produtos");
   redirect("/cadastros/categorias");
 }
 
 export async function saveCustomer(fd: FormData) {
-  const id = str(fd, "id"), name = str(fd, "name", 80);
-  const phone = str(fd, "phone", 20).replace(/[^\d+()\-\s]/g, ""), cpf = str(fd, "cpf", 20).replace(/\D/g, "");
+  const s = await getStore();
+  if (!s) return void redirect("/login");
+
+  const id = str(fd, "id", 36);
+  if (id && !isValidUUID(id)) return;
+
+  const name = str(fd, "name", 80);
+  const phone = str(fd, "phone", 20).replace(/[^\d+()\-\s]/g, "");
+  const cpf = str(fd, "cpf", 20).replace(/\D/g, "");
   const here = `/cadastros/clientes/${id || "novo"}`;
   if (!id && !name) return;
   if (cpf && cpf.length !== 11) redirect(`${here}?erro=cpf`);
-  const s = await getStore();
-  if (!s) return;
-  if (id) await s.supabase.from("customers").update({ phone: phone || null, cpf: cpf || null }).eq("id", id);
-  else {
-    const { data: ex } = await s.supabase.from("customers").select("id").ilike("name", esc(name)).maybeSingle();
+
+  if (id) {
+    await s.supabase.from("customers").update({ phone: phone || null, cpf: cpf || null }).eq("id", id).eq("store_id", s.storeId);
+  } else {
+    const { data: ex } = await s.supabase.from("customers").select("id").eq("store_id", s.storeId).ilike("name", esc(name)).maybeSingle();
     if (ex) redirect(`${here}?erro=nome`);
     await s.supabase.from("customers").insert({ store_id: s.storeId, name, phone: phone || null, cpf: cpf || null });
   }
-  await logAction(s.supabase, s.storeId, id ? "cliente.editado" : "cliente.criado", name);
   revalidatePath("/cadastros/clientes");
   redirect("/cadastros/clientes");
 }
 
 export async function saveVariation(fd: FormData) {
-  const id = str(fd, "id"), name = str(fd, "name", 40);
-  const options = [...new Set(String(fd.get("options") ?? "").split(/[\n,;]+/).map((o) => o.trim().slice(0, 30)).filter(Boolean))].slice(0, 50);
-  if (!name || options.length === 0) redirect(`/cadastros/variacoes/${id || "novo"}?erro=1`);
   const s = await getStore();
-  if (!s) return;
-  if (id) await s.supabase.from("variation_groups").update({ name, options }).eq("id", id);
-  else await s.supabase.from("variation_groups").insert({ name, options, store_id: s.storeId });
-  await logAction(s.supabase, s.storeId, id ? "variacao.editada" : "variacao.criada", name);
+  if (!s) return void redirect("/login");
+
+  const id = str(fd, "id", 36);
+  if (id && !isValidUUID(id)) return;
+
+  const name = str(fd, "name", 40);
+  const options = [...new Set(
+    String(fd.get("options") ?? "")
+      .split(/[\n,;]+/)
+      .map((o) => sanitizeText(o, 30))
+      .filter(Boolean),
+  )].slice(0, 50);
+  if (!name || options.length === 0) redirect(`/cadastros/variacoes/${id || "novo"}?erro=1`);
+
+  if (id) {
+    await s.supabase.from("variation_groups").update({ name, options }).eq("id", id).eq("store_id", s.storeId);
+  } else {
+    await s.supabase.from("variation_groups").insert({ name, options, store_id: s.storeId });
+  }
   revalidatePath("/cadastros/variacoes");
   redirect("/cadastros/variacoes");
 }
+
 export async function deleteVariation(id: string) {
+  if (typeof id !== "string" || !isValidUUID(id)) return;
   const s = await getStore();
-  if (s) {
-    const { data: g } = await s.supabase.from("variation_groups").select("name").eq("id", id).maybeSingle();
-    await s.supabase.from("variation_groups").delete().eq("id", id);
-    await logAction(s.supabase, s.storeId, "variacao.excluida", g?.name ?? id);
-  }
+  if (!s) return void redirect("/login");
+  await s.supabase.from("variation_groups").delete().eq("id", id).eq("store_id", s.storeId);
   revalidatePath("/cadastros/variacoes");
   redirect("/cadastros/variacoes");
 }

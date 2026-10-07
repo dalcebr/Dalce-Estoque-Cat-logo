@@ -1,187 +1,238 @@
-# TESTING.md
+# Estrategia de Testes
 
-Checklist de testes do **Dalce Estoque**. Execute antes de cada entrega a cliente.
+O Dalce Estoque atualmente nao possui testes automatizados. Este documento descreve a estrategia de testes manuais e recomendacoes para testes automatizados.
 
-> **Regra:** não considere pronto só porque compila. Teste o comportamento real.
+## Testes Manuais
 
----
+### Pre-requisitos para Testes
 
-## 1. Autenticação
+1. Crie ao menos **duas lojas** com usuarios diferentes
+2. Cada loja deve ter produtos, categorias e clientes cadastrados
+3. Tenha o app rodando localmente (`npm run dev`)
 
-- [ ] Cadastro com e-mail novo cria loja + perfil + trial de 14 dias.
-- [ ] Cadastro com e-mail já existente mostra erro claro.
-- [ ] Cadastro com senha < 6 caracteres é rejeitado.
-- [ ] Login com credenciais corretas entra no sistema.
-- [ ] Login com senha errada mostra erro (sem revelar se o e-mail existe).
-- [ ] 10 tentativas de login erradas em 5 min são bloqueadas (rate limit).
-- [ ] Logout encerra a sessão e volta para `/login`.
-- [ ] Acessar rota protegida sem sessão redireciona para `/login`.
-- [ ] Usuário logado que acessa `/login` é redirecionado para a home.
-- [ ] Recuperação de senha envia e-mail.
-- [ ] Link de recuperação abre `/redefinir-senha` e permite trocar a senha.
-- [ ] Após redefinir, login com a nova senha funciona.
-- [ ] Sessão expirada redireciona para login (não trava).
+### Checklist: Autenticacao
 
----
+- [ ] Login com usuario valido redireciona para dashboard
+- [ ] Login com usuario inexistente mostra erro generico
+- [ ] Login com senha incorreta mostra erro generico
+- [ ] Logout redireciona para /login
+- [ ] Acessar pagina protegida sem login redireciona para /login
+- [ ] Acessar /login estando logado redireciona para /
+- [ ] Rate limiting: 11 tentativas rapidas retorna 429
+- [ ] Username com caracteres invalidos (`<script>`, espacos) e rejeitado
+- [ ] Catalogo publico (`/c/slug`) acessivel sem login
 
-## 2. Multi-tenant (CRÍTICO)
+### Checklist: Dashboard
 
-- [ ] Loja A e Loja B criadas com e-mails diferentes.
-- [ ] Produto da Loja A **não** aparece na Loja B.
-- [ ] Acessar `/cadastros/produtos/<id-da-loja-A>` logado como B → não mostra.
-- [ ] Vendas da Loja A **não** aparecem na Loja B.
-- [ ] Fiado da Loja A **não** aparece na Loja B.
-- [ ] Catálogo da Loja A **não** aparece na Loja B.
-- [ ] No console (logado como B), `supabase.from('products').select()` retorna só B.
-- [ ] Tentar cancelar venda da Loja A logado como B → falha.
-- [ ] Upload de imagem grava na pasta da própria loja.
-- [ ] Tentar gravar na pasta de outra loja → rejeitado.
-- [ ] Ajustes da Loja A não afetam a Loja B.
+- [ ] Mostra data atual no fuso de Sao Paulo
+- [ ] Mostra vendas do dia corretamente
+- [ ] Mostra vendas do mes corretamente
+- [ ] Meta mensal pode ser definida
+- [ ] Meta aceita formato brasileiro (`1.000,50`)
+- [ ] Meta rejeita valores negativos e zero
 
-> Se **qualquer** item falhar, **não venda**. Revise o RLS.
+### Checklist: Nova Venda (PDV)
 
----
+- [ ] Adicionar produto cadastrado ao carrinho
+- [ ] Adicionar item avulso (venda rapida, sem produto cadastrado)
+- [ ] Alterar quantidade no carrinho
+- [ ] Remover item do carrinho
+- [ ] Selecionar metodo de pagamento
+- [ ] Pagamento com multiplos metodos (split)
+- [ ] Soma dos pagamentos deve bater com total
+- [ ] Venda com fiado exige nome do cliente
+- [ ] Adicionar observacao a venda
+- [ ] Preco de produto cadastrado vem do banco (nao do client)
+- [ ] Apos venda, estoque e baixado corretamente
+- [ ] Codigo da venda e exibido apos confirmacao
+- [ ] Venda aparece na lista de vendas
 
-## 3. Estoque / Produtos
+### Checklist: Vendas
 
-- [ ] Criar produto com nome, preço, custo, estoque, categoria e imagem.
-- [ ] Produto aparece na listagem e no PDV.
-- [ ] Editar produto atualiza os dados.
-- [ ] Arquivar produto remove do PDV mas mantém o histórico.
-- [ ] Buscar produto por nome funciona.
-- [ ] Filtrar por categoria funciona.
-- [ ] Alerta de estoque baixo aparece quando `stock <= min_stock`.
-- [ ] Ajustar estoque manualmente funciona.
-- [ ] Estado vazio (sem produtos) mostra mensagem clara.
-- [ ] Validação: preço ≤ 0 é rejeitado.
-- [ ] Validação: nome vazio é rejeitado.
+- [ ] Lista de vendas mostra vendas do dia
+- [ ] Detalhe da venda mostra itens e pagamentos
+- [ ] Cancelar venda muda status para "cancelada"
+- [ ] Cancelar venda restaura estoque dos itens
+- [ ] Venda cancelada nao pode ser cancelada novamente
+- [ ] Vendas de outra loja nao aparecem na lista
 
----
+### Checklist: Estoque
 
-## 4. Imagens
+- [ ] Lista mostra todos os produtos ativos
+- [ ] Produtos com estoque abaixo do minimo sao destacados
+- [ ] Editar estoque salva corretamente
+- [ ] Estoque pode ser negativo (overselling permitido)
+- [ ] Editar preco e custo funciona
 
-- [ ] Upload de JPG/PNG funciona.
-- [ ] Imagem é comprimida e convertida para WebP.
-- [ ] Imagem aparece no produto e no catálogo.
-- [ ] Trocar imagem remove a antiga do Storage.
-- [ ] Remover imagem funciona.
-- [ ] Arquivo não-imagem é rejeitado.
-- [ ] Arquivo > 12 MB é rejeitado.
-- [ ] Upload com internet instável mostra erro claro.
-- [ ] Imagem quebrada/inexistente não quebra o layout.
+### Checklist: Cadastros - Produtos
 
----
+- [ ] Criar produto com todos os campos
+- [ ] Criar produto com imagem (upload + resize)
+- [ ] Imagem e redimensionada automaticamente
+- [ ] Editar produto existente
+- [ ] Arquivar produto (nao aparece mais no estoque/PDV)
+- [ ] Produto pode ter categoria associada
+- [ ] Remover categoria do produto funciona
 
-## 5. PDV / Vendas
+### Checklist: Cadastros - Categorias
 
-- [ ] Adicionar produto ao carrinho.
-- [ ] Aumentar/diminuir quantidade.
-- [ ] Remover item / limpar carrinho.
-- [ ] Venda rápida (valor livre) funciona.
-- [ ] Pagamento único (dinheiro, pix, débito, crédito).
-- [ ] Pagamento dividido (ex.: metade pix, metade dinheiro).
-- [ ] Cálculo de troco em dinheiro.
-- [ ] Venda no fiado exige cliente identificado.
-- [ ] Finalizar venda baixa o estoque.
-- [ ] Venda aparece na listagem e nos relatórios.
-- [ ] Cancelar venda devolve o estoque.
-- [ ] Cancelar venda duas vezes não devolve estoque duas vezes.
-- [ ] Se a venda falhar no meio, nada é gravado (atomicidade).
-- [ ] Recibo pode ser compartilhado.
+- [ ] Criar categoria com nome e cor
+- [ ] Editar categoria
+- [ ] Excluir categoria (produtos ficam sem categoria)
+- [ ] Nome duplicado na mesma loja mostra erro
+- [ ] Nome duplicado em lojas diferentes e permitido
 
----
+### Checklist: Cadastros - Clientes
 
-## 6. Fiado
+- [ ] Criar cliente com nome
+- [ ] Criar cliente com telefone e CPF
+- [ ] CPF invalido (tamanho diferente de 11) mostra erro
+- [ ] Nome duplicado na mesma loja mostra erro
+- [ ] Editar telefone e CPF de cliente existente
+- [ ] Cliente auto-cadastrado ao vender aparece na lista
 
-- [ ] Venda no fiado cria dívida para o cliente.
-- [ ] Extrato do cliente mostra compras e recebimentos.
-- [ ] Saldo é calculado corretamente.
-- [ ] Registrar recebimento reduz o saldo.
-- [ ] Recebimento com valor inválido é rejeitado.
-- [ ] Cliente sem movimentação mostra estado vazio.
+### Checklist: Cadastros - Variacoes
 
----
+- [ ] Criar grupo de variacao com opcoes
+- [ ] Opcoes podem ser separadas por virgula, ponto-e-virgula ou quebra de linha
+- [ ] Opcoes duplicadas sao removidas automaticamente
+- [ ] Editar grupo de variacao
+- [ ] Excluir grupo de variacao
 
-## 7. Catálogo
+### Checklist: Catalogo Digital
 
-- [ ] Configurar nome, logo, tema, contatos e redes sociais.
-- [ ] Salvar mantém os dados.
-- [ ] Publicar torna o catálogo acessível em `/c/<slug>`.
-- [ ] Slug duplicado mostra erro.
-- [ ] Slug com menos de 3 caracteres é rejeitado.
-- [ ] Catálogo público abre sem login.
-- [ ] Produtos aparecem com imagem e preço.
-- [ ] Modo de estoque (mostrar/ocultar/indisponível) funciona.
-- [ ] WhatsApp e redes sociais abrem corretamente.
-- [ ] Despublicar torna o catálogo inacessível.
-- [ ] Catálogo aparece no sitemap.
+- [ ] Ativar catalogo com slug
+- [ ] Slug minimo de 3 caracteres
+- [ ] Slug duplicado entre lojas mostra erro
+- [ ] Catalogo publico acessivel em `/c/slug`
+- [ ] Catalogo mostra produtos ativos
+- [ ] Modo `hide`: produtos sem estoque nao aparecem
+- [ ] Modo `unavailable`: produtos sem estoque mostram "indisponivel"
+- [ ] Modo `all`: todos os produtos aparecem
+- [ ] Logo aparece corretamente
+- [ ] Links de redes sociais funcionam
+- [ ] Temas visuais aplicam corretamente (azul, noite, vibrante, floresta)
+- [ ] Google Analytics ID e validado (formato `G-XXXXXXXXXX`)
+- [ ] Desativar catalogo torna `/c/slug` inacessivel
 
----
+### Checklist: Fiado
 
-## 8. Assinatura / Bloqueio
+- [ ] Lista de devedores mostra saldo correto
+- [ ] Saldo = vendas com fiado - recebimentos
+- [ ] Registrar recebimento diminui saldo
+- [ ] Historico por cliente mostra vendas e recebimentos
+- [ ] Metodo de pagamento do recebimento e registrado
 
-- [ ] Trial de 14 dias é criado no cadastro.
-- [ ] Loja vencida é redirecionada para `/bloqueado`.
-- [ ] Loja bloqueada só acessa `/bloqueado`, `/assinatura` e `/c/`.
-- [ ] Super admin ativa a loja e o acesso volta.
-- [ ] Reativar loja **não** sobrescreve o plano do cliente.
-- [ ] Super admin altera plano e validade.
+### Checklist: Relatorios
 
----
+- [ ] Relatorio mostra vendas no periodo selecionado
+- [ ] Filtro por data funciona corretamente
+- [ ] Valores em BRL formatados corretamente
 
-## 9. Responsividade
+### Checklist: Ajustes
 
-- [ ] Celular pequeno (360px): tudo legível e clicável.
-- [ ] Celular grande (430px): layout correto.
-- [ ] Tablet (768px): layout correto.
-- [ ] Desktop (1280px+): layout correto.
-- [ ] PDV usável no celular (é o caso de uso principal).
-- [ ] Nenhuma funcionalidade depende só de desktop.
+- [ ] Alterar nome da loja funciona
+- [ ] Nome da loja atualizado aparece em outros lugares
 
----
+## Testes de Isolamento Multi-Tenant
 
-## 10. Tratamento de erros
+Este e o teste mais critico. Execute com duas lojas (Loja A e Loja B):
 
-- [ ] Internet offline mostra mensagem clara.
-- [ ] API indisponível não trava a tela.
-- [ ] Sessão expirada redireciona para login.
-- [ ] Upload falhando mostra erro e permite tentar de novo.
-- [ ] Dados inválidos mostram mensagem amigável (sem stack trace).
-- [ ] Página inexistente mostra 404 amigável.
-- [ ] Erro interno mostra página de erro amigável.
+### Dados
 
----
+1. Loja A: crie produtos, vendas, clientes, categorias
+2. Loja B: crie produtos, vendas, clientes, categorias (diferentes)
 
-## 11. Infraestrutura
+### Verificacoes
 
-- [ ] Deploy na Vercel conclui sem erro.
-- [ ] Domínio próprio abre com HTTPS.
-- [ ] `/api/health` retorna 200.
-- [ ] Variáveis de ambiente corretas em produção.
-- [ ] Login funciona no domínio final.
-- [ ] Catálogo público funciona no domínio final.
-- [ ] Redirect URLs do Supabase incluem o domínio final.
-- [ ] Backups configurados.
+- [ ] **Dashboard**: Loja A so ve vendas da Loja A
+- [ ] **Estoque**: Loja A so ve produtos da Loja A
+- [ ] **Vendas**: Loja A so ve vendas da Loja A
+- [ ] **Clientes**: Loja A so ve clientes da Loja A
+- [ ] **Categorias**: Loja A so ve categorias da Loja A
+- [ ] **Fiado**: Loja A so ve fiado da Loja A
+- [ ] **Catalogo**: Config do catalogo e por loja
 
----
+### Teste de bypass (seguranca)
 
-## 12. Performance
+Com ferramentas de desenvolvedor do browser:
 
-- [ ] Primeira carga da home < 3s em 4G.
-- [ ] Catálogo público carrega rápido.
-- [ ] Imagens otimizadas (WebP, tamanho adequado).
-- [ ] PDV responde rápido ao adicionar itens.
-- [ ] Sem erros no console do navegador.
+- [ ] Tentar submeter formulario com `store_id` de outra loja
+- [ ] Tentar cancelar venda de outra loja (alterar UUID no request)
+- [ ] Tentar editar produto de outra loja
+- [ ] Todas essas tentativas devem falhar silenciosamente ou com erro
 
----
+### Teste via SQL
 
-## Como registrar os testes
+Conecte como usuario da Loja A e execute:
 
-Mantenha um arquivo de evidências (fora do repositório) com:
+```sql
+-- Deve retornar apenas produtos da Loja A
+SELECT * FROM products;
 
-- Data do teste.
-- Ambiente (local / preview / produção).
-- Resultado de cada item.
-- Bugs encontrados e correções.
+-- Deve falhar (RLS impede)
+UPDATE products SET price = 0 WHERE store_id = 'UUID_DA_LOJA_B';
 
-> Repita o checklist completo antes de cada entrega importante.
+-- Deve retornar 0 linhas afetadas
+DELETE FROM sales WHERE store_id = 'UUID_DA_LOJA_B';
+```
+
+## Recomendacoes para Testes Automatizados
+
+### Ferramentas Sugeridas
+
+| Ferramenta | Uso |
+|-----------|-----|
+| Playwright | Testes E2E (fluxos completos) |
+| Vitest | Testes unitarios (validacao, formatacao) |
+
+### Testes unitarios prioritarios
+
+1. `sanitizeText()` - verificar remoção de XSS
+2. `isValidUUID()` - verificar UUIDs validos e invalidos
+3. `isValidPaymentMethod()` - verificar metodos aceitos
+4. `parseDecimal()` - formato brasileiro e internacional
+5. Funcoes de formatacao BRL
+
+### Testes E2E prioritarios
+
+1. Fluxo completo de login -> venda -> verificar estoque
+2. Isolamento multi-tenant (login como Loja A, verificar que nao ve Loja B)
+3. Catalogo publico com diferentes modos de estoque
+4. Rate limiting no login
+
+### Exemplo de setup Playwright
+
+```typescript
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  testDir: './tests',
+  baseURL: 'http://localhost:3000',
+  use: {
+    locale: 'pt-BR',
+    timezoneId: 'America/Sao_Paulo',
+  },
+});
+```
+
+```typescript
+// tests/login.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('login com credenciais validas', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('[name="usuario"]', 'admin');
+  await page.fill('[name="senha"]', 'senha-teste');
+  await page.click('button[type="submit"]');
+  await expect(page).toHaveURL('/');
+});
+
+test('login com credenciais invalidas', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('[name="usuario"]', 'inexistente');
+  await page.fill('[name="senha"]', 'errada');
+  await page.click('button[type="submit"]');
+  await expect(page.locator('text=inválidos')).toBeVisible();
+});
+```

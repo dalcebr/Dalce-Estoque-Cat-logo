@@ -1,175 +1,144 @@
-# VERCEL_SETUP.md
+# Deploy na Vercel
 
-Deploy do **Dalce Estoque** (Next.js 15) na Vercel, do zero até produção com domínio próprio.
+Guia completo para deploy do Dalce Estoque na Vercel.
 
----
+## 1. Conectar Repositorio
 
-## 1. Pré-requisitos
+1. Acesse [vercel.com](https://vercel.com) e faca login
+2. Clique em **Add New > Project**
+3. Importe o repositorio do GitHub
+4. A Vercel detecta automaticamente que e um projeto Next.js
 
-- Repositório no GitHub com o código (veja `docs/GITHUB_SETUP.md`).
-- Projeto Supabase configurado (veja `docs/SUPABASE_SETUP.md`).
-- Conta na Vercel (<https://vercel.com>) — pode entrar com o GitHub.
+## 2. Configurar Variaveis de Ambiente
 
----
+Na tela de importacao (ou em **Settings > Environment Variables**):
 
-## 2. Importar o projeto
+| Variavel | Valor | Ambientes |
+|----------|-------|-----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | Production, Preview, Development |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...` (chave anon) | Production, Preview, Development |
 
-1. Acesse <https://vercel.com/new>.
-2. Em **Import Git Repository**, escolha o repositório do Dalce Estoque.
-   - Se não aparecer, clique em **Adjust GitHub App Permissions** e autorize o repositório.
-3. Em **Configure Project**:
-   - **Framework Preset**: `Next.js` (detectado automaticamente).
-   - **Root Directory**: deixe em branco (o projeto está na raiz).
-   - **Build Command**: `next build` (padrão).
-   - **Output Directory**: `.next` (padrão).
-   - **Install Command**: `npm install` (padrão).
-   - **Node.js Version**: `20.x` ou superior.
-4. **Não clique em Deploy ainda** — primeiro configure as variáveis (próximo passo).
+> **Nota**: Ambas as variaveis tem prefixo `NEXT_PUBLIC_` porque sao usadas tanto no server quanto no client.
 
----
+### Variaveis Opcionais
 
-## 3. Variáveis de ambiente
+Para ambientes de staging/preview, voce pode usar um projeto Supabase separado configurando variaveis diferentes por ambiente.
 
-Ainda na tela de import (ou depois em **Settings → Environment Variables**), adicione:
+## 3. Configuracoes de Build
 
-| Variável | Obrigatória | Onde obter | Ambiente | Exemplo |
-|---|---|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase → Project Settings → API → Project URL | Production, Preview, Development | `https://abcdefgh.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase → Project Settings → API → anon public | Production, Preview, Development | `eyJhbGciOiJIUzI1NiIs...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase → Project Settings → API → service_role | **Somente Production** | `eyJhbGciOiJIUzI1NiIs...` |
-| `NEXT_PUBLIC_APP_URL` | ✅ | Seu domínio final | Production | `https://app.seudominio.com` |
-| `NEXT_PUBLIC_APP_NAME` | ➖ | Você escolhe | Todos | `Dalce Estoque` |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | ➖ | Seu e-mail de suporte | Todos | `suporte@seudominio.com` |
+A Vercel detecta automaticamente:
 
-> ⚠️ **`SUPABASE_SERVICE_ROLE_KEY` nunca deve ser marcada para Preview/Development** se
-> o repositório for público ou compartilhado — previews podem ser acessados por terceiros.
-> Marque apenas **Production**.
+- **Framework Preset**: Next.js
+- **Build Command**: `next build` (default)
+- **Output Directory**: `.next` (default)
+- **Install Command**: `npm install` (default)
+- **Node.js Version**: 20.x (recomendado)
 
-> ⚠️ Toda variável `NEXT_PUBLIC_*` é embutida no bundle do navegador. Nunca coloque
-> segredos com esse prefixo.
+Nenhuma configuracao adicional e necessaria.
 
-Depois de preencher, clique em **Deploy**.
+### Verificar Node.js Version
 
----
+Em **Settings > General > Node.js Version**, selecione `20.x`.
 
-## 4. Primeiro deploy
+## 4. Deploy
 
-A Vercel vai rodar `npm install` e `next build`. Acompanhe os logs.
+Clique em **Deploy**. A Vercel fara o build e deploy automaticamente.
 
-**Resultado esperado:** build verde e uma URL do tipo `https://dalce-estoque.vercel.app`.
+### Build Logs
 
-Se o build falhar:
+Acompanhe o build em **Deployments > [ultimo deploy] > Building**. O build tipico leva 30-60 segundos.
 
-| Erro | Causa | Solução |
-|---|---|---|
-| `Missing NEXT_PUBLIC_SUPABASE_URL` | Variável não configurada | Adicione em Settings → Environment Variables e faça redeploy |
-| `Type error` | Erro de TypeScript | Rode `npm run typecheck` localmente e corrija |
-| `Module not found` | Dependência faltando | Rode `npm install` local e commite o `package-lock.json` |
+## 5. Dominio Personalizado
 
----
+### 5.1 Adicionar dominio
 
-## 5. Domínio próprio
+1. Va em **Settings > Domains**
+2. Adicione seu dominio: `app.dalce.com.br` (exemplo)
+3. A Vercel mostrara os registros DNS necessarios
 
-1. **Settings → Domains → Add**.
-2. Digite o domínio: `app.seudominio.com` (recomendado usar um subdomínio para o app).
-3. A Vercel mostra o registro DNS necessário. Duas opções:
+### 5.2 Configurar DNS
 
-   **Opção A — nameservers da Vercel (mais simples):**
-   - Aponte os nameservers do seu domínio para `ns1.vercel-dns.com` e `ns2.vercel-dns.com`.
-   - A Vercel gerencia todo o DNS.
+Se usando Cloudflare (recomendado), veja [CLOUDFLARE_SETUP.md](./CLOUDFLARE_SETUP.md).
 
-   **Opção B — manter o DNS no Cloudflare (recomendado, veja `docs/CLOUDFLARE_SETUP.md`):**
-   - Adicione um registro `CNAME` apontando `app` → `cname.vercel-dns.com`.
-   - **Importante:** deixe o proxy do Cloudflare como **DNS only** (nuvem cinza) para o
-     domínio do app, ou configure corretamente se usar proxy (ver seção 8).
+Se usando outro provedor DNS:
+- Adicione um registro **CNAME** de `app` apontando para `cname.vercel-dns.com`
+- Ou um registro **A** apontando para `76.76.21.21`
 
-4. Aguarde a propagação (de segundos a algumas horas).
-5. **Resultado esperado:** a Vercel mostra o domínio com o status **Valid Configuration** e
-   o cadeado de HTTPS.
+### 5.3 SSL
 
----
+A Vercel provisiona certificado SSL automaticamente via Let's Encrypt. Se usar Cloudflare, configure SSL como "Full (strict)".
 
-## 6. Ambientes
+## 6. Preview Deployments
 
-A Vercel cria três ambientes automaticamente:
+Cada push para uma branch (que nao seja `main`) gera um preview deployment automatico com URL unica.
 
-| Ambiente | Quando roda | URL | Variáveis |
-|---|---|---|---|
-| **Production** | Push na branch `main` | Domínio próprio | Todas |
-| **Preview** | Push em qualquer outra branch / PR | URL única por deploy | Sem `service_role` |
-| **Development** | `vercel dev` local | `localhost:3000` | Use `.env.local` |
+### Configurar preview com Supabase separado
 
-**Recomendação:** trabalhe em branches (`feat/...`, `fix/...`) e só faça merge na `main`
-quando estiver testado. Cada PR ganha uma URL de preview para validar antes de publicar.
+Para ambientes de preview isolados:
 
----
+1. Crie um projeto Supabase separado para staging
+2. Na Vercel, configure as variaveis por ambiente:
+   - Selecione **Preview** ao adicionar a variavel
+   - Coloque as credenciais do Supabase de staging
 
-## 7. Redirects e rewrites
+## 7. Limites e Performance
 
-O projeto **não precisa** de redirects/rewrites manuais: o roteamento é feito pelo
-App Router do Next.js. O middleware (`src/middleware.ts`) cuida de:
+### Free Tier (Hobby)
 
-- Redirecionar visitantes não autenticados para `/login`.
-- Redirecionar usuários logados que acessam `/login` ou `/cadastro` para a home.
-- Bloquear lojas vencidas/suspensas, liberando apenas `/bloqueado`, `/assinatura` e `/c/`.
+- 100 GB de bandwidth/mes
+- Funcoes serverless: 100 GB-hours/mes
+- Builds: 6000 minutos/mes
+- Sem dominio personalizado (usa `.vercel.app`)
 
-Se um dia precisar de redirects, crie `vercel.json` na raiz:
+### Pro Tier
 
-```json
-{
-  "redirects": [
-    { "source": "/loja", "destination": "/catalogo", "permanent": true }
-  ]
-}
-```
+- 1 TB de bandwidth/mes
+- 1000 GB-hours/mes
+- Builds ilimitados
+- Dominios personalizados
+- Analytics avancado
 
----
+### Otimizacoes
 
-## 8. CORS
+O `next.config.ts` ja inclui:
 
-O app é **same-origin** (frontend e server actions no mesmo domínio), então **não há
-configuração de CORS a fazer**. As chamadas ao Supabase usam a anon key e são protegidas
-por RLS.
+- `reactStrictMode: true` - detecta problemas no desenvolvimento
+- `poweredByHeader: false` - remove header `X-Powered-By: Next.js`
+- Formatos de imagem: WebP e AVIF
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
 
-Se no futuro você expuser uma API pública para terceiros, configure os headers de CORS
-explicitamente no route handler e restrinja as origens permitidas.
+## 8. Monitoramento
 
----
+### Vercel Analytics
 
-## 9. Logs e observabilidade
+Para habilitar analytics:
 
-- **Runtime Logs**: **Deployments → (deploy) → Functions / Logs**. Mostra erros de server
-  actions e route handlers em tempo real.
-- **Build Logs**: **Deployments → (deploy) → Building**.
-- **Health check**: `GET /api/health` retorna `200` (ok) ou `503` (banco indisponível).
-  Configure um monitor externo (UptimeRobot, Better Stack) apontando para essa URL.
-- **Analytics**: **Settings → Analytics** (Web Analytics + Speed Insights) — opcional, útil
-  para medir performance real dos clientes.
+1. Va em **Analytics** no dashboard do projeto
+2. Ative **Web Analytics** (gratuito)
+3. Opcionalmente, ative **Speed Insights** para Core Web Vitals
 
----
+### Logs
 
-## 10. Redeploy e rollback
+- **Runtime Logs**: em tempo real em **Logs** no dashboard
+- **Build Logs**: em cada deployment
 
-**Redeploy** (após mudar variáveis):
-- **Deployments → (deploy desejado) → ⋯ → Redeploy**.
+### Alertas
 
-**Rollback** (produção quebrou):
-- **Deployments → encontre o último deploy bom → ⋯ → Promote to Production**.
-- O rollback é instantâneo e não altera o código no Git.
+Configure alertas em **Settings > Notifications** para:
+- Falhas de build
+- Erros de funcoes serverless
+- Limites de uso
 
-> ⚠️ Rollback de código **não** reverte o banco. Se uma migração SQL quebrou algo,
-> restaure o backup (veja `docs/SUPABASE_SETUP.md`, seção 9).
+## 9. Rollback
 
----
+Se um deploy causar problemas:
 
-## 11. Checklist de produção
+1. Va em **Deployments**
+2. Encontre o deploy anterior que funcionava
+3. Clique nos tres pontos > **Promote to Production**
 
-- [ ] Build verde na `main`.
-- [ ] Todas as variáveis configuradas (Production).
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` **somente** em Production.
-- [ ] Domínio próprio com HTTPS válido.
-- [ ] `NEXT_PUBLIC_APP_URL` apontando para o domínio real.
-- [ ] Redirect URLs do Supabase incluindo o domínio da Vercel.
-- [ ] Health check monitorado.
-- [ ] Logs verificados após o primeiro acesso real.
-- [ ] Teste de login, cadastro e catálogo público no domínio final.
+Isso e instantaneo e nao requer rebuild.
+
+## 10. Variaveis de Ambiente de Referencia
+
+Veja [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) para a lista completa de variaveis.
