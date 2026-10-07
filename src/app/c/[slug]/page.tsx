@@ -16,7 +16,14 @@ async function load(slug: string) {
 }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const d = await load((await params).slug);
-  return { title: d?.name ?? "Catálogo" };
+  if (!d) return { title: "Catálogo não encontrado", robots: { index: false, follow: false } };
+  const desc = d.settings.about ?? d.settings.highlight ?? `Confira os produtos de ${d.name} e peça pelo WhatsApp.`;
+  return {
+    title: d.name,
+    description: desc.slice(0, 160),
+    openGraph: { title: d.name, description: desc.slice(0, 160), type: "website", images: d.settings.logo ? [d.settings.logo] : undefined },
+    alternates: { canonical: `/c/${(await params).slug}` },
+  };
 }
 
 export default async function Vitrine({ params }: { params: Promise<{ slug: string }> }) {
@@ -26,9 +33,26 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
   const digits = (s.phone ?? "").replace(/\D/g, ""), wa = digits ? (digits.length <= 11 ? `55${digits}` : digits) : "";
   const ga = s.analytics_id && /^G-[A-Z0-9]{4,20}$/.test(s.analytics_id) ? s.analytics_id : null;
   const link = "font-semibold underline underline-offset-2";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: d.name,
+    telephone: s.phone ?? undefined,
+    email: s.email ?? undefined,
+    image: s.logo ?? undefined,
+    description: s.about ?? s.highlight ?? undefined,
+    makesOffer: d.products.slice(0, 50).map((p) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Product", name: p.name },
+      price: Number(p.price),
+      priceCurrency: "BRL",
+      availability: p.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    })),
+  };
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-5 pb-12 pt-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {ga && <>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga}`} strategy="afterInteractive" />
         <Script id="ga" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga}');`}</Script>

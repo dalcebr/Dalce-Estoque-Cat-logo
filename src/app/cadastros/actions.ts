@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getStore, num } from "@/lib/store";
+import { logAction } from "@/lib/audit";
 
 const str = (fd: FormData, k: string, max = 120) => String(fd.get(k) ?? "").trim().slice(0, max);
 const esc = (s: string) => s.replace(/[%_\\]/g, "\\$&");
@@ -17,12 +18,17 @@ export async function saveProduct(fd: FormData) {
   if (!s) return;
   if (id) await s.supabase.from("products").update(row).eq("id", id);
   else await s.supabase.from("products").insert({ ...row, store_id: s.storeId });
+  await logAction(s.supabase, s.storeId, id ? "produto.editado" : "produto.criado", name);
   revalidatePath("/cadastros/produtos"); revalidatePath("/estoque");
   redirect("/cadastros/produtos");
 }
 export async function archiveProduct(id: string) {
   const s = await getStore();
-  if (s) await s.supabase.from("products").update({ active: false }).eq("id", id);
+  if (s) {
+    const { data: p } = await s.supabase.from("products").select("name").eq("id", id).maybeSingle();
+    await s.supabase.from("products").update({ active: false }).eq("id", id);
+    await logAction(s.supabase, s.storeId, "produto.arquivado", p?.name ?? id);
+  }
   revalidatePath("/cadastros/produtos"); revalidatePath("/estoque");
   redirect("/cadastros/produtos");
 }
@@ -34,12 +40,17 @@ export async function saveCategory(fd: FormData) {
   if (!s) return;
   const { error } = id ? await s.supabase.from("categories").update({ name, color }).eq("id", id) : await s.supabase.from("categories").insert({ name, color, store_id: s.storeId });
   if (error?.code === "23505") redirect(`/cadastros/categorias/${id || "novo"}?erro=nome`);
+  await logAction(s.supabase, s.storeId, id ? "categoria.editada" : "categoria.criada", name);
   revalidatePath("/cadastros/categorias"); revalidatePath("/cadastros/produtos");
   redirect("/cadastros/categorias");
 }
 export async function deleteCategory(id: string) {
   const s = await getStore();
-  if (s) await s.supabase.from("categories").delete().eq("id", id);
+  if (s) {
+    const { data: c } = await s.supabase.from("categories").select("name").eq("id", id).maybeSingle();
+    await s.supabase.from("categories").delete().eq("id", id);
+    await logAction(s.supabase, s.storeId, "categoria.excluida", c?.name ?? id);
+  }
   revalidatePath("/cadastros/categorias"); revalidatePath("/cadastros/produtos");
   redirect("/cadastros/categorias");
 }
@@ -58,6 +69,7 @@ export async function saveCustomer(fd: FormData) {
     if (ex) redirect(`${here}?erro=nome`);
     await s.supabase.from("customers").insert({ store_id: s.storeId, name, phone: phone || null, cpf: cpf || null });
   }
+  await logAction(s.supabase, s.storeId, id ? "cliente.editado" : "cliente.criado", name);
   revalidatePath("/cadastros/clientes");
   redirect("/cadastros/clientes");
 }
@@ -70,12 +82,17 @@ export async function saveVariation(fd: FormData) {
   if (!s) return;
   if (id) await s.supabase.from("variation_groups").update({ name, options }).eq("id", id);
   else await s.supabase.from("variation_groups").insert({ name, options, store_id: s.storeId });
+  await logAction(s.supabase, s.storeId, id ? "variacao.editada" : "variacao.criada", name);
   revalidatePath("/cadastros/variacoes");
   redirect("/cadastros/variacoes");
 }
 export async function deleteVariation(id: string) {
   const s = await getStore();
-  if (s) await s.supabase.from("variation_groups").delete().eq("id", id);
+  if (s) {
+    const { data: g } = await s.supabase.from("variation_groups").select("name").eq("id", id).maybeSingle();
+    await s.supabase.from("variation_groups").delete().eq("id", id);
+    await logAction(s.supabase, s.storeId, "variacao.excluida", g?.name ?? id);
+  }
   revalidatePath("/cadastros/variacoes");
   redirect("/cadastros/variacoes");
 }

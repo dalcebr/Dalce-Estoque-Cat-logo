@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { getStore } from "@/lib/store";
 import { slugify, THEMES, type CatalogSettings } from "@/lib/catalog";
+import { logAction } from "@/lib/audit";
 
 type Result = { ok: true; slug: string } | { error: string };
 const handle = (v: string) => v.trim().replace(/^https?:\/\/(www\.)?(instagram|facebook)\.com\//i, "").replace(/^@/, "").replace(/\/+$/, "");
@@ -29,6 +30,7 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
     theme: THEMES.some((t) => t.k === i.theme) ? i.theme : "azul", updated_at: new Date().toISOString(),
   });
   if (error) return { error: error.code === "23505" ? "Esse link já está em uso. Escolha outro." : "Não foi possível salvar o catálogo." };
+  await logAction(s.supabase, s.storeId, "catalogo.salvo", `${i.active ? "ativo" : "inativo"} · /c/${slug}`);
   revalidatePath("/c/[slug]", "page");
   return { ok: true, slug };
 }

@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Mail } from "lucide-react";
 import LoginForm from "./LoginForm";
+
 export default function LoginPage() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center bg-page px-6">
@@ -10,6 +12,10 @@ export default function LoginPage() {
         <h1 className="text-4xl font-bold text-ink">Dalce Estoque</h1>
         <p className="mt-2 text-muted">Seu negócio mais organizado e lucrativo</p>
         <LoginForm />
+        <p className="mt-6 text-sm text-soft">
+          Ainda não tem conta?{" "}
+          <Link href="/cadastro" className="font-bold text-brand">Criar loja grátis</Link>
+        </p>
       </div>
     </main>
   );
