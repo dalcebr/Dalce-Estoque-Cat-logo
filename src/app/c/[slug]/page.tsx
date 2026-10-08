@@ -51,6 +51,7 @@ export type CatalogProduct = {
   material: string | null;
   featured: boolean;
   created_at: string;
+  sold_count: number;
 };
 
 export type Benefit = {
@@ -80,7 +81,7 @@ export type CatalogSettings = {
 export type CatalogData = {
   name: string;
   settings: CatalogSettings;
-  categories: { name: string; color: string }[];
+  categories: { name: string; color: string; image: string | null }[];
   collections: string[];
   products: CatalogProduct[];
 };
@@ -114,6 +115,11 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
   const products = d.products.map((p) => ({
     ...p,
     image: p.image ? resolveImageUrl(supabaseUrl, "product-images", p.image) : null,
+  }));
+
+  const categories = (d.categories ?? []).map((c) => ({
+    ...c,
+    image: c.image ? resolveImageUrl(supabaseUrl, "product-images", c.image) : null,
   }));
 
   const raw = d.settings as unknown as Record<string, unknown>;
@@ -152,7 +158,7 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
         storeName={storeName}
         settings={settings}
         products={products}
-        categories={d.categories ?? []}
+        categories={categories}
       />
     </div>
   );

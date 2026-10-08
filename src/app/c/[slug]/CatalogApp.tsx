@@ -6,6 +6,8 @@ import { fontStack, type CatalogColors, type CatalogFonts } from "@/lib/catalog"
 
 /* ─── types ─── */
 type CartItem = { product: CatalogProduct; qty: number };
+type Category = { name: string; color: string; image: string | null };
+type SortKey = "relevance" | "price_desc" | "price_asc" | "best_sellers" | "newest";
 type View =
   | { type: "home" }
   | { type: "products"; category?: string }
@@ -70,6 +72,14 @@ function ChevronLeftIcon({ size = 20 }: { size?: number }) { return <Ico d="M15 
 function PlusIcon() { return <Ico d="M12 5v14M5 12h14" size={18} />; }
 function MinusIcon() { return <Ico d="M5 12h14" size={18} />; }
 function TrashIcon() { return <Ico d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" size={18} />; }
+function FilterIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 6h16M7 12h10M10 18h4" />
+    </svg>
+  );
+}
+function CheckIcon({ size = 16 }: { size?: number }) { return <Ico d="M20 6L9 17l-5-5" size={size} sw={2.5} />; }
 
 /* Benefit icons — mapped by key string from settings */
 function BenefitIcon({ name, size = 40, color = "#000" }: { name: string; size?: number; color?: string }) {
@@ -220,24 +230,28 @@ function ProductGrid({
 function CategoryChips({
   categories, colors, bodyFont, active, onSelect,
 }: {
-  categories: { name: string; color: string }[];
+  categories: Category[];
   colors: CatalogColors;
   bodyFont: string;
   active?: string;
   onSelect: (name?: string) => void;
 }) {
   if (categories.length === 0) return null;
-  const chip = (label: string, value: string | undefined) => {
+  const chip = (label: string, value: string | undefined, image?: string | null) => {
     const on = active === value;
     return (
       <button key={label} onClick={() => onSelect(value)}
         style={{
-          flex: "0 0 auto", padding: "8px 16px", borderRadius: 40, cursor: "pointer",
+          flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 8,
+          padding: image ? "5px 16px 5px 5px" : "8px 16px", borderRadius: 40, cursor: "pointer",
           border: `1px solid ${on ? colors.filter_active_border : colors.filter_border}`,
           background: on ? colors.filter_active_bg : colors.filter_bg,
           color: on ? colors.filter_active_text : colors.filter_text,
           fontSize: 13, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap",
         }}>
+        {image && (
+          <img src={image} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+        )}
         {label}
       </button>
     );
@@ -245,18 +259,26 @@ function CategoryChips({
   return (
     <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
       {chip("Todos", undefined)}
-      {categories.map((c) => chip(c.name, c.name))}
+      {categories.map((c) => chip(c.name, c.name, c.image))}
     </div>
   );
 }
 
 /* ═══ PRODUCTS LIST ═══ */
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "relevance", label: "Relevância" },
+  { key: "price_desc", label: "Maior preço" },
+  { key: "price_asc", label: "Menor preço" },
+  { key: "best_sellers", label: "Mais vendidos" },
+  { key: "newest", label: "Novidades" },
+];
+
 function ProductsListView({
   products, categories, colors, headingFont, cardFont, bodyFont, wishlist,
   initialCategory, onView, onAddCart, onToggleWish,
 }: {
   products: CatalogProduct[];
-  categories: { name: string; color: string }[];
+  categories: Category[];
   colors: CatalogColors;
   headingFont: string;
   cardFont: string;
@@ -270,35 +292,112 @@ function ProductsListView({
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | undefined>(initialCategory);
   const [focus, setFocus] = useState(false);
+  const [sort, setSort] = useState<SortKey>("relevance");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [filterOpen]);
+
   const filtered = products.filter((p) => {
     if (cat && p.category !== cat) return false;
     if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
 
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sort) {
+      case "price_desc": return b.price - a.price;
+      case "price_asc": return a.price - b.price;
+      case "best_sellers": return (b.sold_count ?? 0) - (a.sold_count ?? 0);
+      case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      default: return 0;
+    }
+  });
+
+  const activeSort = SORT_OPTIONS.find((o) => o.key === sort)!;
+
   return (
     <section style={{ padding: "0 16px", background: colors.products_section_bg }}>
       <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>
         {cat || "Todos os produtos"}
       </h2>
-      <input
-        type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="O que você procura ?" aria-label="Pesquisar produtos"
-        onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
-        style={{
-          width: "100%", height: 42, borderRadius: 40,
-          border: `1px solid ${focus ? colors.search_border_focus : colors.search_border}`,
-          background: colors.search_bg,
-          padding: "0 18px", fontSize: 15, color: colors.search_text, outline: "none", marginBottom: 16, boxSizing: "border-box",
-          fontFamily: bodyFont,
-        }}
-      />
+
+      {/* busca + filtro */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <input
+          type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="O que você procura ?" aria-label="Pesquisar produtos"
+          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+          style={{
+            flex: 1, minWidth: 0, height: 42, borderRadius: 40,
+            border: `1px solid ${focus ? colors.search_border_focus : colors.search_border}`,
+            background: colors.search_bg,
+            padding: "0 18px", fontSize: 15, color: colors.search_text, outline: "none", boxSizing: "border-box",
+            fontFamily: bodyFont,
+          }}
+        />
+        <div ref={filterRef} style={{ position: "relative", flexShrink: 0 }}>
+          <button
+            onClick={() => setFilterOpen((v) => !v)}
+            aria-label="Filtrar e ordenar"
+            style={{
+              width: 42, height: 42, borderRadius: 12, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              border: `1px solid ${sort !== "relevance" ? colors.filter_active_border : colors.filter_border}`,
+              background: sort !== "relevance" ? colors.filter_active_bg : colors.filter_bg,
+              color: sort !== "relevance" ? colors.filter_active_text : colors.filter_text,
+            }}
+          >
+            <FilterIcon size={20} />
+          </button>
+          {filterOpen && (
+            <div style={{
+              position: "absolute", top: 50, right: 0, zIndex: 50, minWidth: 190,
+              background: colors.card_bg, border: `1px solid ${colors.card_border}`,
+              borderRadius: 14, padding: 6, boxShadow: `0 8px 24px ${withAlpha(colors.card_shadow, 25)}`,
+            }}>
+              {SORT_OPTIONS.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => { setSort(o.key); setFilterOpen(false); }}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 10, padding: "10px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                    background: sort === o.key ? colors.filter_active_bg : "transparent",
+                    color: sort === o.key ? colors.filter_active_text : colors.filter_text,
+                    fontSize: 13, fontWeight: 600, fontFamily: bodyFont, textAlign: "left",
+                  }}
+                >
+                  {o.label}
+                  {sort === o.key && <CheckIcon size={15} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div style={{ margin: "0 -16px 20px" }}>
         <CategoryChips categories={categories} colors={colors} bodyFont={bodyFont} active={cat} onSelect={setCat} />
       </div>
-      {filtered.length === 0 ? (
+
+      {sorted.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.text_secondary, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>Nenhum produto encontrado.</p>
       ) : (
-        <ProductGrid products={filtered} colors={colors} cardFont={cardFont} wishlist={wishlist} onView={onView} onAddCart={onAddCart} onToggleWish={onToggleWish} />
+        <>
+          {sort !== "relevance" && (
+            <p style={{ fontFamily: bodyFont, fontSize: 12, color: colors.text_muted, marginBottom: 12 }}>
+              Ordenado por: <strong style={{ color: colors.text_secondary }}>{activeSort.label}</strong>
+            </p>
+          )}
+          <ProductGrid products={sorted} colors={colors} cardFont={cardFont} wishlist={wishlist} onView={onView} onAddCart={onAddCart} onToggleWish={onToggleWish} />
+        </>
       )}
     </section>
   );
@@ -496,7 +595,7 @@ export default function CatalogApp({
   storeName: string;
   settings: CatalogSettings;
   products: CatalogProduct[];
-  categories: { name: string; color: string }[];
+  categories: Category[];
 }) {
   const fonts: CatalogFonts = settings.fonts;
   const f1 = fontStack(fonts.font_1);
@@ -616,7 +715,7 @@ export default function CatalogApp({
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button onClick={() => setView({ type: "products" })} aria-label="Pesquisar" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: C.header_search_icon }}><SearchIcon size={26} /></button>
           <button onClick={() => setView({ type: "wishlist" })} aria-label="Favoritos" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: wishlist.length > 0 ? C.header_wish_active : C.header_wish_icon }}>
-            <HeartIcon size={26} filled={wishlist.length > 0} />
+            <HeartIcon size={26} filled={false} />
             {wishlist.length > 0 && (
               <span style={{ position: "absolute", top: -6, right: -8, fontSize: 10, fontWeight: 700, background: C.header_wish_badge_bg, color: C.header_wish_badge_text, borderRadius: "50%", minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>{wishlist.length}</span>
             )}
@@ -677,7 +776,10 @@ export default function CatalogApp({
                 <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollbarWidth: "none" }}>
                   {categories.map((c) => (
                     <button key={c.name} onClick={() => setView({ type: "products", category: c.name })}
-                      style={{ flex: "0 0 auto", padding: "10px 18px", borderRadius: 40, cursor: "pointer", border: `1px solid ${C.category_border}`, background: C.category_bg, color: C.category_text, fontSize: 14, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap" }}>
+                      style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 8, padding: c.image ? "5px 18px 5px 5px" : "10px 18px", borderRadius: 40, cursor: "pointer", border: `1px solid ${C.category_border}`, background: C.category_bg, color: C.category_text, fontSize: 14, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap" }}>
+                      {c.image && (
+                        <img src={c.image} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                      )}
                       {c.name}
                     </button>
                   ))}
