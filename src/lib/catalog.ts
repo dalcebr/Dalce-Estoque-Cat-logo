@@ -1,9 +1,3 @@
-export const THEMES = [
-  { k: "azul", n: "Azul", colors: ["#1d4ed8", "#93b4f5"] },
-  { k: "noite", n: "Noite", colors: ["#16161d", "#facc15"] },
-  { k: "vibrante", n: "Vibrante", colors: ["#ec4899", "#0891b2", "#10b981"] },
-  { k: "floresta", n: "Floresta", colors: ["#15803d", "#bbf7d0"] },
-] as const;
 export type StockMode = "all" | "hide" | "unavailable";
 
 export type Benefit = {
@@ -12,31 +6,59 @@ export type Benefit = {
   description: string;
 };
 
+/**
+ * Cores personalizáveis de cada elemento do catálogo.
+ * Cada chave corresponde a um elemento visual da vitrine.
+ */
+export type CatalogColors = {
+  page_bg: string;        // fundo da página
+  card_bg: string;        // fundo do card de produto
+  card_text: string;      // texto do card (nome/preço)
+  store_name: string;     // texto do nome da loja
+  heading: string;        // títulos de seção
+  body_text: string;      // textos gerais
+  button_bg: string;      // fundo dos botões
+  button_text: string;    // texto dos botões
+  header_bg: string;      // fundo do cabeçalho
+  footer_bg: string;      // fundo do rodapé
+};
+
+/**
+ * Fontes do catálogo. Duas fontes disponíveis; cada bloco de texto
+ * escolhe qual usar (permite mesclar).
+ */
+export type FontKey = "inter" | "poppins" | "playfair" | "montserrat" | "lora" | "roboto";
+
+export type CatalogFonts = {
+  font_1: FontKey;        // fonte 1
+  font_2: FontKey;        // fonte 2
+  store_name_font: 1 | 2; // fonte do nome da loja
+  heading_font: 1 | 2;    // fonte dos títulos
+  card_font: 1 | 2;       // fonte do texto do card
+  body_font: 1 | 2;       // fonte dos textos gerais
+};
+
 export type CatalogSettings = {
   active: boolean;
   slug: string;
-  logo: string;
+  store_name: string;
   phone: string;
   email: string;
-  stock_mode: StockMode;
   instagram: string;
-  facebook: string;
-  analytics_id: string;
-  highlight: string;
-  top_text: string;
-  about: string;
-  theme: string;
-  // New customization fields
-  primary_color: string;
-  font_family: string;
+  stock_mode: StockMode;
+  // Banner principal
   hero_title: string;
   hero_subtitle: string;
   hero_description: string;
   hero_image: string;
   hero_button_text: string;
+  // Benefícios
   benefits: Benefit[];
+  // Aparência
+  colors: CatalogColors;
+  fonts: CatalogFonts;
   dark_mode_enabled: boolean;
-  footer_text: string;
+  // WhatsApp
   whatsapp_message: string;
 };
 
@@ -51,20 +73,78 @@ export const BENEFIT_ICONS = [
   { k: "gift", n: "Presente" },
 ] as const;
 
+export const FONTS: { k: FontKey; n: string; stack: string }[] = [
+  { k: "inter", n: "Inter", stack: "var(--font-inter), Arial, Helvetica, sans-serif" },
+  { k: "poppins", n: "Poppins", stack: "var(--font-poppins), Arial, Helvetica, sans-serif" },
+  { k: "montserrat", n: "Montserrat", stack: "var(--font-montserrat), Arial, Helvetica, sans-serif" },
+  { k: "roboto", n: "Roboto", stack: "var(--font-roboto), Arial, Helvetica, sans-serif" },
+  { k: "playfair", n: "Playfair Display", stack: "var(--font-playfair), Georgia, serif" },
+  { k: "lora", n: "Lora", stack: "var(--font-lora), Georgia, serif" },
+];
+
+export const fontStack = (k: FontKey): string =>
+  FONTS.find((f) => f.k === k)?.stack ?? FONTS[0].stack;
+
+export const COLOR_FIELDS: { k: keyof CatalogColors; n: string }[] = [
+  { k: "page_bg", n: "Fundo da página" },
+  { k: "header_bg", n: "Fundo do cabeçalho" },
+  { k: "card_bg", n: "Fundo do card" },
+  { k: "card_text", n: "Texto do card" },
+  { k: "store_name", n: "Nome da loja" },
+  { k: "heading", n: "Títulos" },
+  { k: "body_text", n: "Textos gerais" },
+  { k: "button_bg", n: "Fundo dos botões" },
+  { k: "button_text", n: "Texto dos botões" },
+  { k: "footer_bg", n: "Fundo do rodapé" },
+];
+
+export const DEFAULT_COLORS: CatalogColors = {
+  page_bg: "#FFFFFF",
+  card_bg: "#F7F7F7",
+  card_text: "#111111",
+  store_name: "#111111",
+  heading: "#111111",
+  body_text: "#444444",
+  button_bg: "#C9852B",
+  button_text: "#FFFFFF",
+  header_bg: "#FFFFFF",
+  footer_bg: "#F7F7F7",
+};
+
+export const DEFAULT_FONTS: CatalogFonts = {
+  font_1: "inter",
+  font_2: "playfair",
+  store_name_font: 1,
+  heading_font: 2,
+  card_font: 1,
+  body_font: 1,
+};
+
 export const DEFAULT_BENEFITS: Benefit[] = [
   { icon: "headphones", title: "Atendimento 24h", description: "De qualidade" },
   { icon: "truck", title: "Envio rápido", description: "Para todo brasil" },
 ];
 
 export const DEFAULTS: CatalogSettings = {
-  active: false, slug: "", logo: "", phone: "", email: "", stock_mode: "all",
-  instagram: "", facebook: "", analytics_id: "", highlight: "", top_text: "", about: "", theme: "azul",
-  primary_color: "#C9852B", font_family: "Inter",
-  hero_title: "", hero_subtitle: "", hero_description: "", hero_image: "", hero_button_text: "VER PRODUTOS",
+  active: false,
+  slug: "",
+  store_name: "",
+  phone: "",
+  email: "",
+  instagram: "",
+  stock_mode: "all",
+  hero_title: "",
+  hero_subtitle: "",
+  hero_description: "",
+  hero_image: "",
+  hero_button_text: "VER PRODUTOS",
   benefits: DEFAULT_BENEFITS,
-  dark_mode_enabled: true, footer_text: "", whatsapp_message: "Olá! Gostaria de fazer um pedido:",
+  colors: DEFAULT_COLORS,
+  fonts: DEFAULT_FONTS,
+  dark_mode_enabled: true,
+  whatsapp_message: "Olá! Gostaria de fazer um pedido:",
 };
 
 export const slugify = (s: string) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30);

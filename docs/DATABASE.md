@@ -227,26 +227,36 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `store_id` | uuid | NOT NULL | | PK, FK para `stores(id)` ON DELETE CASCADE |
 | `active` | boolean | NOT NULL | `false` | Catalogo ativo? |
 | `slug` | text | NULL | | Link personalizado (unico) |
-| `logo` | text | NULL | | Logo base64 |
-| `phone` | text | NULL | | Telefone |
+| `store_name` | text | NULL | | Nome da loja exibido no catalogo |
+| `phone` | text | NULL | | Numero / WhatsApp |
 | `email` | text | NULL | | Email de contato |
 | `stock_mode` | text | NOT NULL | `'all'` | Modo de exibicao de estoque |
 | `instagram` | text | NULL | | Username Instagram |
-| `facebook` | text | NULL | | Username Facebook |
-| `analytics_id` | text | NULL | | Google Analytics ID |
-| `highlight` | text | NULL | | Texto de destaque |
-| `top_text` | text | NULL | | Texto superior |
-| `about` | text | NULL | | Sobre a loja |
-| `theme` | text | NOT NULL | `'azul'` | Tema visual |
+| `hero_title` | text | NULL | | Titulo do banner principal |
+| `hero_subtitle` | text | NULL | | Subtitulo do banner |
+| `hero_description` | text | NULL | | Descricao do banner |
+| `hero_image` | text | NULL | | Imagem do banner (storage path) |
+| `hero_button_text` | text | NOT NULL | `'VER PRODUTOS'` | Texto do botao do banner |
+| `benefits` | jsonb | NOT NULL | `[]` | Beneficios (ate 4): `{icon,title,description}` |
+| `colors` | jsonb | NOT NULL | (ver abaixo) | Cores de cada elemento |
+| `fonts` | jsonb | NOT NULL | (ver abaixo) | Fonte 1, fonte 2 e onde cada uma e usada |
+| `dark_mode_enabled` | boolean | NOT NULL | `true` | Exibe botao de modo escuro |
+| `whatsapp_message` | text | NOT NULL | `'Ola! Gostaria de fazer um pedido:'` | Mensagem inicial do pedido |
 | `updated_at` | timestamptz | NOT NULL | `now()` | Ultima atualizacao |
 
 **Constraints**:
 - `slug ~ '^[a-z0-9-]{3,30}$'`
 - `stock_mode IN ('all', 'hide', 'unavailable')`
-- `catalog_logo_size`: `logo IS NULL OR length(logo) < 512000`
 - `slug` UNIQUE
 
 **RLS**: `catalogo da loja` - ALL onde `store_id = current_store_id()`
+
+**`colors` (JSONB)** - chaves: `page_bg`, `header_bg`, `card_bg`, `card_text`,
+`store_name`, `heading`, `body_text`, `button_bg`, `button_text`, `footer_bg`.
+
+**`fonts` (JSONB)** - chaves: `font_1`, `font_2` (valores: `inter`, `poppins`,
+`montserrat`, `roboto`, `playfair`, `lora`) e `store_name_font`, `heading_font`,
+`card_font`, `body_font` (valores: `1` ou `2`).
 
 ---
 
@@ -358,12 +368,3 @@ Valores aceitos em `catalog_settings.stock_mode`:
 - `all` - Mostra todos os produtos
 - `hide` - Esconde produtos sem estoque
 - `unavailable` - Mostra como "indisponivel"
-
-### Temas do catalogo
-
-Valores aceitos em `catalog_settings.theme`:
-
-- `azul` - Tema azul (padrao)
-- `noite` - Tema escuro com amarelo
-- `vibrante` - Tema colorido (rosa, ciano, verde)
-- `floresta` - Tema verde

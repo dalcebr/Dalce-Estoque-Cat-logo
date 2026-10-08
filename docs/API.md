@@ -124,26 +124,37 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
   {
     active: boolean;       // Catalogo ativo?
     slug: string;          // Link personalizado (3-30 chars, lowercase alfanumerico)
-    logo: string;          // Logo em base64 (max 300KB)
-    phone: string;         // Telefone (max 20 chars)
+    store_name: string;    // Nome da loja exibido no catalogo (max 80 chars)
+    phone: string;         // Numero / WhatsApp (max 20 chars)
     email: string;         // Email de contato
-    stock_mode: "all" | "hide" | "unavailable";  // Modo de exibicao de estoque
     instagram: string;     // Username Instagram
-    facebook: string;      // Username Facebook
-    analytics_id: string;  // Google Analytics ID (formato G-XXXXXXXXXX)
-    highlight: string;     // Destaque (max 120 chars)
-    top_text: string;      // Texto superior (max 500 chars)
-    about: string;         // Sobre a loja (max 1500 chars)
-    theme: string;         // Tema: "azul" | "noite" | "vibrante" | "floresta"
+    stock_mode: "all" | "hide" | "unavailable";  // Modo de exibicao de estoque
+    hero_title: string;    // Titulo do banner (max 80 chars)
+    hero_subtitle: string; // Subtitulo do banner (max 80 chars)
+    hero_description: string; // Descricao do banner (max 200 chars)
+    hero_image: string;    // Imagem do banner (storage path ou base64)
+    hero_button_text: string; // Texto do botao (max 40 chars)
+    benefits: Array<{ icon: string; title: string; description: string }>; // ate 4
+    colors: {              // Cores de cada elemento (hex #RRGGBB)
+      page_bg, header_bg, card_bg, card_text, store_name,
+      heading, body_text, button_bg, button_text, footer_bg
+    };
+    fonts: {               // Fonte 1, fonte 2 e onde cada uma e usada
+      font_1, font_2,      // "inter" | "poppins" | "montserrat" | "roboto" | "playfair" | "lora"
+      store_name_font, heading_font, card_font, body_font  // 1 | 2
+    };
+    dark_mode_enabled: boolean; // Exibe botao de modo escuro
+    whatsapp_message: string;   // Mensagem inicial do pedido (max 300 chars)
   }
   ```
 - **Retorno**: `{ ok: true, slug: string }` ou `{ error: string }`
 - **Validacoes**:
   - Slug: minimo 3 caracteres se ativo
-  - Logo: deve comecar com `data:image/` e ter < 300KB
+  - Imagem do banner: storage path valido ou base64 < 300KB
   - Email: formato basico de email
-  - Analytics ID: formato `G-XXXXXXXXXX`
-  - Redes sociais: `^[A-Za-z0-9._-]{0,60}$`
+  - Instagram: `^[A-Za-z0-9._-]{0,60}$`
+  - Cores: cada valor deve ser `#RRGGBB`
+  - Fontes: valores dentro da lista permitida; slots 1 ou 2
 - **Comportamento**: Upsert em `catalog_settings`
 
 ## Cadastros

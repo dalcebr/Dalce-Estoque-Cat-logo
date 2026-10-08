@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, ChevronRight, ExternalLink, Eye, EyeOff, ImagePlus, Info, Palette, Save, Store, Sun, Moon, Type, MessageCircle, Image, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2 } from "lucide-react";
+import { Check, ExternalLink, Eye, EyeOff, Info, Image, Save, Sun, Moon, MessageCircle, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2, Palette, Type } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { saveCatalog } from "@/app/catalogo/actions";
-import { THEMES, BENEFIT_ICONS, DEFAULT_BENEFITS, type CatalogSettings, type StockMode, type Benefit } from "@/lib/catalog";
+import {
+  BENEFIT_ICONS, DEFAULT_BENEFITS, COLOR_FIELDS, FONTS,
+  type CatalogSettings, type StockMode, type Benefit, type CatalogColors, type CatalogFonts,
+} from "@/lib/catalog";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { uploadImage, resolveImageUrl } from "@/lib/storage";
 
@@ -20,8 +23,7 @@ const OPTS: { k: StockMode; n: string; s: string; Icon: typeof Eye }[] = [
   { k: "unavailable", n: "Exibir como indisponível", s: "Aparece, mas sem comprar", Icon: Info },
 ];
 
-const LOGO_BUCKET = "catalog-logos";
-const LOGO_MAX_PX = 256;
+const HERO_BUCKET = "catalog-logos";
 const HERO_MAX_PX = 1200;
 
 const ICON_MAP: Record<string, typeof Headphones> = {
@@ -32,17 +34,14 @@ const ICON_MAP: Record<string, typeof Headphones> = {
 export default function CatalogForm({ initial, open, storeId }: { initial: CatalogSettings; open: boolean; storeId: string }) {
   const [v, setV] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [logoUploading, setLogoUploading] = useState(false);
   const [heroUploading, setHeroUploading] = useState(false);
   const [msg, setMsg] = useState<{ t: string; err?: boolean } | null>(null);
-  const [themes, setThemes] = useState(false);
   const [host, setHost] = useState("");
-  const file = useRef<HTMLInputElement>(null);
   const heroFile = useRef<HTMLInputElement>(null);
   useEffect(() => setHost(location.host), []);
   const set = <K extends keyof CatalogSettings>(k: K, x: CatalogSettings[K]) => setV((s) => ({ ...s, [k]: x }));
-  const theme = THEMES.find((t) => t.k === v.theme) ?? THEMES[0];
-  const sw = (cols: readonly string[]) => <span className="flex">{cols.map((c) => <i key={c} className="h-6 w-6 first:rounded-l-md last:rounded-r-md" style={{ background: c }} />)}</span>;
+  const setColor = (k: keyof CatalogColors, x: string) => setV((s) => ({ ...s, colors: { ...s.colors, [k]: x } }));
+  const setFont = <K extends keyof CatalogFonts>(k: K, x: CatalogFonts[K]) => setV((s) => ({ ...s, fonts: { ...s.fonts, [k]: x } }));
 
   // Benefits helpers
   const benefits: Benefit[] = Array.isArray(v.benefits) && v.benefits.length > 0 ? v.benefits : DEFAULT_BENEFITS;
@@ -56,9 +55,7 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
     if (benefits.length >= 4) return;
     setBenefits([...benefits, { icon: "star", title: "", description: "" }]);
   };
-  const removeBenefit = (idx: number) => {
-    setBenefits(benefits.filter((_, i) => i !== idx));
-  };
+  const removeBenefit = (idx: number) => setBenefits(benefits.filter((_, i) => i !== idx));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -73,30 +70,8 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
     <main className="mx-auto min-h-dvh max-w-md bg-page px-5 pb-48 pt-5">
       <PageHeader eyebrow="Ajustes · Catálogo" title="Como sua loja aparece?" back="/" />
 
-      {/* Logo */}
-      <section className="mt-6 grid min-h-40 place-items-center rounded-[28px] bg-line/50 p-5">
-        {v.logo && <img src={resolveImageUrl(supabaseUrl, LOGO_BUCKET, v.logo)} alt="Logo da loja" className="mb-3 size-20 rounded-2xl bg-surface object-contain" />}
-        <div className="flex gap-2">
-          <button disabled={logoUploading} onClick={() => file.current?.click()} className="flex items-center gap-2 rounded-2xl bg-surface px-5 py-3.5 text-lg font-semibold text-brand disabled:opacity-60"><ImagePlus size={22} />{logoUploading ? "Enviando..." : v.logo ? "Trocar logo" : "Adicionar logo"}</button>
-          {v.logo && <button onClick={() => set("logo", "")} className="rounded-2xl bg-surface px-4 py-3.5 font-semibold text-red-700">Remover</button>}
-        </div>
-        <input ref={file} type="file" accept="image/*" hidden onChange={async (e) => {
-          const f = e.target.files?.[0];
-          if (f) {
-            setLogoUploading(true);
-            try {
-              const supabase = createBrowserSupabase();
-              const path = await uploadImage(supabase, LOGO_BUCKET, storeId, f, LOGO_MAX_PX);
-              set("logo", path);
-            } catch (err) { console.error("Logo upload failed", err); }
-            finally { setLogoUploading(false); }
-          }
-          e.target.value = "";
-        }} />
-      </section>
-
       {/* Ativar */}
-      <button role="switch" aria-checked={v.active} onClick={() => set("active", !v.active)} className="mt-5 flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-left">
+      <button role="switch" aria-checked={v.active} onClick={() => set("active", !v.active)} className="mt-6 flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-left">
         <span className="flex-1 leading-tight"><b className="block text-xl font-extrabold">Ativar catálogo</b><span className="text-soft">Sua vitrine fica visível na internet</span></span>
         <span className={`h-9 w-16 shrink-0 rounded-full p-1 transition-colors ${v.active ? "bg-brand" : "bg-line"}`}><span className={`block size-7 rounded-full bg-white shadow transition-transform ${v.active ? "translate-x-7" : ""}`} /></span>
       </button>
@@ -106,10 +81,11 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
       <Prefix p="/c/"><input value={v.slug} onChange={(e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="nome-da-sua-loja" maxLength={30} autoCapitalize="none" className={bare} /></Prefix>
       <p className="mt-2 break-all px-1 text-sm text-soft">https://{host}/c/{v.slug || "seu-link"}{open && initial.slug && <> · <Link href={`/c/${initial.slug}`} target="_blank" className="inline-flex items-center gap-1 font-bold text-brand">Abrir <ExternalLink size={14} /></Link></>}</p>
 
-      <Sep t="Contato" />
-      <Link href="/ajustes/loja" className="flex items-center gap-4 rounded-3xl border border-line bg-surface p-4"><span className="grid size-12 place-items-center rounded-2xl bg-page text-brand"><Store size={22} /></span><b className="flex-1 text-xl font-extrabold">Informações da Loja</b><ChevronRight className="text-soft/70" /></Link>
-      <Lbl t="Telefone · WhatsApp" /><input value={v.phone} onChange={(e) => set("phone", e.target.value)} inputMode="tel" placeholder="(11) 99999-9999" className={box} />
-      <Lbl t="E-mail" /><input value={v.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="contato@sualoja.com" className={box} />
+      <Sep t="Dados da loja" />
+      <Lbl t="Nome da loja" /><input value={v.store_name} onChange={(e) => set("store_name", e.target.value)} maxLength={80} placeholder="Ex: Dalce Joias" className={box} />
+      <Lbl t="E-mail da loja" /><input value={v.email} onChange={(e) => set("email", e.target.value)} type="email" placeholder="contato@sualoja.com" className={box} />
+      <Lbl t="Número" /><input value={v.phone} onChange={(e) => set("phone", e.target.value)} inputMode="tel" placeholder="(11) 99999-9999" className={box} />
+      <Lbl t="Instagram" /><Prefix p="instagram.com/"><input value={v.instagram} onChange={(e) => set("instagram", e.target.value)} autoCapitalize="none" className={bare} /></Prefix>
 
       <Sep t="Produto sem estoque" />
       <div className="space-y-2.5">
@@ -121,23 +97,12 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
           </button>); })}
       </div>
 
-      <Sep t="Redes sociais" />
-      <Lbl t="Instagram" /><Prefix p="instagram.com/"><input value={v.instagram} onChange={(e) => set("instagram", e.target.value)} autoCapitalize="none" className={bare} /></Prefix>
-      <Lbl t="Facebook" /><Prefix p="facebook.com/"><input value={v.facebook} onChange={(e) => set("facebook", e.target.value)} autoCapitalize="none" className={bare} /></Prefix>
-      <Lbl t="Google Analytics ID" opt /><input value={v.analytics_id} onChange={(e) => set("analytics_id", e.target.value)} placeholder="G-XXXXXXXXXX" autoCapitalize="characters" className={box} />
-
-      <Sep t="Textos da vitrine" />
-      <Lbl t="Texto de destaque" /><input value={v.highlight} onChange={(e) => set("highlight", e.target.value)} maxLength={120} placeholder="Ex: Quem ama cuida" className={box} />
-      <Lbl t="Texto livre superior" opt /><textarea value={v.top_text} onChange={(e) => set("top_text", e.target.value)} rows={2} maxLength={500} className={box} />
-      <Lbl t="Sobre nós" opt /><textarea value={v.about} onChange={(e) => set("about", e.target.value)} rows={3} maxLength={1500} placeholder="Conte a história da sua loja…" className={box} />
-
-      {/* ═══ HERO BANNER ═══ */}
+      {/* ═══ BANNER PRINCIPAL ═══ */}
       <Sep t="Banner principal" />
       <section className="space-y-1">
-        {/* Hero image upload */}
         <div className="grid min-h-32 place-items-center rounded-[28px] bg-line/50 p-5">
           {v.hero_image && (
-            <img src={resolveImageUrl(supabaseUrl, LOGO_BUCKET, v.hero_image)} alt="Banner" className="mb-3 h-32 w-full rounded-2xl bg-surface object-cover" />
+            <img src={resolveImageUrl(supabaseUrl, HERO_BUCKET, v.hero_image)} alt="Banner" className="mb-3 h-32 w-full rounded-2xl bg-surface object-cover" />
           )}
           <div className="flex gap-2">
             <button disabled={heroUploading} onClick={() => heroFile.current?.click()} className="flex items-center gap-2 rounded-2xl bg-surface px-5 py-3.5 text-lg font-semibold text-brand disabled:opacity-60">
@@ -151,7 +116,7 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
               setHeroUploading(true);
               try {
                 const supabase = createBrowserSupabase();
-                const path = await uploadImage(supabase, LOGO_BUCKET, storeId, f, HERO_MAX_PX);
+                const path = await uploadImage(supabase, HERO_BUCKET, storeId, f, HERO_MAX_PX);
                 set("hero_image", path);
               } catch (err) { console.error("Hero upload failed", err); }
               finally { setHeroUploading(false); }
@@ -169,7 +134,7 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
         <input value={v.hero_button_text} onChange={(e) => set("hero_button_text", e.target.value)} maxLength={40} placeholder="VER PRODUTOS" className={box} />
       </section>
 
-      {/* ═══ BENEFITS ═══ */}
+      {/* ═══ BENEFÍCIOS ═══ */}
       <Sep t="Benefícios" />
       <p className="mb-4 px-1 text-sm text-soft">Ícones exibidos abaixo do banner. Até 4 benefícios.</p>
       <div className="space-y-3">
@@ -177,16 +142,15 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
           const IconComp = ICON_MAP[b.icon] || Star;
           return (
             <div key={idx} className="rounded-3xl border border-line bg-surface p-4">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="mb-3 flex items-center gap-3">
                 <span className="grid size-10 place-items-center rounded-xl bg-page text-brand"><IconComp size={20} /></span>
                 <b className="flex-1 text-lg font-extrabold">Benefício {idx + 1}</b>
                 {benefits.length > 1 && (
                   <button onClick={() => removeBenefit(idx)} className="grid size-8 place-items-center rounded-lg text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
                 )}
               </div>
-              {/* Icon picker */}
               <label className="mb-2 block px-1 text-sm font-bold text-soft">Ícone</label>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="mb-3 flex flex-wrap gap-2">
                 {BENEFIT_ICONS.map((ic) => {
                   const Ic = ICON_MAP[ic.k] || Star;
                   const on = b.icon === ic.k;
@@ -212,21 +176,64 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
         )}
       </div>
 
-      {/* ═══ PERSONALIZAÇÃO VISUAL ═══ */}
-      <Sep t="Personalização visual" />
-
-      {/* Primary color */}
-      <Lbl t="Cor principal" />
-      <div className="flex items-center gap-3">
-        <input type="color" value={v.primary_color || "#C9852B"} onChange={(e) => set("primary_color", e.target.value)}
-          className="size-14 cursor-pointer rounded-2xl border border-line bg-surface p-1" />
-        <input value={v.primary_color || "#C9852B"} onChange={(e) => set("primary_color", e.target.value)}
-          maxLength={7} placeholder="#C9852B" className={bare + " rounded-2xl border border-line bg-surface px-4 py-3 text-lg font-mono font-bold"} />
+      {/* ═══ CORES ═══ */}
+      <Sep t="Cores" />
+      <p className="mb-4 px-1 text-sm text-soft">Escolha a cor de cada elemento do catálogo.</p>
+      <div className="space-y-2.5">
+        {COLOR_FIELDS.map(({ k, n }) => (
+          <div key={k} className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-3">
+            <input type="color" value={v.colors[k]} onChange={(e) => setColor(k, e.target.value)}
+              className="size-12 shrink-0 cursor-pointer rounded-2xl border border-line bg-page p-1" />
+            <span className="flex-1 text-lg font-bold">{n}</span>
+            <input value={v.colors[k]} onChange={(e) => setColor(k, e.target.value)} maxLength={7}
+              className="w-28 rounded-2xl border border-line bg-page px-3 py-2 text-center font-mono text-base font-bold outline-none focus:border-brand" />
+          </div>
+        ))}
       </div>
 
-      {/* Dark mode toggle */}
+      {/* ═══ FONTES ═══ */}
+      <Sep t="Fontes" />
+      <p className="mb-4 px-1 text-sm text-soft">Escolha duas fontes e onde cada uma é usada.</p>
+      <div className="space-y-3">
+        <div className="rounded-3xl border border-line bg-surface p-4">
+          <label className="mb-2 flex items-center gap-2 px-1 text-sm font-bold text-soft"><Type size={16} /> Fonte 1</label>
+          <select value={v.fonts.font_1} onChange={(e) => setFont("font_1", e.target.value as CatalogFonts["font_1"])} className={box}>
+            {FONTS.map((f) => <option key={f.k} value={f.k}>{f.n}</option>)}
+          </select>
+        </div>
+        <div className="rounded-3xl border border-line bg-surface p-4">
+          <label className="mb-2 flex items-center gap-2 px-1 text-sm font-bold text-soft"><Type size={16} /> Fonte 2</label>
+          <select value={v.fonts.font_2} onChange={(e) => setFont("font_2", e.target.value as CatalogFonts["font_2"])} className={box}>
+            {FONTS.map((f) => <option key={f.k} value={f.k}>{f.n}</option>)}
+          </select>
+        </div>
+        {([
+          { k: "store_name_font" as const, n: "Nome da loja" },
+          { k: "heading_font" as const, n: "Títulos" },
+          { k: "card_font" as const, n: "Texto do card" },
+          { k: "body_font" as const, n: "Textos gerais" },
+        ]).map(({ k, n }) => (
+          <div key={k} className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-4">
+            <span className="flex-1 text-lg font-bold">{n}</span>
+            <div className="flex gap-2">
+              {[1, 2].map((slot) => {
+                const on = v.fonts[k] === slot;
+                return (
+                  <button key={slot} onClick={() => setFont(k, slot as 1 | 2)}
+                    className={`rounded-xl border px-4 py-2 text-base font-bold ${on ? "border-brand bg-tint text-brand" : "border-line bg-page text-soft"}`}>
+                    Fonte {slot}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ═══ MODO ESCURO ═══ */}
+      <Sep t="Modo escuro" />
       <button role="switch" aria-checked={v.dark_mode_enabled} onClick={() => set("dark_mode_enabled", !v.dark_mode_enabled)}
-        className="mt-5 flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-left">
+        className="flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-5 text-left">
         <span className="grid size-12 place-items-center rounded-xl bg-page text-brand">
           {v.dark_mode_enabled ? <Moon size={22} /> : <Sun size={22} />}
         </span>
@@ -239,13 +246,6 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
         </span>
       </button>
 
-      {/* Theme selector */}
-      <section className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
-        <button onClick={() => setThemes(!themes)} className="flex w-full items-center gap-4 p-4 text-left"><span className="grid size-12 place-items-center rounded-xl bg-page text-brand"><Palette size={22} /></span><b className="flex-1 text-xl font-extrabold">Tema do catálogo</b>{sw(theme.colors)}<ChevronRight size={20} className={`text-soft/70 transition-transform ${themes ? "rotate-90" : ""}`} /></button>
-        {themes && <div className="divide-y divide-line border-t border-line">{THEMES.map((t) => (
-          <button key={t.k} onClick={() => set("theme", t.k)} className="flex w-full items-center gap-4 px-5 py-3.5 text-left">{sw(t.colors)}<b className="flex-1 text-lg">{t.n}</b>{v.theme === t.k && <Check size={20} className="text-brand" />}</button>))}</div>}
-      </section>
-
       {/* ═══ WHATSAPP ═══ */}
       <Sep t="WhatsApp" />
       <Lbl t="Mensagem inicial do pedido" />
@@ -254,12 +254,6 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
         <textarea value={v.whatsapp_message} onChange={(e) => set("whatsapp_message", e.target.value)} rows={2} maxLength={300}
           placeholder="Olá! Gostaria de fazer um pedido:" className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none placeholder:text-soft" />
       </div>
-
-      {/* ═══ FOOTER ═══ */}
-      <Sep t="Rodapé" />
-      <Lbl t="Texto do rodapé" opt />
-      <textarea value={v.footer_text} onChange={(e) => set("footer_text", e.target.value)} rows={2} maxLength={200}
-        placeholder="Ex: 19 anos de história" className={box} />
 
       {/* ═══ SAVE BUTTON ═══ */}
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-page px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">

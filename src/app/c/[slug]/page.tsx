@@ -1,19 +1,19 @@
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Poppins, Montserrat, Roboto, Playfair_Display, Lora } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { resolveImageUrl } from "@/lib/storage";
+import { DEFAULT_COLORS, DEFAULT_FONTS, type CatalogColors, type CatalogFonts } from "@/lib/catalog";
 import CatalogApp from "./CatalogApp";
 
 export const dynamic = "force-dynamic";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-inter",
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700", "800"], variable: "--font-inter", display: "swap" });
+const poppins = Poppins({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700", "800"], variable: "--font-poppins", display: "swap" });
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700", "800"], variable: "--font-montserrat", display: "swap" });
+const roboto = Roboto({ subsets: ["latin"], weight: ["300", "400", "500", "700", "900"], variable: "--font-roboto", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-playfair", display: "swap" });
+const lora = Lora({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-lora", display: "swap" });
 
 export type CatalogProduct = {
   id: string;
@@ -37,27 +37,20 @@ export type Benefit = {
 };
 
 export type CatalogSettings = {
-  logo: string | null;
+  store_name: string | null;
   phone: string | null;
   email: string | null;
   stock_mode: string;
   instagram: string | null;
-  facebook: string | null;
-  analytics_id: string | null;
-  highlight: string | null;
-  top_text: string | null;
-  about: string | null;
-  theme: string;
-  primary_color: string;
-  font_family: string;
   hero_title: string | null;
   hero_subtitle: string | null;
   hero_description: string | null;
   hero_image: string | null;
   hero_button_text: string;
   benefits: Benefit[];
+  colors: CatalogColors;
+  fonts: CatalogFonts;
   dark_mode_enabled: boolean;
-  footer_text: string | null;
   whatsapp_message: string;
 };
 
@@ -78,10 +71,16 @@ async function load(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const d = await load((await params).slug);
   return {
-    title: d?.name ?? "Catálogo",
-    description: d?.settings.about ?? `Catálogo de produtos — ${d?.name ?? ""}`,
+    title: d?.settings.store_name ?? d?.name ?? "Catálogo",
+    description: `Catálogo de produtos — ${d?.settings.store_name ?? d?.name ?? ""}`,
   };
 }
+
+const parse = <T,>(raw: unknown, fallback: T): T => {
+  if (raw == null) return fallback;
+  if (typeof raw === "string") { try { return JSON.parse(raw) as T; } catch { return fallback; } }
+  return raw as T;
+};
 
 export default async function Vitrine({ params }: { params: Promise<{ slug: string }> }) {
   const d = await load((await params).slug);
@@ -89,41 +88,41 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  // Resolve all image URLs server-side
   const products = d.products.map((p) => ({
     ...p,
     image: p.image ? resolveImageUrl(supabaseUrl, "product-images", p.image) : null,
   }));
 
+  const raw = d.settings as unknown as Record<string, unknown>;
   const settings: CatalogSettings = {
-    ...d.settings,
-    logo: d.settings.logo ? resolveImageUrl(supabaseUrl, "catalog-logos", d.settings.logo) : null,
-    hero_image: d.settings.hero_image ? resolveImageUrl(supabaseUrl, "catalog-logos", d.settings.hero_image) : null,
-    // Ensure benefits is always an array
-    benefits: Array.isArray(d.settings.benefits)
-      ? d.settings.benefits
-      : [
-          { icon: "headphones", title: "Atendimento 24h", description: "De qualidade" },
-          { icon: "truck", title: "Envio rápido", description: "Para todo brasil" },
-        ],
+    store_name: (raw.store_name as string) ?? null,
+    phone: (raw.phone as string) ?? null,
+    email: (raw.email as string) ?? null,
+    stock_mode: (raw.stock_mode as string) ?? "all",
+    instagram: (raw.instagram as string) ?? null,
+    hero_title: (raw.hero_title as string) ?? null,
+    hero_subtitle: (raw.hero_subtitle as string) ?? null,
+    hero_description: (raw.hero_description as string) ?? null,
+    hero_image: raw.hero_image ? resolveImageUrl(supabaseUrl, "catalog-logos", String(raw.hero_image)) : null,
+    hero_button_text: (raw.hero_button_text as string) || "VER PRODUTOS",
+    benefits: Array.isArray(raw.benefits) ? (raw.benefits as Benefit[]) : parse(raw.benefits, [] as Benefit[]),
+    colors: parse(raw.colors, DEFAULT_COLORS),
+    fonts: parse(raw.fonts, DEFAULT_FONTS),
+    dark_mode_enabled: raw.dark_mode_enabled !== false,
+    whatsapp_message: (raw.whatsapp_message as string) || "Olá! Gostaria de fazer um pedido:",
   };
 
-  const ga = settings.analytics_id && /^G-[A-Z0-9]{4,20}$/.test(settings.analytics_id) ? settings.analytics_id : null;
+  const storeName = settings.store_name || d.name;
+
+  const fontVars = [inter.variable, poppins.variable, montserrat.variable, roboto.variable, playfair.variable, lora.variable].join(" ");
 
   return (
-    <div className={inter.variable} style={{ fontFamily: "var(--font-inter), Inter, Arial, Helvetica, sans-serif" }}>
-      {ga && (
-        <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga}`} strategy="afterInteractive" />
-          <Script id="ga" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga}');`}</Script>
-        </>
-      )}
+    <div className={fontVars}>
       <CatalogApp
-        storeName={d.name}
+        storeName={storeName}
         settings={settings}
         products={products}
         categories={d.categories ?? []}
-        collections={d.collections ?? []}
       />
     </div>
   );
