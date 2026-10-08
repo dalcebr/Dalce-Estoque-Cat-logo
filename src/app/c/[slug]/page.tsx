@@ -125,7 +125,7 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
         group: String(v?.group ?? "").trim(),
         option: String(v?.option ?? "").trim(),
         stock: Number.isFinite(Number(v?.stock)) ? Math.trunc(Number(v.stock)) : 0,
-        price: v?.price == null || v.price === "" || !Number.isFinite(Number(v.price)) ? null : Number(v.price),
+        price: v?.price == null || !Number.isFinite(Number(v.price)) ? null : Number(v.price),
       }))
       .filter((v) => v.group && v.option);
     return { ...p, images: list, image: list[0] ?? null, variations };
