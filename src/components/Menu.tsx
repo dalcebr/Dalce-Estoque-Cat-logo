@@ -73,7 +73,7 @@ export default function Menu({ name }: { name: string }) {
             <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/20 text-2xl font-extrabold">{initials[0]}</span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xl font-extrabold">{name}</p>
-              <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider"><Diamond size={12} className="fill-white" /> Teste grátis</span>
+              <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider"><Diamond size={12} className="fill-white" /> Proprietário</span>
             </div>
             <ChevronRight size={22} />
           </div>
@@ -92,7 +92,7 @@ export default function Menu({ name }: { name: string }) {
           <div className="border-t border-line">
             <div className="flex items-center gap-3 px-5 py-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-tint text-lg font-extrabold text-brand">{initials}</span>
-              <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-lg">{name}</b><span className="text-soft">Operador de caixa</span></div>
+              <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-lg">{name}</b><span className="text-soft">{name}</span></div>
               <form action={signOut}><button aria-label="Sair" className="grid size-11 place-items-center rounded-xl border border-line text-soft"><LogOut size={20} /></button></form>
             </div>
             <a href="mailto:suporte@dalce.app" className="flex items-center gap-4 bg-[#14306e] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white">
