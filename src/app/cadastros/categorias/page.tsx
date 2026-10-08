@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { resolveImageUrl } from "@/lib/storage";
 import PageHeader from "@/components/PageHeader";
 import CadList, { type CadRow } from "@/components/CadList";
 
@@ -6,9 +7,17 @@ export const dynamic = "force-dynamic";
 
 export default async function Categorias() {
   const supabase = await createClient();
-  const { data } = await supabase.from("categories").select("id, name, color").order("name");
-  const rows: CadRow[] = (data ?? []).map((c: { id: string; name: string; color: string }): CadRow => ({
-    id: c.id, href: `/cadastros/categorias/${c.id}`, title: c.name, search: c.name, left: { k: "chip", t: c.name[0]?.toUpperCase() ?? "?", bg: `${c.color}26`, fg: c.color } }));
+  const { data } = await supabase.from("categories").select("id, name, color, image").order("name");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const rows: CadRow[] = (data ?? []).map((c: { id: string; name: string; color: string; image: string | null }): CadRow => ({
+    id: c.id,
+    href: `/cadastros/categorias/${c.id}`,
+    title: c.name,
+    search: c.name,
+    left: c.image
+      ? { k: "img", src: resolveImageUrl(supabaseUrl, "product-images", c.image) }
+      : { k: "chip", t: c.name[0]?.toUpperCase() ?? "?", bg: `${c.color}26`, fg: c.color },
+  }));
   return (
     <main className="min-h-dvh bg-page pb-36">
       <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />

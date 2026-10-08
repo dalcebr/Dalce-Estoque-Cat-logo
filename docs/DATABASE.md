@@ -23,6 +23,7 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 13 | `014_catalog_colors_dark.sql` | Tema escuro do catalogo |
 | 14 | `015_catalog_sort_categories.sql` | Ordenacao de categorias e sold_count |
 | 15 | `016_product_images.sql` | Galeria de fotos dos produtos (ate 5, coluna `images`) |
+| 16 | `017_category_images.sql` | Foto de capa das categorias (coluna `image`) |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -147,10 +148,17 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `store_id` | uuid | NOT NULL | | FK para `stores(id)` |
 | `name` | text | NOT NULL | | Nome da categoria |
 | `color` | text | NOT NULL | `'#0f8b83'` | Cor hexadecimal |
+| `image` | text | NULL | | Foto de capa (storage path no bucket `product-images`) |
 
 **Constraints**:
 - UNIQUE `(store_id, name)`
 - `categories_name_not_empty`: `trim(name) <> ''`
+
+**Foto de capa**:
+- Opcional. Quando definida, aparece no card da categoria na vitrine.
+- Convertida para **WebP** no upload (mesmo padrao dos produtos: ate 1600 px,
+  qualidade `0.92`) e com editor de recorte antes de enviar.
+- Sem capa, o catalogo usa a primeira foto de um produto da categoria.
 
 **RLS**: `categorias da loja` - ALL onde `store_id = current_store_id()`
 
@@ -362,6 +370,10 @@ LANGUAGE sql STABLE SECURITY DEFINER
 ```
 
 Retorna dados publicos do catalogo. Acessivel por `anon` e `authenticated`. Valida slug e retorna apenas catalogos ativos.
+
+O array `categories` traz `{name, color, image}`. A imagem segue esta ordem de
+preferencia: capa da categoria (`categories.image`) → primeira foto do produto
+mais recente da categoria → `products.image`.
 
 ## Diagrama de Relacionamentos
 

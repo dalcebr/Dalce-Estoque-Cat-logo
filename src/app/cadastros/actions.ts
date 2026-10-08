@@ -80,10 +80,28 @@ export async function saveCategory(fd: FormData) {
   const name = str(fd, "name", 40), color = str(fd, "color", 7);
   if (!name || !/^#[0-9a-f]{6}$/i.test(color)) return;
 
-  const { error } = id
-    ? await s.supabase.from("categories").update({ name, color }).eq("id", id).eq("store_id", s.storeId)
-    : await s.supabase.from("categories").insert({ name, color, store_id: s.storeId });
-  if (error?.code === "23505") redirect(`/cadastros/categorias/${id || "novo"}?erro=nome`);
+  // Foto de capa da categoria (opcional): caminho no Storage ou base64 legado.
+  let image = String(fd.get("image") ?? "");
+  if (image) {
+    const isBase64 = image.startsWith("data:image/");
+    const isPath = isStoragePath(image);
+    if (!isBase64 && !isPath) image = "";
+    if (isBase64 && image.length > 150_000) image = "";
+  }
+
+  if (id) {
+    // Remove do Storage a capa antiga quando ela foi trocada/removida.
+    const { data: prev } = await s.supabase.from("categories").select("image").eq("id", id).eq("store_id", s.storeId).maybeSingle();
+    const before = prev?.image ?? "";
+    const { error } = await s.supabase.from("categories").update({ name, color, image: image || null }).eq("id", id).eq("store_id", s.storeId);
+    if (error?.code === "23505") redirect(`/cadastros/categorias/${id}?erro=nome`);
+    if (before && before !== image && isStoragePath(before)) {
+      try { await deleteImages(s.supabase, "product-images", [before]); } catch { /* não bloqueia o salvamento */ }
+    }
+  } else {
+    const { error } = await s.supabase.from("categories").insert({ name, color, image: image || null, store_id: s.storeId });
+    if (error?.code === "23505") redirect("/cadastros/categorias/novo?erro=nome");
+  }
   revalidatePath("/cadastros/categorias"); revalidatePath("/cadastros/produtos");
   redirect("/cadastros/categorias");
 }
