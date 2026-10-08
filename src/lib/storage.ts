@@ -1,19 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { toWebpBlob } from "@/lib/image";
+import { toWebpBlob, MAX_IMAGE_PX, type CropArea } from "@/lib/image";
 
 /**
  * Upload an image to Supabase Storage.
  * The file is resized client-side and ALWAYS converted to WebP before upload.
+ * Optionally crops the image before resizing.
  * Returns the storage path (not the full URL): `{storeId}/{uuid}.webp`
  */
 export async function uploadImage(
   supabase: SupabaseClient,
   bucket: string,
   storeId: string,
-  file: File,
-  maxSize: number,
+  file: File | Blob,
+  maxSize: number = MAX_IMAGE_PX,
+  crop?: CropArea,
 ): Promise<string> {
-  const blob = await toWebpBlob(file, maxSize);
+  const blob = await toWebpBlob(file, maxSize, crop);
   const path = `${storeId}/${crypto.randomUUID()}.webp`;
 
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {

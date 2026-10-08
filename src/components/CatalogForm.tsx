@@ -24,7 +24,7 @@ const OPTS: { k: StockMode; n: string; s: string; Icon: typeof Eye }[] = [
 ];
 
 const HERO_BUCKET = "catalog-logos";
-const HERO_MAX_PX = 1200;
+const HERO_MAX_PX = 1600;
 
 const ICON_MAP: Record<string, typeof Headphones> = {
   headphones: Headphones, truck: Truck, shield: Shield, star: Star,

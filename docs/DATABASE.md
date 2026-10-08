@@ -190,6 +190,12 @@ Vincula um usuario do Supabase Auth a uma loja.
 - O usuario pode escolher qualquer foto como capa (ela e movida para a posicao 0).
 - Todos os formatos de imagem sao convertidos para **WebP** no upload
   (client-side, via canvas) antes de irem para o bucket `product-images`.
+- **Qualidade**: a imagem e reduzida para no maximo **1600 px** no maior lado
+  (apenas se for maior), com downscale em etapas e qualidade WebP `0.92`.
+  Imagens menores que 1600 px sao mantidas na resolucao original.
+- **Recorte**: apos escolher a foto, o usuario pode ajustar o enquadramento
+  (arrastar + zoom, recorte quadrado 1:1) antes do upload. Tambem e possivel
+  recortar novamente uma foto ja enviada (o arquivo antigo e substituido).
 
 **RLS**: `produtos da loja` - ALL onde `store_id = current_store_id()`
 
