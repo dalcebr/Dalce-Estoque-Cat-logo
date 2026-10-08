@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { ShieldCheck, UserPlus } from "lucide-react";
 import { getAdminUserId, listAdmins } from "@/lib/admin";
 import { adminConfigured } from "@/lib/supabase/admin";
@@ -21,7 +21,17 @@ export default async function AdminsPage({
   searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
   const adminId = await getAdminUserId();
-  if (!adminId) redirect("/");
+  if (!adminId) {
+    return (
+      <main className="mx-auto max-w-md px-5 py-10 text-center">
+        <h1 className="text-2xl font-extrabold">Acesso restrito</h1>
+        <p className="mt-2 text-soft">Sua conta não está marcada como administrador.</p>
+        <Link href="/admin/diagnostico" className="mt-6 inline-flex rounded-2xl bg-brand px-5 py-3 font-bold text-white">
+          Abrir diagnóstico
+        </Link>
+      </main>
+    );
+  }
 
   const { ok, erro } = await searchParams;
   const admins = await listAdmins();

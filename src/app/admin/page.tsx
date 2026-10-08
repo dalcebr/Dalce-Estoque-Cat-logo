@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Plus, ShieldCheck, Upload } from "lucide-react";
 import { getAdminUserId, listStores } from "@/lib/admin";
 import { adminConfigured } from "@/lib/supabase/admin";
@@ -18,7 +17,24 @@ const OK: Record<string, string> = {
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const adminId = await getAdminUserId();
-  if (!adminId) redirect("/");
+  if (!adminId) {
+    // Não redireciona para "/" (isso causaria loop com o middleware).
+    // Mostra uma mensagem clara com link para o diagnóstico.
+    return (
+      <main className="mx-auto max-w-md px-5 py-10 text-center">
+        <h1 className="text-2xl font-extrabold">Acesso restrito</h1>
+        <p className="mt-2 text-soft">
+          Sua conta não está marcada como administrador. Verifique o papel do seu usuário.
+        </p>
+        <Link
+          href="/admin/diagnostico"
+          className="mt-6 inline-flex rounded-2xl bg-brand px-5 py-3 font-bold text-white"
+        >
+          Abrir diagnóstico
+        </Link>
+      </main>
+    );
+  }
 
   const { ok, erro } = await searchParams;
   const stores = await listStores();
@@ -58,6 +74,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <Link href="/admin/admins" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-surface py-4 text-base font-bold text-brand"><ShieldCheck size={20} strokeWidth={2.5} /> Admins</Link>
           <Link href="/admin/importar" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-surface py-4 text-base font-bold text-brand"><Upload size={20} strokeWidth={2.5} /> Importar</Link>
           <Link href="/admin/novo" className="flex items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-base font-bold text-white"><Plus size={22} /> Novo</Link>
+        </div>
+        <div className="mx-auto mt-3 max-w-md">
+          <Link href="/admin/diagnostico" className="block text-center text-sm font-semibold text-soft underline">
+            Diagnóstico do login
+          </Link>
         </div>
       </nav>
     </main>

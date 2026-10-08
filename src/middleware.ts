@@ -17,7 +17,10 @@ function getClientIp(req: NextRequest): string {
 }
 
 export function middleware(req: NextRequest) {
-  // Rate-limit login attempts
+  // Rate-limit login attempts.
+  // O POST em /login é a Server Action de autenticação: aplicamos apenas o
+  // rate-limit e deixamos a requisição seguir sem rodar a lógica de sessão
+  // (o usuário ainda não está autenticado neste ponto).
   if (req.nextUrl.pathname === "/login" && req.method === "POST") {
     const ip = getClientIp(req);
     const { success, remaining } = loginLimiter.check(ip);
@@ -35,12 +38,9 @@ export function middleware(req: NextRequest) {
       );
     }
 
-    // Attach rate-limit info header on allowed requests
-    const res = updateSession(req);
-    return res.then((r) => {
-      r.headers.set("X-RateLimit-Remaining", String(remaining));
-      return r;
-    });
+    const res = NextResponse.next();
+    res.headers.set("X-RateLimit-Remaining", String(remaining));
+    return res;
   }
 
   return updateSession(req);

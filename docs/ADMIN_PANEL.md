@@ -143,7 +143,16 @@ usuario no proprio formulario de importacao).
 
 ## Diagnostico: login de admin nao redireciona
 
-Se ao logar com um usuario `role = 'admin'` voce nao for para `/admin`:
+O painel tem uma pagina de diagnostico em **`/admin/diagnostico`** (acessivel
+logado). Ela mostra, em tempo real, o que o servidor enxerga:
+
+- se voce esta autenticado;
+- o que a funcao `current_role_name()` retorna;
+- o valor de `profiles.role` lido diretamente;
+- se a `SUPABASE_SERVICE_ROLE_KEY` esta configurada.
+
+Se qualquer um dos dois primeiros nao mostrar **admin**, o redirecionamento nao
+acontece. Siga os passos abaixo:
 
 1. **Rode a migracao `023_admin_role_helper.sql`.** O login e o middleware
    passaram a usar a funcao `current_role_name()` (security definer), que le o
@@ -163,3 +172,9 @@ Se ao logar com um usuario `role = 'admin'` voce nao for para `/admin`:
    a linha (com `store_id` nulo e `role = 'admin'`).
 4. **Reinicie o servidor** (`npm run dev`) para o middleware recarregar.
 5. **Limpe os cookies de sessao** do navegador e entre novamente.
+
+> **Nota tecnica:** o login **nao** usa `redirect()` dentro da Server Action.
+> Em Next.js, o `redirect()` em uma Server Action pode descartar os cookies de
+> sessao definidos na mesma requisicao, fazendo o middleware enxergar o usuario
+> como deslogado na navegacao seguinte. Por isso a action retorna o destino e o
+> cliente redireciona com `router.replace()` + `router.refresh()`.

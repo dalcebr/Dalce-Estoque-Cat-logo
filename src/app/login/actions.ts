@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeText } from "@/lib/validation";
 
-export async function signIn(_: { error?: string } | undefined, fd: FormData) {
+export type SignInState = { error?: string; redirectTo?: string };
+
+export async function signIn(_: SignInState | undefined, fd: FormData): Promise<SignInState> {
   const user = sanitizeText(String(fd.get("usuario") ?? ""), 60).toLowerCase();
   const password = String(fd.get("senha") ?? "");
   if (!user || !password || password.length > 128) return { error: "Informe usuário e senha." };
@@ -29,7 +31,13 @@ export async function signIn(_: { error?: string } | undefined, fd: FormData) {
       .maybeSingle();
     role = profile?.role ?? null;
   }
-  redirect(role === "admin" ? "/admin" : "/");
+
+  // IMPORTANTE: não usamos redirect() aqui. Em Server Actions, o redirect()
+  // pode descartar os cookies de sessão definidos nesta mesma requisição,
+  // fazendo o middleware enxergar o usuário como deslogado na navegação
+  // seguinte. Retornamos o destino e o cliente redireciona após os cookies
+  // já estarem persistidos.
+  return { redirectTo: role === "admin" ? "/admin" : "/" };
 }
 
 export async function signOut() {
