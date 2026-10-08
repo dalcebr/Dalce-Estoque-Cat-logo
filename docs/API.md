@@ -288,3 +288,4 @@ Chamadas via `supabase.rpc()`:
 - **Seguranca**: SECURITY DEFINER (acesso publico intencional)
 - **Acesso**: Concedido a roles `anon` e `authenticated`
 - **Retorno**: JSONB com `{ name, settings, products }` ou null
+- **Nota**: Cada produto inclui `variations: [{ group, option, stock, price }]`. Na vitrine, o cliente escolhe uma opcao por grupo antes de adicionar ao carrinho; o preco da opcao (quando definido) substitui o preco do produto e as escolhas vao na mensagem do WhatsApp.

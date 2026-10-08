@@ -5,7 +5,9 @@ import type { CatalogProduct, CatalogSettings, Benefit } from "./page";
 import { fontStack, type CatalogColors, type CatalogFonts } from "@/lib/catalog";
 
 /* ─── types ─── */
-type CartItem = { product: CatalogProduct; qty: number };
+/** Variação escolhida pelo cliente (ex.: Tamanho: 16). */
+type ChosenVariation = { group: string; option: string; price: number | null };
+type CartItem = { key: string; product: CatalogProduct; qty: number; variations: ChosenVariation[] };
 type Category = { name: string; color: string; image: string | null };
 type SortKey = "relevance" | "price_desc" | "price_asc" | "best_sellers" | "newest";
 type View =
@@ -18,6 +20,30 @@ type View =
 /* ─── helpers ─── */
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** Chave única de um item do carrinho (produto + combinação de variações). */
+function cartKey(productId: string, variations: ChosenVariation[]): string {
+  if (variations.length === 0) return productId;
+  const sig = variations
+    .map((v) => `${v.group.toLowerCase()}=${v.option.toLowerCase()}`)
+    .sort()
+    .join("|");
+  return `${productId}::${sig}`;
+}
+
+/** Preço efetivo do produto considerando as variações escolhidas. */
+function effectivePrice(product: CatalogProduct, variations: ChosenVariation[]): number {
+  let price = product.price;
+  for (const v of variations) {
+    if (v.price != null && Number.isFinite(v.price)) price = v.price;
+  }
+  return price;
+}
+
+/** Texto curto das variações (ex.: "Tamanho: 16 · Cor: Ouro"). */
+function variationsLabel(variations: ChosenVariation[]): string {
+  return variations.map((v) => `${v.group}: ${v.option}`).join(" · ");
 }
 
 function waLink(phone: string, text: string) {
@@ -189,6 +215,7 @@ function ProductCard({
   const [favHover, setFavHover] = useState(false);
   const favBg = wishlisted ? colors.fav_active_bg : favHover ? colors.fav_hover_bg : colors.fav_bg;
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
+  const hasVariations = (product.variations?.length ?? 0) > 0;
   return (
     <div style={{ background: colors.card_bg, border: `1px solid ${colors.card_border}`, boxShadow: `0 2px 10px ${withAlpha(colors.card_shadow, 12)}`, borderRadius: 16, padding: 10, position: "relative" }}>
       <button
@@ -212,10 +239,13 @@ function ProductCard({
         )}
       </button>
       <p style={{ fontFamily: cardFont, fontSize: 16, fontWeight: 500, color: colors.card_name, marginTop: 8, lineHeight: 1.2 }}>{product.name}</p>
+      {hasVariations && (
+        <p style={{ fontFamily: cardFont, fontSize: 11, color: colors.text_muted, marginTop: 2 }}>Escolha as opções</p>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
         <p style={{ fontFamily: cardFont, fontSize: 15, fontWeight: 700, color: colors.card_price }}>{brl(product.price)}</p>
         <button onClick={onAddCart} onMouseEnter={() => setCartHover(true)} onMouseLeave={() => setCartHover(false)}
-          aria-label="Adicionar ao carrinho" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: cartHover ? colors.card_cart_icon_hover : colors.card_cart_icon, transition: "color .15s" }}>
+          aria-label={hasVariations ? "Escolher opções" : "Adicionar ao carrinho"} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: cartHover ? colors.card_cart_icon_hover : colors.card_cart_icon, transition: "color .15s" }}>
           <AddCartIcon size={22} />
         </button>
       </div>
@@ -238,7 +268,9 @@ function ProductGrid({
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px 14px" }}>
       {products.map((p) => (
         <ProductCard key={p.id} product={p} colors={colors} cardFont={cardFont} wishlisted={wishlist.includes(p.id)}
-          onView={() => onView(p.id)} onAddCart={() => onAddCart(p)} onToggleWish={() => onToggleWish(p)} />
+          onView={() => onView(p.id)}
+          onAddCart={() => ((p.variations?.length ?? 0) > 0 ? onView(p.id) : onAddCart(p))}
+          onToggleWish={() => onToggleWish(p)} />
       ))}
     </div>
   );
@@ -468,16 +500,21 @@ function CartView({
   bodyFont: string;
   phone: string | null;
   whatsappMsg: string;
-  onUpdateQty: (id: string, delta: number) => void;
-  onRemove: (id: string) => void;
+  onUpdateQty: (key: string, delta: number) => void;
+  onRemove: (key: string) => void;
   onBack: () => void;
 }) {
   const [name, setName] = useState("");
-  const total = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+  const total = cart.reduce((s, i) => s + effectivePrice(i.product, i.variations) * i.qty, 0);
 
   function checkout() {
     if (!phone || cart.length === 0) return;
-    const items = cart.map((i) => `• ${i.qty}x ${i.product.name} — ${brl(i.product.price * i.qty)}`).join("\n");
+    const items = cart
+      .map((i) => {
+        const line = `• ${i.qty}x ${i.product.name}${i.variations.length ? ` (${variationsLabel(i.variations)})` : ""} — ${brl(effectivePrice(i.product, i.variations) * i.qty)}`;
+        return line;
+      })
+      .join("\n");
     const msg = `${whatsappMsg}\n\n${items}\n\n*Total: ${brl(total)}*${name ? `\n\nNome: ${name}` : ""}`;
     window.open(waLink(phone, msg), "_blank");
   }
@@ -492,20 +529,23 @@ function CartView({
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {cart.map((item) => (
-              <div key={item.product.id} style={{ display: "flex", gap: 12, padding: 12, borderRadius: 14, background: colors.card_bg, border: `1px solid ${colors.card_border}` }}>
+              <div key={item.key} style={{ display: "flex", gap: 12, padding: 12, borderRadius: 14, background: colors.card_bg, border: `1px solid ${colors.card_border}` }}>
                 {item.product.image ? (
                   <img src={item.product.image} alt={item.product.name} style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover" }} />
                 ) : (
                   <div style={{ width: 72, height: 72, borderRadius: 10, background: colors.placeholder_bg }} />
                 )}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: bodyFont, fontSize: 14, fontWeight: 500, color: colors.card_name }}>{item.product.name}</p>
-                  <p style={{ fontFamily: bodyFont, fontSize: 13, color: colors.text_secondary, marginTop: 2 }}>{brl(item.product.price)}</p>
+                  {item.variations.length > 0 && (
+                    <p style={{ fontFamily: bodyFont, fontSize: 12, color: colors.text_secondary, marginTop: 2 }}>{variationsLabel(item.variations)}</p>
+                  )}
+                  <p style={{ fontFamily: bodyFont, fontSize: 13, color: colors.text_secondary, marginTop: 2 }}>{brl(effectivePrice(item.product, item.variations))}</p>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-                    <button onClick={() => onUpdateQty(item.product.id, -1)} style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${colors.divider}`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.text_primary }}><MinusIcon /></button>
+                    <button onClick={() => onUpdateQty(item.key, -1)} style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${colors.divider}`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.text_primary }}><MinusIcon /></button>
                     <span style={{ fontFamily: bodyFont, fontSize: 14, fontWeight: 600, color: colors.text_primary, minWidth: 20, textAlign: "center" }}>{item.qty}</span>
-                    <button onClick={() => onUpdateQty(item.product.id, 1)} style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${colors.divider}`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.text_primary }}><PlusIcon /></button>
-                    <button onClick={() => onRemove(item.product.id)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: colors.state_error }}><TrashIcon /></button>
+                    <button onClick={() => onUpdateQty(item.key, 1)} style={{ width: 28, height: 28, borderRadius: 8, border: `1px solid ${colors.divider}`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: colors.text_primary }}><PlusIcon /></button>
+                    <button onClick={() => onRemove(item.key)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: colors.state_error }}><TrashIcon /></button>
                   </div>
                 </div>
               </div>
@@ -542,12 +582,14 @@ function ProductDetailView({
   whatsappMsg: string;
   wishlisted: boolean;
   onBack: () => void;
-  onAddCart: () => void;
+  onAddCart: (variations: ChosenVariation[]) => void;
   onView: (id: string) => void;
   onToggleWish: () => void;
 }) {
   const [favHover, setFavHover] = useState(false);
   const [active, setActive] = useState(0);
+  // Opção escolhida por grupo (nome do grupo → opção).
+  const [selected, setSelected] = useState<Record<string, string>>({});
   const favBg = wishlisted ? colors.fav_active_bg : favHover ? colors.fav_hover_bg : colors.fav_bg;
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
   const gallery = product.images?.length ? product.images : product.image ? [product.image] : [];
@@ -559,6 +601,21 @@ function ProductDetailView({
     else acc.push({ name: v.group, options: [{ option: v.option, stock: v.stock, price: v.price }] });
     return acc;
   }, []);
+
+  /** Variações escolhidas (na ordem dos grupos). */
+  const chosen: ChosenVariation[] = variationGroups
+    .map((g) => {
+      const opt = selected[g.name];
+      if (!opt) return null;
+      const found = g.options.find((o) => o.option === opt);
+      return { group: g.name, option: opt, price: found?.price ?? null };
+    })
+    .filter((v): v is ChosenVariation => v !== null);
+
+  const missing = variationGroups.filter((g) => !selected[g.name]);
+  const ready = missing.length === 0;
+  const price = effectivePrice(product, chosen);
+
   return (
     <section style={{ padding: "0 16px" }}>
       <BackButton onClick={onBack} colors={colors} font={bodyFont} />
@@ -586,7 +643,7 @@ function ProductDetailView({
         </div>
       )}
       <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.products_title, marginTop: 16 }}>{product.name}</h1>
-      <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(product.price)}</p>
+      <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(price)}</p>
       {product.description && (
         <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.text_secondary, lineHeight: 1.6, marginTop: 12 }}>{product.description}</p>
       )}
@@ -594,25 +651,42 @@ function ProductDetailView({
         <div style={{ marginTop: 18 }}>
           {variationGroups.map((g) => (
             <div key={g.name} style={{ marginBottom: 14 }}>
-              <p style={{ fontFamily: bodyFont, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: colors.text_secondary, marginBottom: 8 }}>{g.name}</p>
+              <p style={{ fontFamily: bodyFont, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: colors.text_secondary, marginBottom: 8 }}>
+                {g.name}
+                {selected[g.name] && <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500, color: colors.text_muted }}> · {selected[g.name]}</span>}
+              </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {g.options.map((o) => {
                   const out = o.stock <= 0;
+                  const isSel = selected[g.name] === o.option;
                   return (
-                    <span key={o.option} style={{
-                      fontFamily: bodyFont, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 10,
-                      border: `1px solid ${out ? colors.divider : colors.category_border}`,
-                      background: out ? "transparent" : colors.category_bg,
-                      color: out ? colors.text_muted : colors.category_text,
-                      textDecoration: out ? "line-through" : "none",
-                    }}>
+                    <button
+                      key={o.option}
+                      type="button"
+                      disabled={out}
+                      onClick={() => setSelected((prev) => ({ ...prev, [g.name]: isSel ? "" : o.option }))}
+                      style={{
+                        fontFamily: bodyFont, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 10,
+                        cursor: out ? "not-allowed" : "pointer",
+                        border: `1px solid ${isSel ? colors.category_active_border : out ? colors.divider : colors.category_border}`,
+                        background: isSel ? colors.category_active_bg : out ? "transparent" : colors.category_bg,
+                        color: isSel ? colors.category_active_text : out ? colors.text_muted : colors.category_text,
+                        textDecoration: out ? "line-through" : "none",
+                        transition: "background .15s, color .15s, border-color .15s",
+                      }}
+                    >
                       {o.option}{o.price != null && o.price !== product.price ? ` · ${brl(o.price)}` : ""}
-                    </span>
+                    </button>
                   );
                 })}
               </div>
             </div>
           ))}
+          {!ready && (
+            <p style={{ fontFamily: bodyFont, fontSize: 12, color: colors.state_warning, marginTop: 2 }}>
+              Escolha {missing.map((m) => m.name).join(", ")} para continuar.
+            </p>
+          )}
         </div>
       )}
       {(product.material || product.collection || product.category) && (
@@ -630,10 +704,21 @@ function ProductDetailView({
         </div>
       )}
       <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-        <button onClick={onAddCart} style={{ flex: 1, height: 48, borderRadius: 14, border: "none", cursor: "pointer", background: colors.hero_button_bg, color: colors.hero_button_text, fontSize: 15, fontWeight: 700, fontFamily: bodyFont }}>Adicionar ao carrinho</button>
+        <button
+          onClick={() => ready && onAddCart(chosen)}
+          disabled={!ready}
+          style={{ flex: 1, height: 48, borderRadius: 14, border: "none", cursor: ready ? "pointer" : "not-allowed", background: colors.hero_button_bg, color: colors.hero_button_text, fontSize: 15, fontWeight: 700, fontFamily: bodyFont, opacity: ready ? 1 : 0.5 }}
+        >
+          Adicionar ao carrinho
+        </button>
       </div>
       {phone && (
-        <button onClick={() => { const msg = `${whatsappMsg}\n\n${product.name} — ${brl(product.price)}`; window.open(waLink(phone, msg), "_blank"); }}
+        <button
+          onClick={() => {
+            const label = chosen.length ? ` (${variationsLabel(chosen)})` : "";
+            const msg = `${whatsappMsg}\n\n${product.name}${label} — ${brl(price)}`;
+            window.open(waLink(phone, msg), "_blank");
+          }}
           style={{ width: "100%", height: 48, borderRadius: 14, border: "none", cursor: "pointer", background: "#25D366", color: "#fff", fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, fontFamily: bodyFont }}>
           Perguntar pelo WhatsApp
         </button>
@@ -715,11 +800,13 @@ export default function CatalogApp({
       if (localStorage.getItem("catalog_dark") === "1") setDark(true);
       const rawCart = localStorage.getItem("catalog_cart");
       if (rawCart) {
-        const parsed = JSON.parse(rawCart) as { id: string; qty: number }[];
+        const parsed = JSON.parse(rawCart) as { id: string; qty: number; variations?: ChosenVariation[] }[];
         const restored: CartItem[] = [];
         for (const it of parsed) {
           const p = products.find((x) => x.id === it.id);
-          if (p) restored.push({ product: p, qty: Math.max(1, it.qty) });
+          if (!p) continue;
+          const variations = Array.isArray(it.variations) ? it.variations : [];
+          restored.push({ key: cartKey(p.id, variations), product: p, qty: Math.max(1, it.qty), variations });
         }
         setCart(restored);
       }
@@ -736,7 +823,7 @@ export default function CatalogApp({
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem("catalog_cart", JSON.stringify(cart.map((i) => ({ id: i.product.id, qty: i.qty }))));
+      localStorage.setItem("catalog_cart", JSON.stringify(cart.map((i) => ({ id: i.product.id, qty: i.qty, variations: i.variations }))));
     } catch { /* noop */ }
   }, [cart, hydrated]);
 
@@ -754,21 +841,23 @@ export default function CatalogApp({
     toastTimer.current = setTimeout(() => setToast(null), 2500);
   }, []);
 
-  const addToCart = useCallback((p: CatalogProduct) => {
+  const addToCart = useCallback((p: CatalogProduct, variations: ChosenVariation[] = []) => {
+    const key = cartKey(p.id, variations);
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === p.id);
-      if (existing) return prev.map((i) => i.product.id === p.id ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { product: p, qty: 1 }];
+      const existing = prev.find((i) => i.key === key);
+      if (existing) return prev.map((i) => i.key === key ? { ...i, qty: i.qty + 1 } : i);
+      return [...prev, { key, product: p, qty: 1, variations }];
     });
-    showToast(`${p.name} adicionado ao carrinho`);
+    const label = variations.length ? ` (${variationsLabel(variations)})` : "";
+    showToast(`${p.name}${label} adicionado ao carrinho`);
   }, [showToast]);
 
-  const updateQty = useCallback((id: string, delta: number) => {
-    setCart((prev) => prev.map((i) => i.product.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
+  const updateQty = useCallback((key: string, delta: number) => {
+    setCart((prev) => prev.map((i) => i.key === key ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
   }, []);
 
-  const removeFromCart = useCallback((id: string) => {
-    setCart((prev) => prev.filter((i) => i.product.id !== id));
+  const removeFromCart = useCallback((key: string) => {
+    setCart((prev) => prev.filter((i) => i.key !== key));
   }, []);
 
   const toggleWish = useCallback((p: CatalogProduct) => {
@@ -907,7 +996,7 @@ export default function CatalogApp({
             <ProductDetailView product={p} related={related} colors={C} headingFont={headingFont} bodyFont={bodyFont}
               phone={settings.phone} whatsappMsg={settings.whatsapp_message || "Olá! Gostaria de fazer um pedido:"}
               wishlisted={wishlist.includes(p.id)}
-              onBack={back} onAddCart={() => addToCart(p)} onView={(id) => go({ type: "product", id })} onToggleWish={() => toggleWish(p)} />
+              onBack={back} onAddCart={(variations) => addToCart(p, variations)} onView={(id) => go({ type: "product", id })} onToggleWish={() => toggleWish(p)} />
           );
         })()}
       </div>
