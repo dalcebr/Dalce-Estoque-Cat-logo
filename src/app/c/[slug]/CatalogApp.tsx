@@ -602,6 +602,11 @@ function ProductDetailView({
     return acc;
   }, []);
 
+  // Um grupo só bloqueia opções sem estoque quando há estoque informado em
+  // pelo menos uma opção. Se todas estiverem zeradas, o estoque não está
+  // sendo controlado e as opções continuam selecionáveis.
+  const groupTracksStock = (g: { options: { stock: number }[] }) => g.options.some((o) => o.stock > 0);
+
   /** Variações escolhidas (na ordem dos grupos). */
   const chosen: ChosenVariation[] = variationGroups
     .map((g) => {
@@ -657,7 +662,7 @@ function ProductDetailView({
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {g.options.map((o) => {
-                  const out = o.stock <= 0;
+                  const out = groupTracksStock(g) && o.stock <= 0;
                   const isSel = selected[g.name] === o.option;
                   return (
                     <button

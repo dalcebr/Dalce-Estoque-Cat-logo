@@ -25,6 +25,7 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 15 | `016_product_images.sql` | Galeria de fotos dos produtos (ate 5, coluna `images`) |
 | 16 | `017_category_images.sql` | Foto de capa das categorias (coluna `image`) |
 | 17 | `018_product_variations.sql` | Variacoes aplicadas aos produtos (tabela `product_variations`) |
+| 18 | `019_catalog_variations_fix.sql` | Recria `public_catalog()` expondo `variations` (corrige opcoes que nao apareciam na vitrine) |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -420,6 +421,21 @@ mais recente da categoria → `products.image`.
 
 Cada produto traz tambem `variations`: um array de
 `{group, option, stock, price}` com as variacoes aplicadas ao produto.
+
+> **Importante**: se as variacoes aparecem no cadastro do produto mas **nao
+> aparecem / nao podem ser selecionadas** na vitrine, a funcao `public_catalog`
+> no banco ainda e a versao antiga (anterior a `018`). Rode
+> `019_catalog_variations_fix.sql` para recriar a funcao com o campo
+> `variations`. A migracao e idempotente.
+
+Na vitrine, o cliente escolhe uma opcao por grupo. O preco exibido passa a ser
+o da variacao escolhida (quando definido) e a escolha vai junto na mensagem do
+WhatsApp, por exemplo:
+
+```
+• 1x Alianca (Tamanho: 16) — R$ 250,00
+• 1x Alianca (Tamanho: 20) — R$ 250,00
+```
 
 ## Diagrama de Relacionamentos
 

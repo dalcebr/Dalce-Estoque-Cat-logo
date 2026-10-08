@@ -118,7 +118,17 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
     const raw = Array.isArray(p.images) ? p.images : [];
     const list = (raw.length > 0 ? raw : p.image ? [p.image] : [])
       .map((v) => resolveImageUrl(supabaseUrl, "product-images", v));
-    return { ...p, images: list, image: list[0] ?? null };
+    // Normaliza as variações: bancos com a função `public_catalog` antiga
+    // (anterior à 018) não retornam `variations`, então garantimos um array.
+    const variations = (Array.isArray(p.variations) ? p.variations : [])
+      .map((v) => ({
+        group: String(v?.group ?? "").trim(),
+        option: String(v?.option ?? "").trim(),
+        stock: Number.isFinite(Number(v?.stock)) ? Math.trunc(Number(v.stock)) : 0,
+        price: v?.price == null || v.price === "" || !Number.isFinite(Number(v.price)) ? null : Number(v.price),
+      }))
+      .filter((v) => v.group && v.option);
+    return { ...p, images: list, image: list[0] ?? null, variations };
   });
 
   const categories = (d.categories ?? []).map((c) => ({
