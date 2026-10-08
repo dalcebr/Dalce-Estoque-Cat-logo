@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resizeImageToBlob } from "@/lib/image";
+import { toWebpBlob } from "@/lib/image";
 
 /**
  * Upload an image to Supabase Storage.
- * The file is resized client-side before upload.
+ * The file is resized client-side and ALWAYS converted to WebP before upload.
  * Returns the storage path (not the full URL): `{storeId}/{uuid}.webp`
  */
 export async function uploadImage(
@@ -13,7 +13,7 @@ export async function uploadImage(
   file: File,
   maxSize: number,
 ): Promise<string> {
-  const blob = await resizeImageToBlob(file, maxSize);
+  const blob = await toWebpBlob(file, maxSize);
   const path = `${storeId}/${crypto.randomUUID()}.webp`;
 
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {
@@ -34,6 +34,18 @@ export async function deleteImage(
   if (error) throw new Error(`Delete failed: ${error.message}`);
 }
 
+/** Remove vários arquivos de uma vez (ignora caminhos vazios/legados). */
+export async function deleteImages(
+  supabase: SupabaseClient,
+  bucket: string,
+  paths: string[],
+): Promise<void> {
+  const valid = paths.filter(isStoragePath);
+  if (valid.length === 0) return;
+  const { error } = await supabase.storage.from(bucket).remove(valid);
+  if (error) throw new Error(`Delete failed: ${error.message}`);
+}
+
 /** Get the full public URL for a storage path. */
 export function getPublicUrl(
   supabase: SupabaseClient,
@@ -47,6 +59,11 @@ export function getPublicUrl(
 /** Detect whether a value is a legacy base64 data URL (old format). */
 export function isBase64Image(src: string): boolean {
   return src.startsWith("data:image/");
+}
+
+/** Detect whether a value is a storage path like `{storeId}/{uuid}.webp`. */
+export function isStoragePath(src: string): boolean {
+  return /^[0-9a-f-]+\/[0-9a-f-]+\.webp$/i.test(src);
 }
 
 /**

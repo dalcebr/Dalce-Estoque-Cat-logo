@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getStore, num } from "@/lib/store";
 import { isValidUUID, sanitizeText } from "@/lib/validation";
+import { normalizeImages, coverOf } from "@/lib/products";
+import { deleteImages, isStoragePath } from "@/lib/storage";
 
 const str = (fd: FormData, k: string, max = 120) => sanitizeText(String(fd.get(k) ?? ""), max);
 const esc = (s: string) => s.replace(/[%_\\]/g, "\\$&");
@@ -27,6 +29,12 @@ export async function saveProduct(fd: FormData) {
     if (isBase64 && image.length > 150_000) image = "";
   }
 
+  // Galeria de fotos (até 5). A primeira é a capa.
+  let rawImages: unknown = [];
+  try { rawImages = JSON.parse(String(fd.get("images") ?? "[]")); } catch { rawImages = []; }
+  const images = normalizeImages(rawImages, image);
+  image = coverOf(images) ?? "";
+
   const categoryId = str(fd, "category_id", 36) || null;
   if (categoryId && !isValidUUID(categoryId)) return;
 
@@ -35,11 +43,17 @@ export async function saveProduct(fd: FormData) {
     stock: Math.trunc(num(fd.get("stock"))) || 0,
     min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0),
     image: image || null,
+    images,
     category_id: categoryId,
   };
 
   if (id) {
+    // Busca a galeria anterior para remover do Storage as fotos que saíram.
+    const { data: prev } = await s.supabase.from("products").select("images, image").eq("id", id).eq("store_id", s.storeId).maybeSingle();
+    const before = normalizeImages(prev?.images, prev?.image);
+    const removed = before.filter((p) => !images.includes(p) && isStoragePath(p));
     await s.supabase.from("products").update(row).eq("id", id).eq("store_id", s.storeId);
+    if (removed.length) { try { await deleteImages(s.supabase, "product-images", removed); } catch { /* não bloqueia o salvamento */ } }
   } else {
     await s.supabase.from("products").insert({ ...row, store_id: s.storeId });
   }

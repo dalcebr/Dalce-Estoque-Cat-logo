@@ -15,6 +15,14 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 5 | `006_catalogo.sql` | Tabela catalog_settings, funcao public_catalog() |
 | 6 | `007_cadastros.sql` | Tabela customers, variation_groups, coluna image |
 | 7 | `008_security_hardening.sql` | Correcoes de seguranca, indices, constraints |
+| 8 | `009_storage_setup.sql` | Buckets de Storage (product-images, catalog-logos) |
+| 9 | `010_catalog_enhancements.sql` | Campos extras do catalogo (description, collection, material, featured) |
+| 10 | `011_catalog_customization.sql` | Personalizacao do catalogo (cores, fontes, beneficios) |
+| 11 | `012_catalog_simplify.sql` | Simplificacao do catalogo |
+| 12 | `013_catalog_enhancements.sql` | Melhorias do catalogo |
+| 13 | `014_catalog_colors_dark.sql` | Tema escuro do catalogo |
+| 14 | `015_catalog_sort_categories.sql` | Ordenacao de categorias e sold_count |
+| 15 | `016_product_images.sql` | Galeria de fotos dos produtos (ate 5, coluna `images`) |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -161,7 +169,8 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `stock` | int | NOT NULL | `0` | Estoque atual (pode ser negativo) |
 | `min_stock` | int | NOT NULL | `0` | Estoque minimo para alerta |
 | `active` | boolean | NOT NULL | `true` | Produto ativo ou arquivado |
-| `image` | text | NULL | | Imagem base64 (data URI WebP) |
+| `image` | text | NULL | | Foto principal (capa) - storage path ou base64 legado |
+| `images` | text[] | NOT NULL | `'{}'` | Galeria de fotos (ate 5). A posicao 0 e a capa |
 | `created_at` | timestamptz | NOT NULL | `now()` | Data de criacao |
 
 **Constraints**:
@@ -172,6 +181,15 @@ Vincula um usuario do Supabase Auth a uma loja.
 
 **Indices**:
 - `products_store_active_idx`: `(store_id) WHERE active` (parcial)
+- `products_images_idx`: GIN `(images)`
+
+**Galeria de fotos**:
+- Cada produto aceita ate **5 fotos** (`images`).
+- A **primeira posicao** e a capa (foto principal) e e espelhada em `image`
+  para compatibilidade com o restante do sistema.
+- O usuario pode escolher qualquer foto como capa (ela e movida para a posicao 0).
+- Todos os formatos de imagem sao convertidos para **WebP** no upload
+  (client-side, via canvas) antes de irem para o bucket `product-images`.
 
 **RLS**: `produtos da loja` - ALL onde `store_id = current_store_id()`
 

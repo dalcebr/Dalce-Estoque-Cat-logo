@@ -43,6 +43,7 @@ export type CatalogProduct = {
   name: string;
   price: number;
   image: string | null;
+  images: string[];
   available: boolean;
   category: string | null;
   color: string | null;
@@ -112,10 +113,12 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  const products = d.products.map((p) => ({
-    ...p,
-    image: p.image ? resolveImageUrl(supabaseUrl, "product-images", p.image) : null,
-  }));
+  const products = d.products.map((p) => {
+    const raw = Array.isArray(p.images) ? p.images : [];
+    const list = (raw.length > 0 ? raw : p.image ? [p.image] : [])
+      .map((v) => resolveImageUrl(supabaseUrl, "product-images", v));
+    return { ...p, images: list, image: list[0] ?? null };
+  });
 
   const categories = (d.categories ?? []).map((c) => ({
     ...c,

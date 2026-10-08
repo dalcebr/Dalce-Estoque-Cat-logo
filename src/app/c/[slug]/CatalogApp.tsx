@@ -547,14 +547,17 @@ function ProductDetailView({
   onToggleWish: () => void;
 }) {
   const [favHover, setFavHover] = useState(false);
+  const [active, setActive] = useState(0);
   const favBg = wishlisted ? colors.fav_active_bg : favHover ? colors.fav_hover_bg : colors.fav_bg;
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
+  const gallery = product.images?.length ? product.images : product.image ? [product.image] : [];
+  const current = gallery[Math.min(active, gallery.length - 1)] ?? null;
   return (
     <section style={{ padding: "0 16px" }}>
       <BackButton onClick={onBack} colors={colors} font={bodyFont} />
       <div style={{ position: "relative" }}>
-        {product.image ? (
-          <img src={product.image} alt={product.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 16, background: colors.card_bg }} />
+        {current ? (
+          <img src={current} alt={product.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 16, background: colors.card_bg }} />
         ) : (
           <ImgPlaceholder bg={colors.placeholder_bg} fg={colors.placeholder_icon} />
         )}
@@ -564,6 +567,17 @@ function ProductDetailView({
           <HeartIcon size={22} filled={wishlisted} />
         </button>
       </div>
+      {gallery.length > 1 && (
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", marginTop: 10, paddingBottom: 4, scrollbarWidth: "none" }}>
+          {gallery.map((src, i) => (
+            <button key={src} onClick={() => setActive(i)} aria-label={`Foto ${i + 1}`}
+              style={{ flex: "0 0 auto", width: 64, height: 64, padding: 0, cursor: "pointer", borderRadius: 10, overflow: "hidden", background: colors.card_bg,
+                border: `2px solid ${i === active ? colors.hero_button_bg : colors.card_border}` }}>
+              <img src={src} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            </button>
+          ))}
+        </div>
+      )}
       <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.products_title, marginTop: 16 }}>{product.name}</h1>
       <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(product.price)}</p>
       {product.description && (

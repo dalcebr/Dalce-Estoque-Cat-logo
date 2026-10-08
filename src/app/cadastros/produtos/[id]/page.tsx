@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import ProductForm, { type ProductInit } from "@/components/ProductForm";
 import DeleteButton from "@/components/DeleteButton";
+import { normalizeImages } from "@/lib/products";
 import { archiveProduct } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +20,11 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   if (!profile) redirect("/login");
   const storeId = profile.store_id as string;
   const { data: cats } = await supabase.from("categories").select("id, name").order("name");
-  let init: ProductInit = { name: "", price: "", cost: "", stock: "0", min_stock: "0", category_id: "", image: "" };
+  let init: ProductInit = { name: "", price: "", cost: "", stock: "0", min_stock: "0", category_id: "", images: [] };
   if (!isNew) {
-    const { data: p } = await supabase.from("products").select("id, name, price, cost, stock, min_stock, category_id, image").eq("id", id).maybeSingle();
+    const { data: p } = await supabase.from("products").select("id, name, price, cost, stock, min_stock, category_id, image, images").eq("id", id).maybeSingle();
     if (!p) notFound();
-    init = { id: p.id, name: p.name, price: dec(Number(p.price)), cost: dec(Number(p.cost)), stock: String(p.stock), min_stock: String(p.min_stock), category_id: p.category_id ?? "", image: p.image ?? "" };
+    init = { id: p.id, name: p.name, price: dec(Number(p.price)), cost: dec(Number(p.cost)), stock: String(p.stock), min_stock: String(p.min_stock), category_id: p.category_id ?? "", images: normalizeImages(p.images, p.image) };
   }
   return (
     <main className="mx-auto min-h-dvh max-w-md bg-page px-5 pb-10 pt-5">

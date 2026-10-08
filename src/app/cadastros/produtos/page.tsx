@@ -5,18 +5,19 @@ import { brl } from "@/lib/format";
 import { resolveImageUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
-type Row = { id: string; name: string; price: number; image: string | null; categories: { name: string } | { name: string }[] | null };
+type Row = { id: string; name: string; price: number; image: string | null; images: string[] | null; categories: { name: string } | { name: string }[] | null };
 
 export default async function Produtos() {
   const supabase = await createClient();
   const [{ data }, { data: cats }] = await Promise.all([
-    supabase.from("products").select("id, name, price, image, categories(name)").eq("active", true).order("name"),
+    supabase.from("products").select("id, name, price, image, images, categories(name)").eq("active", true).order("name"),
     supabase.from("categories").select("name").order("name"),
   ]);
   const rows: CadRow[] = ((data ?? []) as Row[]).map((p): CadRow => {
     const c = Array.isArray(p.categories) ? p.categories[0] : p.categories;
+    const cover = p.images?.[0] ?? p.image;
     return { id: p.id, href: `/cadastros/produtos/${p.id}`, title: p.name, sub: c?.name ?? "Sem categoria", search: `${p.name} ${c?.name ?? ""}`, group: c?.name ?? null, n: Number(p.price),
-      left: p.image ? { k: "img", src: resolveImageUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, "product-images", p.image) } : { k: "chip", t: p.name[0]?.toUpperCase() ?? "?" }, right: { t: brl(Number(p.price)) } };
+      left: cover ? { k: "img", src: resolveImageUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!, "product-images", cover) } : { k: "chip", t: p.name[0]?.toUpperCase() ?? "?" }, right: { t: brl(Number(p.price)) } };
   });
   return (
     <main className="min-h-dvh bg-page pb-36">

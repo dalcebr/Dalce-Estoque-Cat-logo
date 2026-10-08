@@ -14,3 +14,27 @@ export async function resizeImageToBlob(file: File, max: number): Promise<Blob> 
     c.toBlob((b) => (b ? resolve(b) : reject(new Error("Failed to create blob"))), "image/webp", 0.85);
   });
 }
+
+/**
+ * Converte QUALQUER arquivo de imagem aceito pelo navegador (jpg, png, gif,
+ * webp, bmp, avif, heic em navegadores compatíveis, svg, etc.) em um Blob WebP.
+ * Se o navegador não conseguir decodificar o arquivo, lança um erro amigável.
+ */
+export async function toWebpBlob(file: File, max: number): Promise<Blob> {
+  try {
+    return await resizeImageToBlob(file, max);
+  } catch {
+    throw new Error("Não foi possível ler esta imagem. Tente outro arquivo (JPG, PNG, WEBP...).");
+  }
+}
+
+/** Gera uma miniatura WebP (usada na pré-visualização da galeria). */
+export async function makeThumbnail(file: File, max = 320): Promise<string> {
+  const blob = await toWebpBlob(file, max);
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Falha ao gerar pré-visualização."));
+    reader.readAsDataURL(blob);
+  });
+}
