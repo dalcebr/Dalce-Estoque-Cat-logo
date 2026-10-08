@@ -11,9 +11,16 @@ export async function signIn(_: { error?: string } | undefined, fd: FormData) {
   if (!/^[a-z0-9._-]+$/.test(user)) return { error: "Usuário inválido." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: `${user}@dalce.app`, password });
-  if (error) return { error: "Usuário ou senha inválidos." };
-  redirect("/");
+  const { data, error } = await supabase.auth.signInWithPassword({ email: `${user}@dalce.app`, password });
+  if (error || !data.user) return { error: "Usuário ou senha inválidos." };
+
+  // Administradores vão direto para o painel de acessos (separado do sistema).
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  redirect(profile?.role === "admin" ? "/admin" : "/");
 }
 
 export async function signOut() {

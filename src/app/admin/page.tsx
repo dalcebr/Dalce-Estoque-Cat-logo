@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, Plus, ShieldCheck, Upload } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
+import { Plus, ShieldCheck, Upload } from "lucide-react";
 import { getAdminUserId, listStores } from "@/lib/admin";
 import { adminConfigured } from "@/lib/supabase/admin";
 import StoreCard from "./StoreCard";
@@ -26,11 +25,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const configured = adminConfigured();
 
   return (
-    <main className="min-h-dvh bg-page pb-32">
-      <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />
+    <main className="pb-32">
       <div className="mx-auto max-w-md px-5 pt-5">
-        <PageHeader eyebrow="Sistema · Admin" title="Painel de acessos" back="/ajustes" />
-
         {!configured && (
           <p className="mt-5 rounded-2xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-700">
             Configure a variável <code>SUPABASE_SERVICE_ROLE_KEY</code> para criar, congelar e excluir acessos.

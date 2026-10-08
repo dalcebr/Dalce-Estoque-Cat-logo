@@ -3,8 +3,10 @@
 O painel de administrador permite gerenciar os acessos (lojas) do sistema:
 criar, congelar, excluir e fazer backup/restauracao dos dados.
 
-Acesse em **Ajustes → Painel de acessos** (`/admin`). A opcao so aparece para
-usuarios com `role = 'admin'`.
+Acesse em **`/admin`**. A area e **separada do sistema de catalogo**: ao fazer
+login com um usuario `role = 'admin'`, voce e redirecionado automaticamente
+para o painel e nao ve o menu da loja. Usuarios comuns que tentarem abrir
+`/admin` sao enviados de volta para o sistema (`/`).
 
 ## Pre-requisitos
 
@@ -42,6 +44,14 @@ update profiles
 ```
 
 ## Funcionalidades
+
+### Acesso separado
+
+- **Login de admin** → redireciona direto para `/admin`.
+- **Admin logado** tentando abrir qualquer rota do sistema → volta para `/admin`.
+- **Usuario comum** tentando abrir `/admin` → volta para `/`.
+- O painel tem layout proprio (cabecalho com titulo e botao **Sair**), sem o
+  menu da loja.
 
 ### Criar acesso
 

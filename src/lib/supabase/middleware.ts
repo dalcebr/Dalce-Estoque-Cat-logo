@@ -49,6 +49,7 @@ export async function updateSession(req: NextRequest) {
   const isPublic = pathname.startsWith("/c/");
   const isLogin = pathname === "/login";
   const isFrozenPage = pathname === "/congelado";
+  const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
 
   // Public catalog routes: apply security headers, skip auth
   if (isPublic) {
@@ -63,26 +64,45 @@ export async function updateSession(req: NextRequest) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL("/login", req.url)),
     );
-  if (user && isLogin)
-    return applySecurityHeaders(
-      NextResponse.redirect(new URL("/", req.url)),
-    );
 
-  // Bloqueia o acesso de lojas congeladas (exceto a propria pagina de aviso).
-  if (user && !isFrozenPage) {
+  // Descobre o papel do usuario (admin ou loja).
+  let isAdmin = false;
+  let frozen = false;
+  if (user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role, stores(frozen)")
       .eq("id", user.id)
       .maybeSingle();
-
     const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
-    const isAdmin = profile?.role === "admin";
-    if (!isAdmin && store?.frozen) {
-      return applySecurityHeaders(
-        NextResponse.redirect(new URL("/congelado", req.url)),
-      );
-    }
+    isAdmin = profile?.role === "admin";
+    frozen = Boolean(store?.frozen);
+  }
+
+  // O admin tem uma area separada: nunca entra no sistema de catalogo.
+  if (user && isAdmin && !isAdminArea) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/admin", req.url)),
+    );
+  }
+
+  // Rotas do painel exigem admin.
+  if (user && isAdminArea && !isAdmin) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/", req.url)),
+    );
+  }
+
+  if (user && isLogin)
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL(isAdmin ? "/admin" : "/", req.url)),
+    );
+
+  // Bloqueia o acesso de lojas congeladas (exceto a propria pagina de aviso).
+  if (user && !isFrozenPage && !isAdmin && frozen) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/congelado", req.url)),
+    );
   }
 
   return applySecurityHeaders(res);
