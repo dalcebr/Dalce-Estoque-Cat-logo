@@ -22,13 +22,25 @@ Referencia completa de todas as variaveis de ambiente do Dalce Estoque.
 - **Usada em**: Server e Client (prefixo `NEXT_PUBLIC_`)
 - **Notas**: Essa chave e segura para expor no client. Ela so permite operacoes autorizadas pelas RLS policies. **NAO** confunda com a `service_role` key.
 
+## Variaveis Opcionais
+
+### `SUPABASE_SERVICE_ROLE_KEY`
+
+- **Descricao**: Chave privilegiada do Supabase (ignora RLS)
+- **Obrigatoria**: Apenas para o **Painel de administrador** (`/admin`)
+- **Exemplo**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+- **Onde encontrar**: Supabase Dashboard > Settings > API > service_role
+- **Usada em**: Somente no servidor (Server Actions do painel admin)
+- **Notas**: **NUNCA** use o prefixo `NEXT_PUBLIC_` e **NUNCA** exponha no client.
+  Sem ela, o painel admin mostra um aviso e as acoes de criar/congelar/excluir
+  e importar/exportar ficam indisponiveis.
+
 ## Variaveis que NAO sao usadas
 
 O projeto **NAO** usa estas variaveis (ao contrario do que e comum em projetos Supabase):
 
 | Variavel | Motivo |
 |----------|--------|
-| `SUPABASE_SERVICE_ROLE_KEY` | Nao e necessaria. O app sempre opera como o usuario autenticado, via RLS. |
 | `SUPABASE_DB_URL` | Nao ha conexao direta ao banco. Tudo via client SDK. |
 | `DATABASE_URL` | Nao usa ORM (Prisma, Drizzle, etc.) |
 | `NEXT_PUBLIC_SITE_URL` | A URL e inferida do request. |
@@ -95,4 +107,6 @@ Se uma chave for comprometida:
 # .env.local (copie e preencha)
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+# Opcional: apenas para o painel de administrador (/admin)
+SUPABASE_SERVICE_ROLE_KEY=SUA_CHAVE_SERVICE_ROLE
 ```

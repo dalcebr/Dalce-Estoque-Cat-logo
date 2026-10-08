@@ -13,6 +13,10 @@ O Dalce Estoque e um SaaS que permite a lojistas:
 - **Controlar fiado** (vendas a credito por cliente)
 - **Visualizar relatorios** com meta mensal, vendas do dia e do mes
 
+O sistema tambem possui um **painel de administrador** para criar, congelar e
+excluir acessos (lojas), alem de exportar/importar todos os dados em JSON.
+Veja [ADMIN_PANEL.md](./ADMIN_PANEL.md).
+
 ## Stack Tecnologica
 
 | Camada | Tecnologia |
@@ -109,6 +113,7 @@ Acesse `http://localhost:3000` e faca login com o usuario (sem `@dalce.app`) e s
 | Documento | Descricao |
 |---|---|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Arquitetura do sistema, fluxo de dados, multi-tenancy |
+| [ADMIN_PANEL.md](./ADMIN_PANEL.md) | Painel de administrador: acessos, congelar, excluir, backup/restauracao |
 | [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) | Configuracao completa do Supabase |
 | [VERCEL_SETUP.md](./VERCEL_SETUP.md) | Deploy na Vercel |
 | [CLOUDFLARE_SETUP.md](./CLOUDFLARE_SETUP.md) | Configuracao do Cloudflare |

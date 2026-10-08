@@ -45,8 +45,10 @@ export async function updateSession(req: NextRequest) {
     },
   );
 
-  const isPublic = req.nextUrl.pathname.startsWith("/c/");
-  const isLogin = req.nextUrl.pathname === "/login";
+  const pathname = req.nextUrl.pathname;
+  const isPublic = pathname.startsWith("/c/");
+  const isLogin = pathname === "/login";
+  const isFrozenPage = pathname === "/congelado";
 
   // Public catalog routes: apply security headers, skip auth
   if (isPublic) {
@@ -65,6 +67,23 @@ export async function updateSession(req: NextRequest) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL("/", req.url)),
     );
+
+  // Bloqueia o acesso de lojas congeladas (exceto a propria pagina de aviso).
+  if (user && !isFrozenPage) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, stores(frozen)")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
+    const isAdmin = profile?.role === "admin";
+    if (!isAdmin && store?.frozen) {
+      return applySecurityHeaders(
+        NextResponse.redirect(new URL("/congelado", req.url)),
+      );
+    }
+  }
 
   return applySecurityHeaders(res);
 }

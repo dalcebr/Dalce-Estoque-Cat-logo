@@ -26,6 +26,9 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 16 | `017_category_images.sql` | Foto de capa das categorias (coluna `image`) |
 | 17 | `018_product_variations.sql` | Variacoes aplicadas aos produtos (tabela `product_variations`) |
 | 18 | `019_catalog_variations_fix.sql` | Recria `public_catalog()` expondo `variations` (corrige opcoes que nao apareciam na vitrine) |
+| 19 | `020_admin_panel.sql` | Painel admin: colunas `role`/`frozen`, RLS de admin, bloqueio de lojas congeladas |
+| 20 | `021_promote_admin.sql` | Promove um usuario existente a administrador (edite o username antes de rodar) |
+| 21 | `022_store_cascade.sql` | `ON DELETE CASCADE` em `store_id` (permite excluir a loja com todos os dados) |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -40,14 +43,22 @@ Tabela raiz do multi-tenancy. Cada loja e um tenant isolado.
 | `id` | uuid | NOT NULL | `gen_random_uuid()` | PK |
 | `name` | text | NOT NULL | | Nome da loja |
 | `monthly_goal` | numeric(12,2) | NULL | | Meta mensal em BRL |
+| `frozen` | boolean | NOT NULL | `false` | Loja congelada (bloqueia o acesso) |
+| `frozen_at` | timestamptz | NULL | | Quando foi congelada |
+| `frozen_reason` | text | NULL | | Motivo do congelamento |
+| `owner_username` | text | NULL | | Username do dono (referencia) |
 | `created_at` | timestamptz | NOT NULL | `now()` | Data de criacao |
 
 **Constraints**:
 - `stores_name_not_empty`: `trim(name) <> ''`
 
+**Indices**:
+- `stores_frozen_idx`: `(frozen) WHERE frozen` (parcial)
+
 **RLS Policies**:
 - `loja propria (ler)`: SELECT onde `id = current_store_id()`
 - `loja propria (editar)`: UPDATE onde `id = current_store_id()`
+- `admin gerencia lojas`: ALL onde `is_admin()`
 
 ---
 
@@ -58,12 +69,23 @@ Vincula um usuario do Supabase Auth a uma loja.
 | Coluna | Tipo | Nullable | Default | Descricao |
 |--------|------|----------|---------|-----------|
 | `id` | uuid | NOT NULL | | PK, FK para `auth.users(id)` ON DELETE CASCADE |
-| `store_id` | uuid | NOT NULL | | FK para `stores(id)` |
+| `store_id` | uuid | NOT NULL | | FK para `stores(id)` ON DELETE CASCADE |
 | `name` | text | NOT NULL | | Nome de exibicao |
+| `role` | text | NOT NULL | `'owner'` | `'owner'` (dono da loja) ou `'admin'` (administrador do sistema) |
+| `username` | text | NULL | | Username de login (sem `@dalce.app`) |
+| `created_at` | timestamptz | NOT NULL | `now()` | Data de criacao |
+
+**Constraints**:
+- `profiles_role_check`: `role IN ('owner', 'admin')`
+
+**Indices**:
+- `profiles_username_idx`: UNIQUE `(lower(username)) WHERE username IS NOT NULL`
+- `profiles_store_idx`: `(store_id)`
 
 **RLS Policies**:
 - `perfil proprio`: SELECT onde `id = auth.uid()`
-- Sem INSERT/UPDATE/DELETE = negado por RLS (somente service role)
+- `admin gerencia perfis`: ALL onde `is_admin()`
+- Sem INSERT/UPDATE/DELETE para usuarios comuns = negado por RLS (somente service role)
 
 ---
 
@@ -378,6 +400,36 @@ LANGUAGE sql STABLE SECURITY DEFINER
 ```
 
 Retorna o `store_id` do usuario autenticado consultando `profiles`. Usada em todas as RLS policies.
+
+### `is_admin()`
+
+```sql
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+```
+
+Retorna `true` se o usuario autenticado tem `profiles.role = 'admin'`. Usada
+nas policies de administrador (`stores`, `profiles`).
+
+### `store_active()`
+
+```sql
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+```
+
+Retorna `true` se a loja do usuario autenticado **nao** esta congelada. Todas
+as policies de dados exigem `store_active()`, entao uma loja congelada nao
+consegue ler nem gravar dados (mesmo que o middleware seja contornado).
+
+### `current_store_frozen()`
+
+```sql
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+```
+
+Retorna `true` se a loja do usuario autenticado esta congelada.
 
 ### `set_sale_number()`
 
