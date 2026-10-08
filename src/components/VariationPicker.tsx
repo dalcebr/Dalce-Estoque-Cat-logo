@@ -5,24 +5,47 @@ import { MAX_VARIATION_GROUPS, type ProductVariation, type VariationGroup } from
 
 const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3 text-lg outline-none focus:border-brand";
 
+/** Converte texto digitado (aceita vírgula) em número. Vazio → null. */
+function toNumber(raw: string): number | null {
+  const s = raw.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
 /**
  * Seletor de variações do produto.
  * O usuário escolhe grupos já cadastrados (Cadastros → Variações) e define,
  * para cada opção, o estoque e (opcionalmente) um preço próprio.
+ *
+ * Os campos são controlados por texto local para permitir digitação livre
+ * (apagar, digitar "12,50", etc.) sem o valor "pular" a cada tecla.
  */
 export default function VariationPicker({
   groups,
   value,
   onChange,
+  maxStock,
 }: {
   groups: VariationGroup[];
   value: ProductVariation[];
   onChange: (v: ProductVariation[]) => void;
+  /** Estoque do produto principal. A soma das variações não pode ultrapassá-lo. */
+  maxStock?: number;
 }) {
   const [open, setOpen] = useState(false);
+  // Texto em edição por chave "grupo\u0000opção" (evita reformatar durante a digitação).
+  const [draft, setDraft] = useState<Record<string, string>>({});
 
   const usedGroups = new Set(value.map((v) => v.group_name.toLowerCase()));
   const available = groups.filter((g) => !usedGroups.has(g.name.toLowerCase()));
+
+  const keyOf = (groupName: string, option: string) => `${groupName}\u0000${option}`;
+
+  /** Soma atual do estoque das variações. */
+  const totalStock = value.reduce((s, v) => s + (Number.isFinite(v.stock) ? v.stock : 0), 0);
+  const limit = typeof maxStock === "number" && Number.isFinite(maxStock) ? Math.max(0, Math.trunc(maxStock)) : null;
+  const over = limit !== null && totalStock > limit;
 
   /** Adiciona todas as opções de um grupo, herdando estoque/preço já informados. */
   function addGroup(g: VariationGroup) {
@@ -40,6 +63,22 @@ export default function VariationPicker({
 
   function update(groupName: string, option: string, patch: Partial<ProductVariation>) {
     onChange(value.map((v) => (v.group_name === groupName && v.option === option ? { ...v, ...patch } : v)));
+  }
+
+  /** Atualiza o estoque a partir do texto digitado, sem reformatar o campo. */
+  function setStock(groupName: string, option: string, raw: string) {
+    const k = keyOf(groupName, option) + "\u0001stock";
+    setDraft((d) => ({ ...d, [k]: raw }));
+    const n = toNumber(raw);
+    update(groupName, option, { stock: n === null ? 0 : Math.max(0, Math.trunc(n)) });
+  }
+
+  /** Atualiza o preço a partir do texto digitado, sem reformatar o campo. */
+  function setPrice(groupName: string, option: string, raw: string) {
+    const k = keyOf(groupName, option) + "\u0001price";
+    setDraft((d) => ({ ...d, [k]: raw }));
+    const n = toNumber(raw);
+    update(groupName, option, { price: n === null || n < 0 ? null : n });
   }
 
   // Agrupa para exibição
@@ -68,47 +107,53 @@ export default function VariationPicker({
       <div className="space-y-4">
         {Object.entries(grouped).map(([name, options]) => (
           <div key={name} className="rounded-2xl border border-line bg-page p-3">
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
               <b className="text-base font-extrabold">{name}</b>
               <button
                 type="button"
                 onClick={() => removeGroup(name)}
                 aria-label={`Remover ${name}`}
-                className="grid size-8 place-items-center rounded-lg text-red-600"
+                className="grid size-9 place-items-center rounded-xl border border-line bg-surface text-red-600"
               >
                 <Trash2 size={16} />
               </button>
             </div>
-            <div className="space-y-2">
-              {options.map((v) => (
-                <div key={v.option} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 truncate text-sm font-semibold text-soft">{v.option}</span>
-                  <label className="flex flex-1 items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase text-soft">Estoque</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={v.stock}
-                      onChange={(e) => update(name, v.option, { stock: Math.trunc(Number(e.target.value)) || 0 })}
-                      className={`${f} px-3 py-2 text-base`}
-                    />
-                  </label>
-                  <label className="flex flex-1 items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase text-soft">Preço</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="padrão"
-                      value={v.price === null ? "" : String(v.price).replace(".", ",")}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(",", ".").trim();
-                        update(name, v.option, { price: raw === "" ? null : Number(raw) });
-                      }}
-                      className={`${f} px-3 py-2 text-base`}
-                    />
-                  </label>
-                </div>
-              ))}
+
+            <div className="space-y-3">
+              {options.map((v) => {
+                const k = keyOf(name, v.option);
+                const stockText = draft[k + "\u0001stock"] ?? String(v.stock);
+                const priceText = draft[k + "\u0001price"] ?? (v.price === null ? "" : String(v.price).replace(".", ","));
+                return (
+                  <div key={v.option} className="rounded-xl border border-line bg-surface p-3">
+                    <b className="mb-2 block truncate text-sm font-bold text-ink">{v.option}</b>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="block">
+                        <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-soft">Estoque</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={stockText}
+                          onChange={(e) => setStock(name, v.option, e.target.value.replace(/[^\d]/g, ""))}
+                          className={`${f} px-3 py-2.5 text-center text-base`}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-soft">Preço (R$)</span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="padrão"
+                          value={priceText}
+                          onChange={(e) => setPrice(name, v.option, e.target.value.replace(/[^\d.,]/g, ""))}
+                          className={`${f} px-3 py-2.5 text-center text-base`}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -153,8 +198,24 @@ export default function VariationPicker({
         </div>
       )}
 
+      {groupCount > 0 && (
+        <div className={`mt-3 flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold ${over ? "bg-red-100 text-red-700" : "bg-tint text-brand"}`}>
+          <span>Total nas variações</span>
+          <span>
+            {totalStock}
+            {limit !== null && <span className="font-semibold opacity-70"> / {limit}</span>}
+          </span>
+        </div>
+      )}
+
+      {over && (
+        <p className="mt-2 text-xs font-semibold text-red-600">
+          A soma das variações ({totalStock}) ultrapassa o estoque do produto ({limit}). Reduza as quantidades ou aumente o estoque do produto.
+        </p>
+      )}
+
       <p className="mt-3 text-xs text-soft">
-        O estoque das variações é somado ao estoque do produto. Deixe o preço vazio para usar o preço padrão.
+        O estoque das variações é somado ao estoque do produto e não pode ultrapassá-lo. Deixe o preço vazio para usar o preço padrão.
       </p>
     </div>
   );

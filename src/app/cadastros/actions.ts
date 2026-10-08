@@ -44,9 +44,16 @@ export async function saveProduct(fd: FormData) {
   try { rawVariations = JSON.parse(String(fd.get("variations") ?? "[]")); } catch { rawVariations = []; }
   const variations = normalizeVariations(rawVariations);
 
+  const stock = Math.trunc(num(fd.get("stock"))) || 0;
+  // A soma do estoque das variações não pode ultrapassar o estoque do produto.
+  const variationsStock = variations.reduce((s, v) => s + (Number.isFinite(v.stock) ? v.stock : 0), 0);
+  if (variations.length > 0 && variationsStock > Math.max(0, stock)) {
+    redirect(`/cadastros/produtos/${id || "novo"}?erro=estoque`);
+  }
+
   const row = {
     name, price, cost,
-    stock: Math.trunc(num(fd.get("stock"))) || 0,
+    stock,
     min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0),
     image: image || null,
     images,

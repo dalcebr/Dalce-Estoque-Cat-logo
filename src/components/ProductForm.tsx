@@ -24,6 +24,7 @@ export default function ProductForm({ p, cats, groups, storeId }: { p: ProductIn
   // A primeira posição é a capa (foto principal).
   const [images, setImages] = useState<string[]>(p.images);
   const [variations, setVariations] = useState<ProductVariation[]>(p.variations);
+  const [stock, setStock] = useState(p.stock);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<Pending[]>([]);
@@ -35,6 +36,11 @@ export default function ProductForm({ p, cats, groups, storeId }: { p: ProductIn
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const src = (v: string) => resolveImageUrl(supabaseUrl, BUCKET, v);
   const full = images.length >= MAX_PRODUCT_IMAGES;
+
+  // Estoque do produto (controlado) e soma das variações.
+  const stockNum = Math.max(0, Math.trunc(Number(String(stock).replace(/\./g, "").replace(",", ".")) || 0));
+  const variationsStock = variations.reduce((s, v) => s + (Number.isFinite(v.stock) ? v.stock : 0), 0);
+  const stockOver = variations.length > 0 && variationsStock > stockNum;
 
   /** Envia um blob já processado (recortado ou não) para o Storage. */
   async function uploadBlob(blob: Blob, originalName: string) {
@@ -258,14 +264,20 @@ export default function ProductForm({ p, cats, groups, storeId }: { p: ProductIn
         <label className="block"><L t="Categoria" />
           <select name="category_id" defaultValue={p.category_id} className={f}><option value="">Sem categoria</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block"><L t="Em estoque" /><input name="stock" inputMode="numeric" defaultValue={p.stock} className={f} /></label>
+          <label className="block"><L t="Em estoque" /><input name="stock" inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value.replace(/[^\d]/g, ""))} className={f} /></label>
           <label className="block"><L t="Estoque mínimo" /><input name="min_stock" inputMode="numeric" defaultValue={p.min_stock} className={f} /></label>
         </div>
 
         {/* ─── Variações ─── */}
-        <VariationPicker groups={groups} value={variations} onChange={setVariations} />
+        <VariationPicker groups={groups} value={variations} onChange={setVariations} maxStock={stockNum} />
 
-        <button disabled={uploading} className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white disabled:opacity-60">Salvar produto</button>
+        {stockOver && (
+          <p role="alert" className="rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+            A soma das variações ({variationsStock}) é maior que o estoque do produto ({stockNum}). Ajuste antes de salvar.
+          </p>
+        )}
+
+        <button disabled={uploading || stockOver} className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white disabled:opacity-60">Salvar produto</button>
       </form>
     </>
   );

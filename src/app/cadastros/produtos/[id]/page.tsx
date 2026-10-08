@@ -10,8 +10,9 @@ import { archiveProduct } from "../../actions";
 export const dynamic = "force-dynamic";
 const dec = (n: number) => String(n).replace(".", ",");
 
-export default async function Produto({ params }: { params: Promise<{ id: string }> }) {
+export default async function Produto({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ erro?: string }> }) {
   const { id } = await params;
+  const { erro } = await searchParams;
   const isNew = id === "novo";
   const supabase = await createClient();
   // Get current user's store_id for storage uploads
@@ -49,6 +50,11 @@ export default async function Produto({ params }: { params: Promise<{ id: string
   return (
     <main className="mx-auto min-h-dvh max-w-md bg-page px-5 pb-10 pt-5">
       <PageHeader eyebrow="Cadastro · Produtos" title={isNew ? "Novo produto" : "Editar produto"} back="/cadastros/produtos" />
+      {erro === "estoque" && (
+        <p role="alert" className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+          A soma das variações ultrapassa o estoque do produto. Ajuste as quantidades e salve novamente.
+        </p>
+      )}
       <ProductForm p={init} cats={cats ?? []} groups={groups} storeId={storeId} />
       {!isNew && <DeleteButton action={archiveProduct.bind(null, id)} label="Arquivar produto" confirmText="Arquivar este produto? Ele some das listas e do PDV, mas as vendas antigas continuam." />}
     </main>
