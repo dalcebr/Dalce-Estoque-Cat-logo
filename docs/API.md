@@ -134,10 +134,30 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
     hero_image: string;    // Imagem do banner (storage path ou base64)
     hero_button_text: string; // Texto do botao (max 40 chars)
     benefits: Array<{ icon: string; title: string; description: string }>; // ate 4
-    colors: {              // Cores de cada elemento (hex #RRGGBB)
-      page_bg, header_bg, card_bg, card_text, store_name,
-      heading, body_text, button_bg, button_text, footer_bg
+    colors: {              // Cores do tema CLARO (hex #RRGGBB; hero_overlay_opacity 0-100)
+      page_bg, section_bg, divider,
+      text_primary, text_secondary, text_tertiary, text_muted,
+      header_bg, header_text, header_search_icon, header_wish_icon, header_cart_icon,
+      header_wish_badge_bg, header_wish_badge_text, header_cart_badge_bg, header_cart_badge_text,
+      header_icon_hover, header_wish_active, header_wish_inactive,
+      hero_overlay, hero_overlay_opacity, hero_title, hero_description,
+      hero_button_bg, hero_button_text, hero_button_icon, hero_button_hover_bg, hero_button_hover_text,
+      benefit_bg, benefit_icon, benefit_title, benefit_description, benefit_border, benefit_hover_bg, benefit_hover_icon,
+      category_title, category_bg, category_text, category_border,
+      category_active_bg, category_active_text, category_active_border,
+      category_hover_bg, category_hover_text, category_hover_border,
+      products_section_bg, products_title,
+      search_bg, search_text, search_placeholder, search_icon, search_border, search_border_focus,
+      filter_bg, filter_text, filter_border, filter_active_bg, filter_active_text, filter_active_border,
+      filter_hover_bg, filter_hover_text, filter_hover_border,
+      card_bg, card_border, card_shadow, card_name, card_price, card_cart_icon, card_cart_icon_hover,
+      fav_bg, fav_icon, fav_active_bg, fav_active_icon, fav_hover_bg, fav_hover_icon,
+      placeholder_bg, placeholder_icon, placeholder_text,
+      footer_bg, footer_title, footer_text, footer_link, footer_link_hover, footer_copyright,
+      theme_btn_bg, theme_btn_text, theme_btn_icon, theme_btn_border,
+      state_hover, state_focus, state_selection, state_disabled, state_error, state_success, state_warning
     };
+    colors_dark: { ... };  // Mesma estrutura de `colors`, para o tema ESCURO
     fonts: {               // Fonte 1, fonte 2 e onde cada uma e usada
       font_1, font_2,      // "inter" | "poppins" | "montserrat" | "roboto" | "opensans" | "raleway" | "nunito" | "worksans" | "dmsans" | "quicksand" | "josefin" | "oswald" | "bebas" | "righteous" | "playfair" | "lora" | "cormorant" | "merriweather" | "cinzel" | "abril" | "dancing" | "pacifico" | "greatvibes" | "satisfy"
       store_name_font, heading_font, card_font, body_font  // 1 | 2
@@ -152,7 +172,7 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
   - Imagem do banner: storage path valido ou base64 < 300KB
   - Email: formato basico de email
   - Instagram: `^[A-Za-z0-9._-]{0,60}$`
-  - Cores: cada valor deve ser `#RRGGBB`
+  - Cores: cada valor deve ser `#RRGGBB` (exceto `hero_overlay_opacity`, 0-100)
   - Fontes: valores dentro da lista permitida; slots 1 ou 2
 - **Comportamento**: Upsert em `catalog_settings`
 

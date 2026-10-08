@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, ExternalLink, Eye, EyeOff, Info, Image, Save, Sun, Moon, MessageCircle, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2, Palette, Type } from "lucide-react";
+import { Check, ExternalLink, Eye, EyeOff, Info, Image, Save, Sun, Moon, MessageCircle, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2, Palette, Type, ChevronDown } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { saveCatalog } from "@/app/catalogo/actions";
 import {
-  BENEFIT_ICONS, DEFAULT_BENEFITS, COLOR_FIELDS, FONTS,
+  BENEFIT_ICONS, DEFAULT_BENEFITS, COLOR_GROUPS, FONTS,
   type CatalogSettings, type StockMode, type Benefit, type CatalogColors, type CatalogFonts,
 } from "@/lib/catalog";
 import { createBrowserSupabase } from "@/lib/supabase/client";
@@ -31,17 +31,28 @@ const ICON_MAP: Record<string, typeof Headphones> = {
   check: CheckCircle, clock: Clock, heart: Heart, gift: Gift,
 };
 
+type ThemeKey = "light" | "dark";
+
 export default function CatalogForm({ initial, open, storeId }: { initial: CatalogSettings; open: boolean; storeId: string }) {
   const [v, setV] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [heroUploading, setHeroUploading] = useState(false);
   const [msg, setMsg] = useState<{ t: string; err?: boolean } | null>(null);
   const [host, setHost] = useState("");
+  const [colorTheme, setColorTheme] = useState<ThemeKey>("light");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const heroFile = useRef<HTMLInputElement>(null);
   useEffect(() => setHost(location.host), []);
   const set = <K extends keyof CatalogSettings>(k: K, x: CatalogSettings[K]) => setV((s) => ({ ...s, [k]: x }));
-  const setColor = (k: keyof CatalogColors, x: string) => setV((s) => ({ ...s, colors: { ...s.colors, [k]: x } }));
   const setFont = <K extends keyof CatalogFonts>(k: K, x: CatalogFonts[K]) => setV((s) => ({ ...s, fonts: { ...s.fonts, [k]: x } }));
+
+  // Cores do tema selecionado (claro ou escuro)
+  const themeColors: CatalogColors = colorTheme === "dark" ? v.colors_dark : v.colors;
+  const setColor = (k: keyof CatalogColors, x: string) => setV((s) => {
+    const key = colorTheme === "dark" ? "colors_dark" : "colors";
+    return { ...s, [key]: { ...s[key], [k]: x } };
+  });
+  const toggleGroup = (id: string) => setOpenGroups((g) => ({ ...g, [id]: !g[id] }));
 
   // Benefits helpers
   const benefits: Benefit[] = Array.isArray(v.benefits) && v.benefits.length > 0 ? v.benefits : DEFAULT_BENEFITS;
@@ -176,17 +187,54 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
 
       {/* ═══ CORES ═══ */}
       <Sep t="Cores" />
-      <p className="mb-4 px-1 text-sm text-soft">Escolha a cor de cada elemento do catálogo.</p>
+      <p className="mb-4 px-1 text-sm text-soft">Escolha a cor de cada elemento. Personalize o tema claro e o tema escuro separadamente.</p>
+
+      {/* Seletor de tema */}
+      <div className="mb-4 flex gap-2 rounded-3xl border border-line bg-surface p-2">
+        {([["light", "Modo claro", Sun], ["dark", "Modo escuro", Moon]] as const).map(([k, n, Icon]) => {
+          const on = colorTheme === k;
+          return (
+            <button key={k} onClick={() => setColorTheme(k)}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-base font-bold ${on ? "bg-brand text-white" : "text-soft"}`}>
+              <Icon size={18} />{n}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="space-y-2.5">
-        {COLOR_FIELDS.map(({ k, n }) => (
-          <div key={k} className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-3">
-            <input type="color" value={v.colors[k]} onChange={(e) => setColor(k, e.target.value)}
-              className="size-12 shrink-0 cursor-pointer rounded-2xl border border-line bg-page p-1" />
-            <span className="flex-1 text-lg font-bold">{n}</span>
-            <input value={v.colors[k]} onChange={(e) => setColor(k, e.target.value)} maxLength={7}
-              className="w-28 rounded-2xl border border-line bg-page px-3 py-2 text-center font-mono text-base font-bold outline-none focus:border-brand" />
-          </div>
-        ))}
+        {COLOR_GROUPS.map((g) => {
+          const isOpen = !!openGroups[g.id];
+          return (
+            <div key={g.id} className="overflow-hidden rounded-3xl border border-line bg-surface">
+              <button onClick={() => toggleGroup(g.id)} aria-expanded={isOpen}
+                className="flex w-full items-center gap-3 p-4 text-left">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-page text-lg">{g.icon}</span>
+                <span className="flex-1 text-lg font-extrabold">{g.n}</span>
+                <span className="text-sm font-medium text-soft">{g.fields.length}</span>
+                <ChevronDown size={20} className={`shrink-0 text-soft transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <div className="space-y-2.5 border-t border-line p-3">
+                  {g.fields.map(({ k, n, opacity }) => (
+                    <div key={k} className="flex items-center gap-3 rounded-2xl border border-line bg-page p-3">
+                      {opacity ? (
+                        <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line bg-surface text-sm font-bold text-soft">%</span>
+                      ) : (
+                        <input type="color" value={themeColors[k]} onChange={(e) => setColor(k, e.target.value)}
+                          className="size-12 shrink-0 cursor-pointer rounded-2xl border border-line bg-surface p-1" />
+                      )}
+                      <span className="flex-1 text-base font-bold">{n}</span>
+                      <input value={themeColors[k]} onChange={(e) => setColor(k, e.target.value)} maxLength={opacity ? 3 : 7}
+                        inputMode={opacity ? "numeric" : undefined}
+                        className="w-24 rounded-2xl border border-line bg-surface px-3 py-2 text-center font-mono text-base font-bold outline-none focus:border-brand" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* ═══ FONTES ═══ */}

@@ -237,7 +237,8 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `hero_image` | text | NULL | | Imagem do banner (storage path) |
 | `hero_button_text` | text | NOT NULL | `'VER PRODUTOS'` | Texto do botao do banner |
 | `benefits` | jsonb | NOT NULL | `[]` | Beneficios (ate 4): `{icon,title,description}` |
-| `colors` | jsonb | NOT NULL | (ver abaixo) | Cores de cada elemento |
+| `colors` | jsonb | NOT NULL | (ver abaixo) | Cores do tema claro |
+| `colors_dark` | jsonb | NOT NULL | (ver abaixo) | Cores do tema escuro |
 | `fonts` | jsonb | NOT NULL | (ver abaixo) | Fonte 1, fonte 2 e onde cada uma e usada |
 | `dark_mode_enabled` | boolean | NOT NULL | `true` | Exibe botao de modo escuro |
 | `whatsapp_message` | text | NOT NULL | `'Ola! Gostaria de fazer um pedido:'` | Mensagem inicial do pedido |
@@ -250,8 +251,25 @@ Vincula um usuario do Supabase Auth a uma loja.
 
 **RLS**: `catalogo da loja` - ALL onde `store_id = current_store_id()`
 
-**`colors` (JSONB)** - chaves: `page_bg`, `header_bg`, `card_bg`, `card_text`,
-`store_name`, `heading`, `body_text`, `button_bg`, `button_text`, `footer_bg`.
+**`colors` / `colors_dark` (JSONB)** - mesma estrutura para os dois temas.
+Grupos de chaves (todas hex `#RRGGBB`, exceto `hero_overlay_opacity` que e
+`0`–`100`):
+
+- **Fundo geral**: `page_bg`, `section_bg`, `divider`
+- **Textos gerais**: `text_primary`, `text_secondary`, `text_tertiary`, `text_muted`
+- **Cabecalho**: `header_bg`, `header_text`, `header_search_icon`, `header_wish_icon`, `header_cart_icon`, `header_wish_badge_bg`, `header_wish_badge_text`, `header_cart_badge_bg`, `header_cart_badge_text`, `header_icon_hover`, `header_wish_active`, `header_wish_inactive`
+- **Banner/Hero**: `hero_overlay`, `hero_overlay_opacity`, `hero_title`, `hero_description`, `hero_button_bg`, `hero_button_text`, `hero_button_icon`, `hero_button_hover_bg`, `hero_button_hover_text`
+- **Beneficios**: `benefit_bg`, `benefit_icon`, `benefit_title`, `benefit_description`, `benefit_border`, `benefit_hover_bg`, `benefit_hover_icon`
+- **Categorias**: `category_title`, `category_bg`, `category_text`, `category_border`, `category_active_bg`, `category_active_text`, `category_active_border`, `category_hover_bg`, `category_hover_text`, `category_hover_border`
+- **Secao de produtos**: `products_section_bg`, `products_title`
+- **Pesquisa**: `search_bg`, `search_text`, `search_placeholder`, `search_icon`, `search_border`, `search_border_focus`
+- **Filtros**: `filter_bg`, `filter_text`, `filter_border`, `filter_active_bg`, `filter_active_text`, `filter_active_border`, `filter_hover_bg`, `filter_hover_text`, `filter_hover_border`
+- **Cards**: `card_bg`, `card_border`, `card_shadow`, `card_name`, `card_price`, `card_cart_icon`, `card_cart_icon_hover`
+- **Favorito**: `fav_bg`, `fav_icon`, `fav_active_bg`, `fav_active_icon`, `fav_hover_bg`, `fav_hover_icon`
+- **Sem imagem**: `placeholder_bg`, `placeholder_icon`, `placeholder_text`
+- **Rodape**: `footer_bg`, `footer_title`, `footer_text`, `footer_link`, `footer_link_hover`, `footer_copyright`
+- **Botao tema**: `theme_btn_bg`, `theme_btn_text`, `theme_btn_icon`, `theme_btn_border`
+- **Estados**: `state_hover`, `state_focus`, `state_selection`, `state_disabled`, `state_error`, `state_success`, `state_warning`
 
 **`fonts` (JSONB)** - chaves: `font_1`, `font_2` (valores: `inter`, `poppins`,
 `montserrat`, `roboto`, `opensans`, `raleway`, `nunito`, `worksans`, `dmsans`,

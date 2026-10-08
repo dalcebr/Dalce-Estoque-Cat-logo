@@ -8,7 +8,7 @@ import {
 } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { resolveImageUrl } from "@/lib/storage";
-import { DEFAULT_COLORS, DEFAULT_FONTS, type CatalogColors, type CatalogFonts } from "@/lib/catalog";
+import { DEFAULT_COLORS, DEFAULT_COLORS_DARK, DEFAULT_FONTS, type CatalogColors, type CatalogFonts } from "@/lib/catalog";
 import CatalogApp from "./CatalogApp";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +71,7 @@ export type CatalogSettings = {
   hero_button_text: string;
   benefits: Benefit[];
   colors: CatalogColors;
+  colors_dark: CatalogColors;
   fonts: CatalogFonts;
   dark_mode_enabled: boolean;
   whatsapp_message: string;
@@ -128,6 +129,7 @@ export default async function Vitrine({ params }: { params: Promise<{ slug: stri
     hero_button_text: (raw.hero_button_text as string) || "VER PRODUTOS",
     benefits: Array.isArray(raw.benefits) ? (raw.benefits as Benefit[]) : parse(raw.benefits, [] as Benefit[]),
     colors: parse(raw.colors, DEFAULT_COLORS),
+    colors_dark: parse(raw.colors_dark, DEFAULT_COLORS_DARK),
     fonts: parse(raw.fonts, DEFAULT_FONTS),
     dark_mode_enabled: raw.dark_mode_enabled !== false,
     whatsapp_message: (raw.whatsapp_message as string) || "Olá! Gostaria de fazer um pedido:",

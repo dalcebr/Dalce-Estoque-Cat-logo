@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getStore } from "@/lib/store";
 import {
   slugify, BENEFIT_ICONS, FONTS, COLOR_FIELDS,
-  DEFAULT_COLORS, DEFAULT_FONTS,
+  DEFAULT_COLORS, DEFAULT_COLORS_DARK, DEFAULT_FONTS,
   type CatalogSettings, type Benefit, type CatalogColors, type CatalogFonts, type FontKey,
 } from "@/lib/catalog";
 import { sanitizeText } from "@/lib/validation";
@@ -24,12 +24,17 @@ function sanitizeBenefits(raw: unknown): Benefit[] {
   })).filter((b) => b.title.length > 0);
 }
 
-function sanitizeColors(raw: unknown): CatalogColors {
+function sanitizeColors(raw: unknown, fallback: CatalogColors): CatalogColors {
   const src = (raw ?? {}) as Record<string, unknown>;
-  const out = { ...DEFAULT_COLORS };
-  for (const { k } of COLOR_FIELDS) {
+  const out = { ...fallback };
+  for (const { k, opacity } of COLOR_FIELDS) {
     const v = String(src[k] ?? "").trim();
-    if (HEX.test(v)) out[k] = v;
+    if (opacity) {
+      const n = Number(v);
+      if (Number.isFinite(n)) out[k] = String(Math.min(100, Math.max(0, Math.round(n))));
+    } else if (HEX.test(v)) {
+      out[k] = v;
+    }
   }
   return out;
 }
@@ -77,7 +82,8 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
   const hero_button_text = sanitizeText(String(i.hero_button_text ?? "VER PRODUTOS"), 40) || "VER PRODUTOS";
   const whatsapp_message = sanitizeText(String(i.whatsapp_message ?? "Olá! Gostaria de fazer um pedido:"), 300) || "Olá! Gostaria de fazer um pedido:";
   const benefits = sanitizeBenefits(i.benefits);
-  const colors = sanitizeColors(i.colors);
+  const colors = sanitizeColors(i.colors, DEFAULT_COLORS);
+  const colors_dark = sanitizeColors(i.colors_dark, DEFAULT_COLORS_DARK);
   const fonts = sanitizeFonts(i.fonts);
   const dark_mode_enabled = Boolean(i.dark_mode_enabled);
 
@@ -99,6 +105,7 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
     hero_button_text,
     benefits: JSON.stringify(benefits),
     colors: JSON.stringify(colors),
+    colors_dark: JSON.stringify(colors_dark),
     fonts: JSON.stringify(fonts),
     dark_mode_enabled,
     whatsapp_message,

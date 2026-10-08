@@ -21,6 +21,7 @@ export default async function Catalogo() {
     return raw as T;
   };
   initial.colors = parse(c?.colors, DEFAULTS.colors);
+  initial.colors_dark = parse(c?.colors_dark, DEFAULTS.colors_dark);
   initial.fonts = parse(c?.fonts, DEFAULTS.fonts);
   initial.benefits = parse(c?.benefits, DEFAULTS.benefits);
 

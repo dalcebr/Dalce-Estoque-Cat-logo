@@ -114,6 +114,8 @@ O Dalce Estoque atualmente nao possui testes automatizados. Este documento descr
 - [ ] Botao do banner se ajusta ao texto (sem quebra de linha)
 - [ ] Beneficios aparecem em carrossel horizontal (deslizar)
 - [ ] Cores personalizadas aplicam em cada elemento
+- [ ] Personalizacao de cores separada por tema (claro e escuro)
+- [ ] Secoes de cores expandem/recolhem ao clicar
 - [ ] Fontes 1 e 2 aplicam nos blocos escolhidos
 - [ ] Modo escuro alterna e persiste
 - [ ] Carrinho persiste apos recarregar a pagina (localStorage)
