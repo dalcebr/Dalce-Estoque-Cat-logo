@@ -68,10 +68,28 @@ function HeartIcon({ size = 22, filled = false }: { size?: number; filled?: bool
   );
 }
 function ChevronRightIcon({ size = 16 }: { size?: number }) { return <Ico d="M9 18l6-6-6-6" size={size} sw={2.5} />; }
-function ChevronLeftIcon({ size = 20 }: { size?: number }) { return <Ico d="M15 18l-6-6 6-6" size={size} />; }
 function PlusIcon() { return <Ico d="M12 5v14M5 12h14" size={18} />; }
 function MinusIcon() { return <Ico d="M5 12h14" size={18} />; }
 function TrashIcon() { return <Ico d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" size={18} />; }
+function ArrowLeftIcon({ size = 20 }: { size?: number }) { return <Ico d="M19 12H5M12 19l-7-7 7-7" size={size} sw={2} />; }
+
+function BackButton({ onClick, colors, font }: { onClick: () => void; colors: CatalogColors; font: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px 8px 10px",
+        marginBottom: 16, borderRadius: 999, border: `1px solid ${colors.category_border}`,
+        background: colors.category_bg, color: colors.category_text, fontSize: 14, fontWeight: 600,
+        cursor: "pointer", fontFamily: font,
+      }}
+    >
+      <ArrowLeftIcon size={18} />
+      Voltar
+    </button>
+  );
+}
 function FilterIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -283,7 +301,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 
 function ProductsListView({
   products, categories, colors, headingFont, cardFont, bodyFont, wishlist,
-  initialCategory, onView, onAddCart, onToggleWish,
+  initialCategory, onView, onAddCart, onToggleWish, onBack,
 }: {
   products: CatalogProduct[];
   categories: Category[];
@@ -296,6 +314,7 @@ function ProductsListView({
   onView: (id: string) => void;
   onAddCart: (p: CatalogProduct) => void;
   onToggleWish: (p: CatalogProduct) => void;
+  onBack?: () => void;
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | undefined>(initialCategory);
@@ -333,6 +352,7 @@ function ProductsListView({
 
   return (
     <section style={{ padding: "0 16px", background: colors.products_section_bg }}>
+      {onBack && <BackButton onClick={onBack} colors={colors} font={bodyFont} />}
       <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>
         {cat || "Todos os produtos"}
       </h2>
@@ -409,7 +429,7 @@ function ProductsListView({
 
 /* ═══ WISHLIST ═══ */
 function WishlistView({
-  products, colors, headingFont, cardFont, bodyFont, wishlist, onView, onAddCart, onToggleWish,
+  products, colors, headingFont, cardFont, bodyFont, wishlist, onView, onAddCart, onToggleWish, onBack,
 }: {
   products: CatalogProduct[];
   colors: CatalogColors;
@@ -420,10 +440,12 @@ function WishlistView({
   onView: (id: string) => void;
   onAddCart: (p: CatalogProduct) => void;
   onToggleWish: (p: CatalogProduct) => void;
+  onBack: () => void;
 }) {
   const items = products.filter((p) => wishlist.includes(p.id));
   return (
     <section style={{ padding: "0 16px" }}>
+      <BackButton onClick={onBack} colors={colors} font={bodyFont} />
       <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>Favoritos</h2>
       {items.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.text_secondary, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>
@@ -438,7 +460,7 @@ function WishlistView({
 
 /* ═══ CART ═══ */
 function CartView({
-  cart, colors, headingFont, bodyFont, phone, whatsappMsg, onUpdateQty, onRemove,
+  cart, colors, headingFont, bodyFont, phone, whatsappMsg, onUpdateQty, onRemove, onBack,
 }: {
   cart: CartItem[];
   colors: CatalogColors;
@@ -448,6 +470,7 @@ function CartView({
   whatsappMsg: string;
   onUpdateQty: (id: string, delta: number) => void;
   onRemove: (id: string) => void;
+  onBack: () => void;
 }) {
   const [name, setName] = useState("");
   const total = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
@@ -461,6 +484,7 @@ function CartView({
 
   return (
     <section style={{ padding: "0 16px" }}>
+      <BackButton onClick={onBack} colors={colors} font={bodyFont} />
       <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>Carrinho</h2>
       {cart.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.text_secondary, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>Seu carrinho está vazio.</p>
@@ -527,9 +551,7 @@ function ProductDetailView({
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
   return (
     <section style={{ padding: "0 16px" }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: colors.text_secondary, fontSize: 14, marginBottom: 12, padding: 0, fontFamily: bodyFont }}>
-        <ChevronLeftIcon size={20} /> Voltar
-      </button>
+      <BackButton onClick={onBack} colors={colors} font={bodyFont} />
       <div style={{ position: "relative" }}>
         {product.image ? (
           <img src={product.image} alt={product.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 16, background: colors.card_bg }} />
@@ -618,6 +640,28 @@ export default function CatalogApp({
   const [hydrated, setHydrated] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const mainRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<View>(view);
+  viewRef.current = view;
+
+  /* ─── navegação com histórico (botão voltar do celular) ─── */
+  const go = useCallback((next: View) => {
+    setView(next);
+    try { window.history.pushState({ catalogView: next }, ""); } catch { /* noop */ }
+  }, []);
+
+  const back = useCallback(() => {
+    try { window.history.back(); } catch { setView({ type: "home" }); }
+  }, []);
+
+  useEffect(() => {
+    try { window.history.replaceState({ catalogView: { type: "home" } }, ""); } catch { /* noop */ }
+    function onPop(e: PopStateEvent) {
+      const v = (e.state && (e.state as { catalogView?: View }).catalogView) || { type: "home" as const };
+      setView(v);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   /* ─── restore persisted state ─── */
   useEffect(() => {
@@ -713,18 +757,18 @@ export default function CatalogApp({
 
       {/* ═══ HEADER ═══ */}
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: C.header_bg, position: "sticky", top: 0, zIndex: 100, borderBottom: `1px solid ${C.divider}` }}>
-        <button onClick={() => setView({ type: "home" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+        <button onClick={() => go({ type: "home" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           <span style={{ fontFamily: storeNameFont, fontSize: 22, fontWeight: 700, color: C.header_text, whiteSpace: "nowrap" }}>{storeName}</span>
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <button onClick={() => setView({ type: "products" })} aria-label="Pesquisar" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: C.header_search_icon }}><SearchIcon size={26} /></button>
-          <button onClick={() => setView({ type: "wishlist" })} aria-label="Favoritos" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: wishlist.length > 0 ? C.header_wish_active : C.header_wish_icon }}>
+          <button onClick={() => go({ type: "products" })} aria-label="Pesquisar" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: C.header_search_icon }}><SearchIcon size={26} /></button>
+          <button onClick={() => go({ type: "wishlist" })} aria-label="Favoritos" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: wishlist.length > 0 ? C.header_wish_active : C.header_wish_icon }}>
             <HeartIcon size={26} filled={false} />
             {wishlist.length > 0 && (
               <span style={{ position: "absolute", top: -6, right: -8, fontSize: 10, fontWeight: 700, background: C.header_wish_badge_bg, color: C.header_wish_badge_text, borderRadius: "50%", minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>{wishlist.length}</span>
             )}
           </button>
-          <button onClick={() => setView({ type: "cart" })} aria-label="Carrinho" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: C.header_cart_icon }}>
+          <button onClick={() => go({ type: "cart" })} aria-label="Carrinho" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: C.header_cart_icon }}>
             <CartIcon size={26} />
             <span style={{ position: "absolute", top: -6, right: -8, fontSize: 10, fontWeight: 700, background: C.header_cart_badge_bg, color: C.header_cart_badge_text, borderRadius: "50%", minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>
           </button>
@@ -750,7 +794,7 @@ export default function CatalogApp({
                   {settings.hero_description && (
                     <p style={{ fontFamily: bodyFont, fontSize: 16, color: C.hero_description, lineHeight: 1.4 }}>{settings.hero_description}</p>
                   )}
-                  <button onClick={() => setView({ type: "products" })} style={{ display: "inline-flex", alignItems: "center", gap: 10, maxWidth: "100%", minHeight: 44, borderRadius: 40, border: "none", cursor: "pointer", background: C.hero_button_bg, color: C.hero_button_text, fontSize: 13, fontWeight: 700, padding: "6px 6px 6px 18px", marginTop: 16, fontFamily: bodyFont }}>
+                  <button onClick={() => go({ type: "products" })} style={{ display: "inline-flex", alignItems: "center", gap: 10, maxWidth: "100%", minHeight: 44, borderRadius: 40, border: "none", cursor: "pointer", background: C.hero_button_bg, color: C.hero_button_text, fontSize: 13, fontWeight: 700, padding: "6px 6px 6px 18px", marginTop: 16, fontFamily: bodyFont }}>
                     <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{settings.hero_button_text}</span>
                     <span style={{ width: 32, height: 32, flexShrink: 0, borderRadius: "50%", background: withAlpha(C.hero_button_icon, 25), display: "flex", alignItems: "center", justifyContent: "center", color: C.hero_button_icon }}><ChevronRightIcon size={16} /></span>
                   </button>
@@ -780,7 +824,7 @@ export default function CatalogApp({
                 <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                   {categories.map((c) => (
                     <CategoryCard key={c.name} label={c.name} image={c.image} colors={C} bodyFont={bodyFont} active={false}
-                      onClick={() => setView({ type: "products", category: c.name })} />
+                      onClick={() => go({ type: "products", category: c.name })} />
                   ))}
                 </div>
               </section>
@@ -789,24 +833,24 @@ export default function CatalogApp({
             {/* ALL PRODUCTS */}
             <div style={{ marginTop: 28 }}>
               <ProductsListView products={products} categories={categories} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
-                onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
+                onView={(id) => go({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
             </div>
           </>
         )}
 
         {view.type === "products" && (
           <ProductsListView products={products} categories={categories} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
-            initialCategory={view.category} onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
+            initialCategory={view.category} onView={(id) => go({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} onBack={back} />
         )}
 
         {view.type === "wishlist" && (
           <WishlistView products={products} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
-            onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
+            onView={(id) => go({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} onBack={back} />
         )}
 
         {view.type === "cart" && (
           <CartView cart={cart} colors={C} headingFont={headingFont} bodyFont={bodyFont} phone={settings.phone}
-            whatsappMsg={settings.whatsapp_message || "Olá! Gostaria de fazer um pedido:"} onUpdateQty={updateQty} onRemove={removeFromCart} />
+            whatsappMsg={settings.whatsapp_message || "Olá! Gostaria de fazer um pedido:"} onUpdateQty={updateQty} onRemove={removeFromCart} onBack={back} />
         )}
 
         {view.type === "product" && (() => {
@@ -817,7 +861,7 @@ export default function CatalogApp({
             <ProductDetailView product={p} related={related} colors={C} headingFont={headingFont} bodyFont={bodyFont}
               phone={settings.phone} whatsappMsg={settings.whatsapp_message || "Olá! Gostaria de fazer um pedido:"}
               wishlisted={wishlist.includes(p.id)}
-              onBack={() => setView({ type: "home" })} onAddCart={() => addToCart(p)} onView={(id) => setView({ type: "product", id })} onToggleWish={() => toggleWish(p)} />
+              onBack={back} onAddCart={() => addToCart(p)} onView={(id) => go({ type: "product", id })} onToggleWish={() => toggleWish(p)} />
           );
         })()}
       </div>
@@ -844,7 +888,7 @@ export default function CatalogApp({
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: 16, right: 16, zIndex: 1000, background: C.text_primary, color: C.page_bg, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", animation: "fadeUp .3s ease-out" }}>
           <span style={{ fontSize: 13, fontFamily: bodyFont }}>{toast}</span>
-          <button onClick={() => setView({ type: "cart" })} style={{ background: C.hero_button_bg, color: C.hero_button_text, border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: bodyFont }}>Ver carrinho</button>
+          <button onClick={() => go({ type: "cart" })} style={{ background: C.hero_button_bg, color: C.hero_button_text, border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: bodyFont }}>Ver carrinho</button>
         </div>
       )}
     </div>
