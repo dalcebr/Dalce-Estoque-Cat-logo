@@ -552,6 +552,13 @@ function ProductDetailView({
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
   const gallery = product.images?.length ? product.images : product.image ? [product.image] : [];
   const current = gallery[Math.min(active, gallery.length - 1)] ?? null;
+  // Agrupa as variações por nome de grupo para exibição.
+  const variationGroups = (product.variations ?? []).reduce<{ name: string; options: { option: string; stock: number; price: number | null }[] }[]>((acc, v) => {
+    const g = acc.find((x) => x.name === v.group);
+    if (g) g.options.push({ option: v.option, stock: v.stock, price: v.price });
+    else acc.push({ name: v.group, options: [{ option: v.option, stock: v.stock, price: v.price }] });
+    return acc;
+  }, []);
   return (
     <section style={{ padding: "0 16px" }}>
       <BackButton onClick={onBack} colors={colors} font={bodyFont} />
@@ -582,6 +589,31 @@ function ProductDetailView({
       <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(product.price)}</p>
       {product.description && (
         <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.text_secondary, lineHeight: 1.6, marginTop: 12 }}>{product.description}</p>
+      )}
+      {variationGroups.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          {variationGroups.map((g) => (
+            <div key={g.name} style={{ marginBottom: 14 }}>
+              <p style={{ fontFamily: bodyFont, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: colors.text_secondary, marginBottom: 8 }}>{g.name}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {g.options.map((o) => {
+                  const out = o.stock <= 0;
+                  return (
+                    <span key={o.option} style={{
+                      fontFamily: bodyFont, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 10,
+                      border: `1px solid ${out ? colors.divider : colors.category_border}`,
+                      background: out ? "transparent" : colors.category_bg,
+                      color: out ? colors.text_muted : colors.category_text,
+                      textDecoration: out ? "line-through" : "none",
+                    }}>
+                      {o.option}{o.price != null && o.price !== product.price ? ` · ${brl(o.price)}` : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
       {(product.material || product.collection || product.category) && (
         <div style={{ marginTop: 16, borderRadius: 12, overflow: "hidden", border: `1px solid ${colors.divider}` }}>

@@ -19,7 +19,13 @@ export default async function Variacoes() {
           <>
             <PageHeader eyebrow="Cadastro · Variações" title="Suas variações" back="/cadastros" sub={`${groups.length} ${groups.length === 1 ? "grupo" : "grupos"}`} />
             <div className="mt-5 space-y-3">{groups.map((g) => (
-              <Link key={g.id} href={`/cadastros/variacoes/${g.id}`} className="block rounded-3xl border border-line bg-surface p-4"><b className="text-xl font-extrabold">{g.name}</b><div className="mt-3 flex flex-wrap gap-2">{g.options.map((o) => <Pill key={o} t={o} />)}</div></Link>))}</div>
+              <Link key={g.id} href={`/cadastros/variacoes/${g.id}`} className="block rounded-3xl border border-line bg-surface p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <b className="text-xl font-extrabold">{g.name}</b>
+                  <span className="shrink-0 rounded-full bg-tint px-3 py-1 text-sm font-bold text-brand">{g.options.length} {g.options.length === 1 ? "opção" : "opções"}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">{g.options.map((o) => <Pill key={o} t={o} />)}</div>
+              </Link>))}</div>
           </>
         ) : (
           <>

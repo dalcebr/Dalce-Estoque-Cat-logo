@@ -53,6 +53,7 @@ export type CatalogProduct = {
   featured: boolean;
   created_at: string;
   sold_count: number;
+  variations: { group: string; option: string; stock: number; price: number | null }[];
 };
 
 export type Benefit = {

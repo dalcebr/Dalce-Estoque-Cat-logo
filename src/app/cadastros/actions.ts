@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getStore, num } from "@/lib/store";
 import { isValidUUID, sanitizeText } from "@/lib/validation";
 import { normalizeImages, coverOf } from "@/lib/products";
+import { normalizeVariations } from "@/lib/variations";
 import { deleteImages, isStoragePath } from "@/lib/storage";
 
 const str = (fd: FormData, k: string, max = 120) => sanitizeText(String(fd.get(k) ?? ""), max);
@@ -38,6 +39,11 @@ export async function saveProduct(fd: FormData) {
   const categoryId = str(fd, "category_id", 36) || null;
   if (categoryId && !isValidUUID(categoryId)) return;
 
+  // Variações selecionadas (grupos já cadastrados + estoque/preço por opção).
+  let rawVariations: unknown = [];
+  try { rawVariations = JSON.parse(String(fd.get("variations") ?? "[]")); } catch { rawVariations = []; }
+  const variations = normalizeVariations(rawVariations);
+
   const row = {
     name, price, cost,
     stock: Math.trunc(num(fd.get("stock"))) || 0,
@@ -47,15 +53,35 @@ export async function saveProduct(fd: FormData) {
     category_id: categoryId,
   };
 
+  /** Substitui as variações do produto pelas informadas. */
+  async function saveVariations(productId: string) {
+    await s.supabase.from("product_variations").delete().eq("product_id", productId).eq("store_id", s.storeId);
+    if (variations.length === 0) return;
+    await s.supabase.from("product_variations").insert(
+      variations.map((v, i) => ({
+        store_id: s.storeId,
+        product_id: productId,
+        group_id: v.group_id,
+        group_name: v.group_name,
+        option: v.option,
+        stock: v.stock,
+        price: v.price,
+        position: i,
+      })),
+    );
+  }
+
   if (id) {
     // Busca a galeria anterior para remover do Storage as fotos que saíram.
     const { data: prev } = await s.supabase.from("products").select("images, image").eq("id", id).eq("store_id", s.storeId).maybeSingle();
     const before = normalizeImages(prev?.images, prev?.image);
     const removed = before.filter((p) => !images.includes(p) && isStoragePath(p));
     await s.supabase.from("products").update(row).eq("id", id).eq("store_id", s.storeId);
+    await saveVariations(id);
     if (removed.length) { try { await deleteImages(s.supabase, "product-images", removed); } catch { /* não bloqueia o salvamento */ } }
   } else {
-    await s.supabase.from("products").insert({ ...row, store_id: s.storeId });
+    const { data: created } = await s.supabase.from("products").insert({ ...row, store_id: s.storeId }).select("id").single();
+    if (created?.id) await saveVariations(created.id);
   }
   revalidatePath("/cadastros/produtos"); revalidatePath("/estoque");
   redirect("/cadastros/produtos");

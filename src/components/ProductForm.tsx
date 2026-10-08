@@ -6,9 +6,11 @@ import { createBrowserSupabase } from "@/lib/supabase/client";
 import { uploadImage, resolveImageUrl } from "@/lib/storage";
 import { MAX_IMAGE_PX, type CropArea } from "@/lib/image";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products";
+import { type ProductVariation, type VariationGroup } from "@/lib/variations";
 import ImageCropper from "@/components/ImageCropper";
+import VariationPicker from "@/components/VariationPicker";
 
-export type ProductInit = { id?: string; name: string; price: string; cost: string; stock: string; min_stock: string; category_id: string; images: string[] };
+export type ProductInit = { id?: string; name: string; price: string; cost: string; stock: string; min_stock: string; category_id: string; images: string[]; variations: ProductVariation[] };
 const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
 const L = ({ t }: { t: string }) => <span className="mb-1 block px-1 text-xs font-bold uppercase tracking-[0.15em] text-soft">{t}</span>;
 
@@ -17,10 +19,11 @@ const BUCKET = "product-images";
 /** Fila de arquivos aguardando recorte. */
 type Pending = { file: File; url: string };
 
-export default function ProductForm({ p, cats, storeId }: { p: ProductInit; cats: { id: string; name: string }[]; storeId: string }) {
+export default function ProductForm({ p, cats, groups, storeId }: { p: ProductInit; cats: { id: string; name: string }[]; groups: VariationGroup[]; storeId: string }) {
   // `images` holds storage paths like "{storeId}/{uuid}.webp" (or legacy base64).
   // A primeira posição é a capa (foto principal).
   const [images, setImages] = useState<string[]>(p.images);
+  const [variations, setVariations] = useState<ProductVariation[]>(p.variations);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<Pending[]>([]);
@@ -166,6 +169,7 @@ export default function ProductForm({ p, cats, storeId }: { p: ProductInit; cats
       <form action={saveProduct} className="mt-6 space-y-3">
         <input type="hidden" name="id" value={p.id ?? ""} />
         <input type="hidden" name="images" value={JSON.stringify(images)} />
+        <input type="hidden" name="variations" value={JSON.stringify(variations)} />
 
         {/* ─── Galeria de fotos ─── */}
         <div className="rounded-3xl border border-line bg-surface p-4">
@@ -257,6 +261,10 @@ export default function ProductForm({ p, cats, storeId }: { p: ProductInit; cats
           <label className="block"><L t="Em estoque" /><input name="stock" inputMode="numeric" defaultValue={p.stock} className={f} /></label>
           <label className="block"><L t="Estoque mínimo" /><input name="min_stock" inputMode="numeric" defaultValue={p.min_stock} className={f} /></label>
         </div>
+
+        {/* ─── Variações ─── */}
+        <VariationPicker groups={groups} value={variations} onChange={setVariations} />
+
         <button disabled={uploading} className="w-full rounded-2xl bg-brand py-4 text-lg font-bold text-white disabled:opacity-60">Salvar produto</button>
       </form>
     </>

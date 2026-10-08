@@ -24,6 +24,7 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 14 | `015_catalog_sort_categories.sql` | Ordenacao de categorias e sold_count |
 | 15 | `016_product_images.sql` | Galeria de fotos dos produtos (ate 5, coluna `images`) |
 | 16 | `017_category_images.sql` | Foto de capa das categorias (coluna `image`) |
+| 17 | `018_product_variations.sql` | Variacoes aplicadas aos produtos (tabela `product_variations`) |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -324,6 +325,39 @@ Grupos de chaves (todas hex `#RRGGBB`, exceto `hero_overlay_opacity` que e
 
 **RLS**: `variacoes da loja` - ALL onde `store_id = current_store_id()`
 
+---
+
+### `product_variations` - Variacoes aplicadas aos produtos
+
+Liga um produto aos grupos de variacao ja cadastrados, com estoque e preco
+proprios por opcao.
+
+| Coluna | Tipo | Nullable | Default | Descricao |
+|--------|------|----------|---------|-----------|
+| `id` | uuid | NOT NULL | `gen_random_uuid()` | PK |
+| `store_id` | uuid | NOT NULL | | FK para `stores(id)` |
+| `product_id` | uuid | NOT NULL | | FK para `products(id)` ON DELETE CASCADE |
+| `group_id` | uuid | NULL | | FK para `variation_groups(id)` ON DELETE SET NULL |
+| `group_name` | text | NOT NULL | | Nome do grupo (snapshot) |
+| `option` | text | NOT NULL | | Opcao escolhida (ex: "P", "Azul") |
+| `stock` | int | NOT NULL | `0` | Estoque desta opcao |
+| `price` | numeric(12,2) | NULL | | Preco proprio (NULL = usa o preco do produto) |
+| `position` | int | NOT NULL | `0` | Ordem de exibicao |
+| `created_at` | timestamptz | NOT NULL | `now()` | Data de criacao |
+
+**Indices**:
+- `product_variations_product_idx`: `(product_id, position)`
+- `product_variations_unique_idx`: UNIQUE `(product_id, group_name, option)`
+
+**RLS**: `variacoes do produto da loja` - ALL onde `store_id = current_store_id()`
+
+**Observacoes**:
+- O usuario escolhe, no cadastro do produto, grupos ja existentes em
+  `variation_groups` (Cadastros → Variacoes) e define estoque/preco por opcao.
+- Ao salvar o produto, as variacoes sao substituidas integralmente
+  (delete + insert), mantendo a ordem informada em `position`.
+- O estoque das variacoes e somado ao estoque do produto na vitrine.
+
 ## Funcoes
 
 ### `current_store_id()`
@@ -374,6 +408,9 @@ Retorna dados publicos do catalogo. Acessivel por `anon` e `authenticated`. Vali
 O array `categories` traz `{name, color, image}`. A imagem segue esta ordem de
 preferencia: capa da categoria (`categories.image`) → primeira foto do produto
 mais recente da categoria → `products.image`.
+
+Cada produto traz tambem `variations`: um array de
+`{group, option, stock, price}` com as variacoes aplicadas ao produto.
 
 ## Diagrama de Relacionamentos
 
