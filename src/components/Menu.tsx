@@ -92,7 +92,7 @@ export default function Menu({ name }: { name: string }) {
           <div className="border-t border-line">
             <div className="flex items-center gap-3 px-5 py-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-tint text-lg font-extrabold text-brand">{initials}</span>
-              <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-lg">{name}</b><span className="text-soft">{name}</span></div>
+              <div className="min-w-0 flex-1 leading-tight"><b className="block truncate text-lg">{name}</b></div>
               <form action={signOut}><button aria-label="Sair" className="grid size-11 place-items-center rounded-xl border border-line text-soft"><LogOut size={20} /></button></form>
             </div>
             <a href="mailto:suporte@dalce.app" className="flex items-center gap-4 bg-[#14306e] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white">
