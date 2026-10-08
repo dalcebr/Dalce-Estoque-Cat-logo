@@ -57,7 +57,7 @@ export default function DeleteButton({ action, label, confirmText }: { action: (
                 Cancelar
               </button>
               <form action={action} className="flex-1">
-                <button type="submit" onClick={close} className="w-full rounded-xl bg-red-700 py-3 font-bold text-white">
+                <button type="submit" className="w-full rounded-xl bg-red-700 py-3 font-bold text-white">
                   Excluir
                 </button>
               </form>

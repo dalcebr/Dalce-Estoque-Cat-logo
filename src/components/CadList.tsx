@@ -54,7 +54,7 @@ export default function CadList({ rows, placeholder, addLabel, addHref, empty, c
             <div className="mt-5 flex gap-3">
               <button type="button" onClick={() => setConfirmId(null)} className="flex-1 rounded-xl border border-line py-3 font-bold text-ink">Cancelar</button>
               <form action={onDelete.bind(null, confirmId)} className="flex-1">
-                <button type="submit" onClick={() => setConfirmId(null)} className="w-full rounded-xl bg-red-700 py-3 font-bold text-white">Excluir</button>
+                <button type="submit" className="w-full rounded-xl bg-red-700 py-3 font-bold text-white">Excluir</button>
               </form>
             </div>
           </div>
