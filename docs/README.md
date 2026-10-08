@@ -78,6 +78,12 @@ No SQL Editor do Supabase, execute os scripts na ordem:
 6. `supabase/007_cadastros.sql`
 7. `supabase/008_security_hardening.sql`
 
+> As demais migrações (`009` a `023`) adicionam recursos como Storage,
+> personalização do catálogo, variações e o painel de administrador. A ordem
+> completa está em [DATABASE.md](./DATABASE.md). Para o painel de admin, rode
+> também `020_admin_panel.sql`, `022_store_cascade.sql` e
+> `023_admin_role_helper.sql`.
+
 > O arquivo `002_payment_method.sql` e necessario apenas se voce rodou o `schema.sql` em uma versao anterior que nao incluia a coluna `payment_method`.
 
 ### 5. Crie um usuario

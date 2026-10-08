@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getAdminUserId, createStoreAccount, setStoreFrozen, deleteStoreAccount, resetStorePassword, isValidUsername } from "@/lib/admin";
+import { getAdminUserId, createStoreAccount, setStoreFrozen, deleteStoreAccount, resetStorePassword, isValidUsername, createAdminAccount } from "@/lib/admin";
 import { exportStore, importStore, validateBackup } from "@/lib/backup";
 import { isValidUUID, sanitizeText } from "@/lib/validation";
 
@@ -67,6 +67,25 @@ export async function deleteStore(storeId: string) {
   await deleteStoreAccount(storeId);
   revalidatePath("/admin");
   redirect("/admin?ok=excluido");
+}
+
+/** Cria um novo administrador do sistema. */
+export async function createAdmin(fd: FormData) {
+  await requireAdmin();
+
+  const name = str(fd, "name", 80);
+  const username = str(fd, "username", 30).toLowerCase();
+  const password = String(fd.get("password") ?? "");
+
+  if (!name) redirect("/admin/admins?erro=campos");
+  if (!isValidUsername(username)) redirect("/admin/admins?erro=usuario");
+  if (password.length < 6 || password.length > 128) redirect("/admin/admins?erro=senha");
+
+  const res = await createAdminAccount({ name, username, password });
+  if (!res.ok) redirect(`/admin/admins?erro=${encodeURIComponent(res.error)}`);
+
+  revalidatePath("/admin/admins");
+  redirect("/admin/admins?ok=criado");
 }
 
 /** Exporta os dados da loja como JSON (retorna a string para download). */

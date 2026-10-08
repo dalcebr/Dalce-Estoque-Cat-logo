@@ -37,6 +37,8 @@ export async function getAdminUserId(): Promise<string | null> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+  const { data: rpcRole, error: rpcError } = await supabase.rpc("current_role_name");
+  if (!rpcError) return rpcRole === "admin" ? user.id : null;
   const { data } = await supabase
     .from("profiles")
     .select("role")
@@ -147,6 +149,71 @@ export async function createStoreAccount(input: {
   }
 
   return { ok: true, storeId: store.id };
+}
+
+export type AdminUser = {
+  id: string;
+  name: string;
+  username: string | null;
+  createdAt: string;
+};
+
+/** Lista todos os administradores do sistema. */
+export async function listAdmins(): Promise<AdminUser[]> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("id, name, username, created_at")
+    .eq("role", "admin")
+    .order("created_at", { ascending: true });
+  return (data ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    username: p.username,
+    createdAt: p.created_at,
+  }));
+}
+
+/**
+ * Cria um novo administrador do sistema.
+ * O admin nao pertence a nenhuma loja, por isso o perfil e criado com
+ * store_id nulo (a coluna precisa aceitar null — ver 023_admin_role_helper.sql).
+ */
+export async function createAdminAccount(input: {
+  name: string;
+  username: string;
+  password: string;
+}): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
+  const admin = createAdminClient();
+  const email = usernameToEmail(input.username);
+
+  const { data: created, error: authError } = await admin.auth.admin.createUser({
+    email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { name: input.name, username: input.username },
+  });
+  if (authError || !created.user) {
+    const msg = authError?.message ?? "Falha ao criar usuário.";
+    if (/already|registered|exists/i.test(msg)) return { ok: false, error: "Este usuário já existe." };
+    return { ok: false, error: msg };
+  }
+
+  const userId = created.user.id;
+
+  const { error: profileError } = await admin.from("profiles").insert({
+    id: userId,
+    store_id: null,
+    name: input.name,
+    username: input.username,
+    role: "admin",
+  });
+  if (profileError) {
+    try { await admin.auth.admin.deleteUser(userId); } catch { /* ignora */ }
+    return { ok: false, error: profileError.message };
+  }
+
+  return { ok: true, userId };
 }
 
 /** Congela ou descongela uma loja. */

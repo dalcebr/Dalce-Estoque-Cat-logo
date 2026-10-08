@@ -69,14 +69,30 @@ export async function updateSession(req: NextRequest) {
   let isAdmin = false;
   let frozen = false;
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, stores(frozen)")
-      .eq("id", user.id)
-      .maybeSingle();
-    const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
-    isAdmin = profile?.role === "admin";
-    frozen = Boolean(store?.frozen);
+    // Papel via funcao security definer (nao depende de RLS).
+    // Fallback: se a funcao ainda nao existir, le direto de `profiles`.
+    const { data: rpcRole, error: rpcError } = await supabase.rpc("current_role_name");
+    if (!rpcError) {
+      isAdmin = rpcRole === "admin";
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      isAdmin = profile?.role === "admin";
+    }
+
+    // Estado de congelamento da loja (apenas para lojas comuns).
+    if (!isAdmin) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("stores(frozen)")
+        .eq("id", user.id)
+        .maybeSingle();
+      const store = Array.isArray(profile?.stores) ? profile?.stores[0] : profile?.stores;
+      frozen = Boolean(store?.frozen);
+    }
   }
 
   // O admin tem uma area separada: nunca entra no sistema de catalogo.

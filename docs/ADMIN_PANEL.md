@@ -18,6 +18,8 @@ No SQL Editor do Supabase, execute (nesta ordem):
    bloqueio de lojas congeladas.
 2. `supabase/022_store_cascade.sql` — `ON DELETE CASCADE` em `store_id`
    (necessario para excluir a loja com todos os dados).
+3. `supabase/023_admin_role_helper.sql` — funcao `current_role_name()`
+   (security definer) usada no login/middleware e `store_id` nulo para admins.
 
 ### 2. Configurar a service role key
 
@@ -52,6 +54,13 @@ update profiles
 - **Usuario comum** tentando abrir `/admin` → volta para `/`.
 - O painel tem layout proprio (cabecalho com titulo e botao **Sair**), sem o
   menu da loja.
+
+### Administradores
+
+Em **Admins** (`/admin/admins`) voce ve todos os administradores do sistema e
+pode criar novos. Um administrador **nao pertence a nenhuma loja** — ele so
+acessa o painel. Informe nome, usuario e senha; o login e feito com o usuario
+(sem e-mail).
 
 ### Criar acesso
 
@@ -131,3 +140,26 @@ usuario no proprio formulario de importacao).
 - A service role key nunca chega ao navegador.
 - O RLS continua ativo para os usuarios comuns; o admin usa o service role
   apenas no servidor.
+
+## Diagnostico: login de admin nao redireciona
+
+Se ao logar com um usuario `role = 'admin'` voce nao for para `/admin`:
+
+1. **Rode a migracao `023_admin_role_helper.sql`.** O login e o middleware
+   passaram a usar a funcao `current_role_name()` (security definer), que le o
+   papel sem depender de RLS. Sem essa funcao, o `rpc` falha e o usuario e
+   tratado como loja comum.
+2. **Confirme o papel no banco:**
+
+   ```sql
+   select p.id, p.name, p.username, p.role, u.email
+     from profiles p join auth.users u on u.id = p.id
+    where p.role = 'admin';
+   ```
+
+   Se nao retornar nada, promova o usuario com `021_promote_admin.sql`.
+3. **Confirme que o perfil existe.** O `update` de `021` so afeta quem ja tem
+   linha em `profiles`. Se o usuario foi criado direto no Auth sem perfil, crie
+   a linha (com `store_id` nulo e `role = 'admin'`).
+4. **Reinicie o servidor** (`npm run dev`) para o middleware recarregar.
+5. **Limpe os cookies de sessao** do navegador e entre novamente.

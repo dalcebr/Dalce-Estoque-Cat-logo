@@ -29,6 +29,7 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 19 | `020_admin_panel.sql` | Painel admin: colunas `role`/`frozen`, RLS de admin, bloqueio de lojas congeladas |
 | 20 | `021_promote_admin.sql` | Promove um usuario existente a administrador (edite o username antes de rodar) |
 | 21 | `022_store_cascade.sql` | `ON DELETE CASCADE` em `store_id` (permite excluir a loja com todos os dados) |
+| 22 | `023_admin_role_helper.sql` | Funcao `current_role_name()` (security definer) para o login/middleware e `store_id` nulo para admins |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -69,7 +70,7 @@ Vincula um usuario do Supabase Auth a uma loja.
 | Coluna | Tipo | Nullable | Default | Descricao |
 |--------|------|----------|---------|-----------|
 | `id` | uuid | NOT NULL | | PK, FK para `auth.users(id)` ON DELETE CASCADE |
-| `store_id` | uuid | NOT NULL | | FK para `stores(id)` ON DELETE CASCADE |
+| `store_id` | uuid | NULL | | FK para `stores(id)` ON DELETE CASCADE. **Nulo para administradores** (nao pertencem a loja) |
 | `name` | text | NOT NULL | | Nome de exibicao |
 | `role` | text | NOT NULL | `'owner'` | `'owner'` (dono da loja) ou `'admin'` (administrador do sistema) |
 | `username` | text | NULL | | Username de login (sem `@dalce.app`) |
@@ -410,6 +411,17 @@ LANGUAGE sql STABLE SECURITY DEFINER
 
 Retorna `true` se o usuario autenticado tem `profiles.role = 'admin'`. Usada
 nas policies de administrador (`stores`, `profiles`).
+
+### `current_role_name()`
+
+```sql
+RETURNS text
+LANGUAGE sql STABLE SECURITY DEFINER
+```
+
+Retorna o papel (`'admin'` ou `'owner'`) do usuario autenticado, ou `null`.
+Usada no **login** e no **middleware** para decidir o redirecionamento sem
+depender de RLS (o `select` direto em `profiles` pode ser bloqueado por policy).
 
 ### `store_active()`
 

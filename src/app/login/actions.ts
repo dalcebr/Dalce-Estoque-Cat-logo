@@ -15,12 +15,21 @@ export async function signIn(_: { error?: string } | undefined, fd: FormData) {
   if (error || !data.user) return { error: "Usuário ou senha inválidos." };
 
   // Administradores vão direto para o painel de acessos (separado do sistema).
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .maybeSingle();
-  redirect(profile?.role === "admin" ? "/admin" : "/");
+  // Usa a função `current_role_name()` (security definer) para não depender de RLS.
+  // Fallback: se a função ainda não existir, lê direto de `profiles`.
+  let role: string | null = null;
+  const { data: rpcRole, error: rpcError } = await supabase.rpc("current_role_name");
+  if (!rpcError) {
+    role = rpcRole;
+  } else {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    role = profile?.role ?? null;
+  }
+  redirect(role === "admin" ? "/admin" : "/");
 }
 
 export async function signOut() {
