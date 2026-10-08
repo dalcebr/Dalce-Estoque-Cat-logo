@@ -25,7 +25,7 @@ export default async function Categoria({ params, searchParams }: { params: Prom
       <PageHeader eyebrow="Cadastro · Categorias" title={isNew ? "Nova categoria" : "Editar categoria"} back="/cadastros/categorias" />
       {erro && <p role="alert" className="mt-4 text-red-700">Já existe uma categoria com esse nome.</p>}
       <CategoryForm c={{ id: isNew ? undefined : id, name: c.name, color: c.color, image: c.image }} storeId={store?.storeId ?? ""} />
-      {!isNew && <DeleteButton action={deleteCategory.bind(null, id)} label="Excluir categoria" confirmText="Excluir esta categoria? Os produtos dela ficam sem categoria." />}
+      {!isNew && <div className="mt-6"><DeleteButton action={deleteCategory.bind(null, id)} label="Excluir categoria" confirmText="Excluir esta categoria? Os produtos dela ficam sem categoria." /></div>}
     </main>
   );
 }

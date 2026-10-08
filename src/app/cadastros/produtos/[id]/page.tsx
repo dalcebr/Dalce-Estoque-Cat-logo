@@ -5,7 +5,7 @@ import ProductForm, { type ProductInit } from "@/components/ProductForm";
 import DeleteButton from "@/components/DeleteButton";
 import { normalizeImages } from "@/lib/products";
 import { normalizeVariations, type VariationGroup } from "@/lib/variations";
-import { archiveProduct } from "../../actions";
+import { archiveProduct, deleteProduct } from "../../actions";
 
 export const dynamic = "force-dynamic";
 const dec = (n: number) => String(n).replace(".", ",");
@@ -55,8 +55,18 @@ export default async function Produto({ params, searchParams }: { params: Promis
           A soma das variações ultrapassa o estoque do produto. Ajuste as quantidades e salve novamente.
         </p>
       )}
+      {erro === "excluir" && (
+        <p role="alert" className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+          Não foi possível excluir o produto. Tente novamente.
+        </p>
+      )}
       <ProductForm p={init} cats={cats ?? []} groups={groups} storeId={storeId} />
-      {!isNew && <DeleteButton action={archiveProduct.bind(null, id)} label="Arquivar produto" confirmText="Arquivar este produto? Ele some das listas e do PDV, mas as vendas antigas continuam." />}
+      {!isNew && (
+        <div className="mt-6 space-y-3 border-t border-line pt-6">
+          <DeleteButton action={archiveProduct.bind(null, id)} label="Arquivar produto" confirmText="Arquivar este produto? Ele some das listas e do PDV, mas as vendas antigas continuam." />
+          <DeleteButton action={deleteProduct.bind(null, id)} label="Excluir produto" confirmText="Excluir este produto definitivamente? Ele será removido do catálogo, do estoque e do PDV. As vendas antigas continuam no histórico." />
+        </div>
+      )}
     </main>
   );
 }

@@ -107,6 +107,29 @@ export async function archiveProduct(id: string) {
   redirect("/cadastros/produtos");
 }
 
+/**
+ * Exclui o produto definitivamente.
+ * As variações caem por cascade e as fotos saem do Storage.
+ * O histórico de vendas é preservado: `sale_items.product_id` usa
+ * `on delete set null` e o nome do item fica gravado em `sale_items.name`.
+ */
+export async function deleteProduct(id: string) {
+  if (typeof id !== "string" || !isValidUUID(id)) return;
+  const s = await getStore();
+  if (!s) return void redirect("/login");
+
+  // Busca as fotos antes de apagar para removê-las do Storage.
+  const { data: prev } = await s.supabase.from("products").select("images, image").eq("id", id).eq("store_id", s.storeId).maybeSingle();
+  const images = normalizeImages(prev?.images, prev?.image);
+
+  const { error } = await s.supabase.from("products").delete().eq("id", id).eq("store_id", s.storeId);
+  if (error) redirect(`/cadastros/produtos/${id}?erro=excluir`);
+
+  if (images.length) { try { await deleteImages(s.supabase, "product-images", images); } catch { /* não bloqueia a exclusão */ } }
+  revalidatePath("/cadastros/produtos"); revalidatePath("/estoque"); revalidatePath("/vendas");
+  redirect("/cadastros/produtos");
+}
+
 export async function saveCategory(fd: FormData) {
   const s = await getStore();
   if (!s) return void redirect("/login");

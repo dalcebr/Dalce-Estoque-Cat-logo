@@ -208,6 +208,15 @@ Vincula um usuario do Supabase Auth a uma loja.
 
 **RLS**: `produtos da loja` - ALL onde `store_id = current_store_id()`
 
+**Arquivar x Excluir**:
+- **Arquivar** (`active = false`): o produto some das listas, do estoque e do
+  PDV, mas continua no banco. Pode ser reativado.
+- **Excluir**: remove o produto definitivamente. As variacoes caem por
+  `ON DELETE CASCADE` e as fotos sao removidas do bucket `product-images`.
+  O **historico de vendas e preservado**: `sale_items.product_id` usa
+  `ON DELETE SET NULL` e o nome do item fica gravado em `sale_items.name`
+  (snapshot), entao vendas, relatorios e fiado continuam intactos.
+
 ---
 
 ### `customers` - Clientes

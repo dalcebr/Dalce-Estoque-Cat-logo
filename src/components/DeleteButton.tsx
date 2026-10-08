@@ -42,7 +42,7 @@ export default function DeleteButton({ action, label, confirmText }: { action: (
 
   return (
     <>
-      <button type="button" onClick={() => setShowConfirm(true)} className="mt-3 w-full rounded-2xl border border-red-300 py-3.5 text-lg font-bold text-red-700">
+      <button type="button" onClick={() => setShowConfirm(true)} className="w-full rounded-2xl border border-red-300 py-3.5 text-lg font-bold text-red-700">
         {label}
       </button>
 

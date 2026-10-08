@@ -3,6 +3,7 @@ import PageHeader from "@/components/PageHeader";
 import CadList, { type CadRow } from "@/components/CadList";
 import { brl } from "@/lib/format";
 import { resolveImageUrl } from "@/lib/storage";
+import { deleteProduct } from "../actions";
 
 export const dynamic = "force-dynamic";
 type Row = { id: string; name: string; price: number; image: string | null; images: string[] | null; categories: { name: string } | { name: string }[] | null };
@@ -24,7 +25,7 @@ export default async function Produtos() {
       <div className="h-[3px] bg-gradient-to-r from-brand via-blue-400 to-transparent" />
       <div className="mx-auto max-w-md px-5 pt-5">
         <PageHeader eyebrow="Cadastro · Produtos" title="Seus produtos" back="/cadastros" sub={`${rows.length} ${rows.length === 1 ? "produto" : "produtos"}`} />
-        <CadList rows={rows} placeholder="Nome do produto" addLabel="Novo produto" addHref="/cadastros/produtos/novo" empty="Nenhum produto cadastrado." chips={(cats ?? []).map((c: { name: string }) => c.name)} sortable />
+        <CadList rows={rows} placeholder="Nome do produto" addLabel="Novo produto" addHref="/cadastros/produtos/novo" empty="Nenhum produto cadastrado." chips={(cats ?? []).map((c: { name: string }) => c.name)} sortable onDelete={deleteProduct} deleteConfirm="Excluir este produto definitivamente? Ele sai do catálogo, do estoque e do PDV. As vendas antigas continuam no histórico." />
       </div>
     </main>
   );

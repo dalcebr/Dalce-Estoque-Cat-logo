@@ -27,7 +27,7 @@ export default async function Variacao({ params, searchParams }: { params: Promi
         {erro && <p role="alert" className="text-red-700">Informe o nome e pelo menos uma opção.</p>}
         <SubmitButton>Salvar variação</SubmitButton>
       </form>
-      {!isNew && <DeleteButton action={deleteVariation.bind(null, id)} label="Excluir variação" confirmText="Excluir este grupo de variações?" />}
+      {!isNew && <div className="mt-6"><DeleteButton action={deleteVariation.bind(null, id)} label="Excluir variação" confirmText="Excluir este grupo de variações?" /></div>}
     </main>
   );
 }
