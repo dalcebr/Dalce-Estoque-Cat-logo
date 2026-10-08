@@ -53,13 +53,17 @@ export async function saveProduct(fd: FormData) {
     category_id: categoryId,
   };
 
+  // Captura em constantes locais: o narrowing de `s` se perde dentro de closures.
+  const supabase = s.supabase;
+  const storeId = s.storeId;
+
   /** Substitui as variações do produto pelas informadas. */
   async function saveVariations(productId: string) {
-    await s.supabase.from("product_variations").delete().eq("product_id", productId).eq("store_id", s.storeId);
+    await supabase.from("product_variations").delete().eq("product_id", productId).eq("store_id", storeId);
     if (variations.length === 0) return;
-    await s.supabase.from("product_variations").insert(
+    await supabase.from("product_variations").insert(
       variations.map((v, i) => ({
-        store_id: s.storeId,
+        store_id: storeId,
         product_id: productId,
         group_id: v.group_id,
         group_name: v.group_name,
