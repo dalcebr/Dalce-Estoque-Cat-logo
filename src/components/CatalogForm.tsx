@@ -188,6 +188,10 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
       {/* ═══ CORES ═══ */}
       <Sep t="Cores" />
       <p className="mb-4 px-1 text-sm text-soft">Escolha a cor de cada elemento. Personalize o tema claro e o tema escuro separadamente.</p>
+      <p className="mb-4 flex items-start gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-soft">
+        <Info size={16} className="mt-0.5 shrink-0 text-brand" />
+        <span>Os grupos seguem a ordem em que aparecem na vitrine, de cima para baixo — começando pelo <b className="text-brand">cabeçalho</b>.</span>
+      </p>
 
       {/* Seletor de tema */}
       <div className="mb-4 flex gap-2 rounded-3xl border border-line bg-surface p-2">
@@ -211,6 +215,7 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
                 className="flex w-full items-center gap-3 p-4 text-left">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-page text-lg">{g.icon}</span>
                 <span className="flex-1 text-lg font-extrabold">{g.n}</span>
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-page text-xs font-bold text-soft">{g.step}</span>
                 <span className="text-sm font-medium text-soft">{g.fields.length}</span>
                 <ChevronDown size={20} className={`shrink-0 text-soft transition-transform ${isOpen ? "rotate-180" : ""}`} />
               </button>

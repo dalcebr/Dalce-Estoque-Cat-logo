@@ -226,28 +226,18 @@ export const fontStack = (k: FontKey): string =>
  * Grupos de cores exibidos no formulário. Cada grupo vira uma seção
  * expansível/recolhível. `opacity` marca o campo que é um valor de
  * opacidade (0–100) em vez de uma cor hexadecimal.
+ *
+ * A ORDEM da lista segue a ordem visual da vitrine (de cima para baixo):
+ * cabeçalho → banner → benefícios → categorias → busca → filtros →
+ * produtos → favorito → placeholder → rodapé → botão de tema → estados.
+ * O campo `step` é o número exibido na interface para reforçar a sequência.
  */
 export type ColorField = { k: keyof CatalogColors; n: string; opacity?: boolean };
-export type ColorGroup = { id: string; n: string; icon: string; fields: ColorField[] };
+export type ColorGroup = { id: string; n: string; icon: string; step: number; fields: ColorField[] };
 
 export const COLOR_GROUPS: ColorGroup[] = [
   {
-    id: "bg", n: "Fundo geral", icon: "🎨", fields: [
-      { k: "page_bg", n: "Fundo do catálogo" },
-      { k: "section_bg", n: "Fundo da seção" },
-      { k: "divider", n: "Divisor" },
-    ],
-  },
-  {
-    id: "text", n: "Textos gerais", icon: "✍️", fields: [
-      { k: "text_primary", n: "Texto principal" },
-      { k: "text_secondary", n: "Texto secundário" },
-      { k: "text_tertiary", n: "Texto terciário" },
-      { k: "text_muted", n: "Texto suave (muted)" },
-    ],
-  },
-  {
-    id: "header", n: "Cabeçalho", icon: "🔝", fields: [
+    id: "header", n: "Cabeçalho", icon: "🔝", step: 1, fields: [
       { k: "header_bg", n: "Fundo do cabeçalho" },
       { k: "header_text", n: "Texto do cabeçalho" },
       { k: "header_search_icon", n: "Ícone de busca" },
@@ -263,7 +253,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "hero", n: "Banner / Hero", icon: "🖼️", fields: [
+    id: "hero", n: "Banner / Hero", icon: "🖼️", step: 2, fields: [
       { k: "hero_overlay", n: "Cor do overlay" },
       { k: "hero_overlay_opacity", n: "Opacidade do overlay", opacity: true },
       { k: "hero_title", n: "Título do banner" },
@@ -276,7 +266,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "benefit", n: "Benefícios", icon: "⭐", fields: [
+    id: "benefit", n: "Benefícios", icon: "⭐", step: 3, fields: [
       { k: "benefit_bg", n: "Fundo do benefício" },
       { k: "benefit_icon", n: "Ícone do benefício" },
       { k: "benefit_title", n: "Título do benefício" },
@@ -287,7 +277,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "category", n: "Categorias", icon: "🏷️", fields: [
+    id: "category", n: "Categorias", icon: "🏷️", step: 4, fields: [
       { k: "category_title", n: "Título das categorias" },
       { k: "category_bg", n: "Fundo da categoria" },
       { k: "category_text", n: "Texto da categoria" },
@@ -301,13 +291,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "products", n: "Seção de produtos", icon: "📦", fields: [
-      { k: "products_section_bg", n: "Fundo da seção de produtos" },
-      { k: "products_title", n: "Título dos produtos" },
-    ],
-  },
-  {
-    id: "search", n: "Pesquisa", icon: "🔍", fields: [
+    id: "search", n: "Pesquisa", icon: "🔍", step: 5, fields: [
       { k: "search_bg", n: "Fundo da busca" },
       { k: "search_text", n: "Texto da busca" },
       { k: "search_placeholder", n: "Placeholder da busca" },
@@ -317,7 +301,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "filter", n: "Filtros de produtos", icon: "🎚️", fields: [
+    id: "filter", n: "Filtros de produtos", icon: "🎚️", step: 6, fields: [
       { k: "filter_bg", n: "Fundo do filtro" },
       { k: "filter_text", n: "Texto do filtro" },
       { k: "filter_border", n: "Borda do filtro" },
@@ -330,7 +314,13 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "card", n: "Cards de produtos", icon: "🃏", fields: [
+    id: "products", n: "Seção de produtos", icon: "📦", step: 7, fields: [
+      { k: "products_section_bg", n: "Fundo da seção de produtos" },
+      { k: "products_title", n: "Título dos produtos" },
+    ],
+  },
+  {
+    id: "card", n: "Cards de produtos", icon: "🃏", step: 8, fields: [
       { k: "card_bg", n: "Fundo do card" },
       { k: "card_border", n: "Borda do card" },
       { k: "card_shadow", n: "Sombra do card" },
@@ -341,7 +331,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "fav", n: "Favorito do produto", icon: "❤️", fields: [
+    id: "fav", n: "Favorito do produto", icon: "❤️", step: 9, fields: [
       { k: "fav_bg", n: "Fundo do favorito" },
       { k: "fav_icon", n: "Ícone do favorito" },
       { k: "fav_active_bg", n: "Fundo ativo" },
@@ -351,14 +341,14 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "placeholder", n: "Produto sem imagem", icon: "🖼️", fields: [
+    id: "placeholder", n: "Produto sem imagem", icon: "🚫", step: 10, fields: [
       { k: "placeholder_bg", n: "Fundo do placeholder" },
       { k: "placeholder_icon", n: "Ícone do placeholder" },
       { k: "placeholder_text", n: "Texto do placeholder" },
     ],
   },
   {
-    id: "footer", n: "Rodapé", icon: "🔻", fields: [
+    id: "footer", n: "Rodapé", icon: "🔻", step: 11, fields: [
       { k: "footer_bg", n: "Fundo do rodapé" },
       { k: "footer_title", n: "Título do rodapé" },
       { k: "footer_text", n: "Texto do rodapé" },
@@ -368,7 +358,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "theme", n: "Botão Modo Claro / Escuro", icon: "🌗", fields: [
+    id: "theme", n: "Botão Modo Claro / Escuro", icon: "🌗", step: 12, fields: [
       { k: "theme_btn_bg", n: "Fundo do botão" },
       { k: "theme_btn_text", n: "Texto do botão" },
       { k: "theme_btn_icon", n: "Ícone do botão" },
@@ -376,7 +366,22 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "state", n: "Estados de interação", icon: "⚡", fields: [
+    id: "bg", n: "Fundo geral", icon: "🎨", step: 13, fields: [
+      { k: "page_bg", n: "Fundo do catálogo" },
+      { k: "section_bg", n: "Fundo da seção" },
+      { k: "divider", n: "Divisor" },
+    ],
+  },
+  {
+    id: "text", n: "Textos gerais", icon: "✍️", step: 14, fields: [
+      { k: "text_primary", n: "Texto principal" },
+      { k: "text_secondary", n: "Texto secundário" },
+      { k: "text_tertiary", n: "Texto terciário" },
+      { k: "text_muted", n: "Texto suave (muted)" },
+    ],
+  },
+  {
+    id: "state", n: "Estados de interação", icon: "⚡", step: 15, fields: [
       { k: "state_hover", n: "Hover" },
       { k: "state_focus", n: "Foco" },
       { k: "state_selection", n: "Seleção" },
