@@ -1,0 +1,37 @@
+/*
+ * Fontes do catálogo carregadas via Google Fonts (CSS) em vez de `next/font/google`.
+ *
+ * Motivo: o build no Cloudflare falhava ao baixar as 24 fontes em tempo de
+ * compilação (`next/font` faz fetch no build). Carregando pelo navegador,
+ * o build nunca quebra por causa de fonte e o usuário baixa só o que precisa.
+ *
+ * Cada variável `--font-*` é definida aqui para manter compatibilidade com
+ * `FONTS[].stack` em `src/lib/catalog.ts`.
+ */
+
+:root {
+  --font-inter: "Inter", Arial, Helvetica, sans-serif;
+  --font-poppins: "Poppins", Arial, Helvetica, sans-serif;
+  --font-montserrat: "Montserrat", Arial, Helvetica, sans-serif;
+  --font-roboto: "Roboto", Arial, Helvetica, sans-serif;
+  --font-opensans: "Open Sans", Arial, Helvetica, sans-serif;
+  --font-raleway: "Raleway", Arial, Helvetica, sans-serif;
+  --font-nunito: "Nunito", Arial, Helvetica, sans-serif;
+  --font-worksans: "Work Sans", Arial, Helvetica, sans-serif;
+  --font-dmsans: "DM Sans", Arial, Helvetica, sans-serif;
+  --font-quicksand: "Quicksand", Arial, Helvetica, sans-serif;
+  --font-josefin: "Josefin Sans", Arial, Helvetica, sans-serif;
+  --font-oswald: "Oswald", Arial, Helvetica, sans-serif;
+  --font-bebas: "Bebas Neue", Impact, sans-serif;
+  --font-righteous: "Righteous", Arial, sans-serif;
+  --font-playfair: "Playfair Display", Georgia, serif;
+  --font-lora: "Lora", Georgia, serif;
+  --font-cormorant: "Cormorant Garamond", Georgia, serif;
+  --font-merriweather: "Merriweather", Georgia, serif;
+  --font-cinzel: "Cinzel", Georgia, serif;
+  --font-abril: "Abril Fatface", Georgia, serif;
+  --font-dancing: "Dancing Script", cursive;
+  --font-pacifico: "Pacifico", cursive;
+  --font-greatvibes: "Great Vibes", cursive;
+  --font-satisfy: "Satisfy", cursive;
+}
