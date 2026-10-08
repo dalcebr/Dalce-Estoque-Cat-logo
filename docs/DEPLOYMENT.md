@@ -41,6 +41,11 @@ No **SQL Editor**, execute os arquivos na ordem:
 5. `supabase/006_catalogo.sql`
 6. `supabase/007_cadastros.sql`
 7. `supabase/008_security_hardening.sql`
+8. `supabase/009_storage_setup.sql`
+9. `supabase/010_catalog_enhancements.sql`
+10. `supabase/011_catalog_customization.sql`
+11. `supabase/012_catalog_simplify.sql`
+12. `supabase/013_catalog_enhancements.sql`
 
 ### 2.3 Configurar autenticacao
 

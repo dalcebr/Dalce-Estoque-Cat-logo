@@ -73,7 +73,6 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
   }
 
   const hero_title = sanitizeText(String(i.hero_title ?? ""), 80);
-  const hero_subtitle = sanitizeText(String(i.hero_subtitle ?? ""), 80);
   const hero_description = sanitizeText(String(i.hero_description ?? ""), 200);
   const hero_button_text = sanitizeText(String(i.hero_button_text ?? "VER PRODUTOS"), 40) || "VER PRODUTOS";
   const whatsapp_message = sanitizeText(String(i.whatsapp_message ?? "Olá! Gostaria de fazer um pedido:"), 300) || "Olá! Gostaria de fazer um pedido:";
@@ -95,7 +94,6 @@ export async function saveCatalog(i: CatalogSettings): Promise<Result> {
     stock_mode: ["all", "hide", "unavailable"].includes(i.stock_mode) ? i.stock_mode : "all",
     instagram: instagram || null,
     hero_title: hero_title || null,
-    hero_subtitle: hero_subtitle || null,
     hero_description: hero_description || null,
     hero_image: hero_image || null,
     hero_button_text,

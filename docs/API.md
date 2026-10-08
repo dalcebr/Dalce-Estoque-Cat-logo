@@ -130,7 +130,6 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
     instagram: string;     // Username Instagram
     stock_mode: "all" | "hide" | "unavailable";  // Modo de exibicao de estoque
     hero_title: string;    // Titulo do banner (max 80 chars)
-    hero_subtitle: string; // Subtitulo do banner (max 80 chars)
     hero_description: string; // Descricao do banner (max 200 chars)
     hero_image: string;    // Imagem do banner (storage path ou base64)
     hero_button_text: string; // Texto do botao (max 40 chars)
@@ -140,7 +139,7 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
       heading, body_text, button_bg, button_text, footer_bg
     };
     fonts: {               // Fonte 1, fonte 2 e onde cada uma e usada
-      font_1, font_2,      // "inter" | "poppins" | "montserrat" | "roboto" | "playfair" | "lora"
+      font_1, font_2,      // "inter" | "poppins" | "montserrat" | "roboto" | "opensans" | "raleway" | "nunito" | "worksans" | "dmsans" | "quicksand" | "josefin" | "oswald" | "bebas" | "righteous" | "playfair" | "lora" | "cormorant" | "merriweather" | "cinzel" | "abril" | "dancing" | "pacifico" | "greatvibes" | "satisfy"
       store_name_font, heading_font, card_font, body_font  // 1 | 2
     };
     dark_mode_enabled: boolean; // Exibe botao de modo escuro

@@ -126,8 +126,6 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
         </div>
         <Lbl t="Título do banner" opt />
         <input value={v.hero_title} onChange={(e) => set("hero_title", e.target.value)} maxLength={80} placeholder="Ex: NOVAS COLEÇÕES" className={box} />
-        <Lbl t="Subtítulo" opt />
-        <input value={v.hero_subtitle} onChange={(e) => set("hero_subtitle", e.target.value)} maxLength={80} placeholder="Ex: EXCLUSIVAS" className={box} />
         <Lbl t="Descrição" opt />
         <textarea value={v.hero_description} onChange={(e) => set("hero_description", e.target.value)} rows={2} maxLength={200} placeholder="Texto abaixo do título…" className={box} />
         <Lbl t="Texto do botão" />

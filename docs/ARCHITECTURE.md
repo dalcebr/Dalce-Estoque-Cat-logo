@@ -82,7 +82,7 @@ dalce-estoque/
 │   │   ├── store.ts              # Helper getStore() para obter store_id
 │   │   ├── validation.ts         # Validacao e sanitizacao de entrada
 │   │   ├── format.ts             # Formatacao BRL, datas, fuso horario
-│   │   ├── catalog.ts            # Temas e tipos do catalogo
+│   │   ├── catalog.ts            # Tipos, cores, fontes e defaults do catalogo
 │   │   ├── image.ts              # Resize de imagem client-side
 │   │   ├── rate-limit.ts         # Rate limiter in-memory
 │   │   ├── fiado.ts              # Logica de calculo de fiado

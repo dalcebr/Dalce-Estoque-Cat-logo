@@ -233,7 +233,6 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `stock_mode` | text | NOT NULL | `'all'` | Modo de exibicao de estoque |
 | `instagram` | text | NULL | | Username Instagram |
 | `hero_title` | text | NULL | | Titulo do banner principal |
-| `hero_subtitle` | text | NULL | | Subtitulo do banner |
 | `hero_description` | text | NULL | | Descricao do banner |
 | `hero_image` | text | NULL | | Imagem do banner (storage path) |
 | `hero_button_text` | text | NOT NULL | `'VER PRODUTOS'` | Texto do botao do banner |
@@ -255,8 +254,11 @@ Vincula um usuario do Supabase Auth a uma loja.
 `store_name`, `heading`, `body_text`, `button_bg`, `button_text`, `footer_bg`.
 
 **`fonts` (JSONB)** - chaves: `font_1`, `font_2` (valores: `inter`, `poppins`,
-`montserrat`, `roboto`, `playfair`, `lora`) e `store_name_font`, `heading_font`,
-`card_font`, `body_font` (valores: `1` ou `2`).
+`montserrat`, `roboto`, `opensans`, `raleway`, `nunito`, `worksans`, `dmsans`,
+`quicksand`, `josefin`, `oswald`, `bebas`, `righteous`, `playfair`, `lora`,
+`cormorant`, `merriweather`, `cinzel`, `abril`, `dancing`, `pacifico`,
+`greatvibes`, `satisfy`) e `store_name_font`, `heading_font`, `card_font`,
+`body_font` (valores: `1` ou `2`).
 
 ---
 

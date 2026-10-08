@@ -10,7 +10,8 @@ type View =
   | { type: "home" }
   | { type: "products"; category?: string }
   | { type: "product"; id: string }
-  | { type: "cart" };
+  | { type: "cart" }
+  | { type: "wishlist" };
 
 /* ─── helpers ─── */
 function brl(n: number) {
@@ -46,9 +47,15 @@ function AddCartIcon({ size = 22 }: { size?: number }) {
     </svg>
   );
 }
+function HeartIcon({ size = 22, filled = false }: { size?: number; filled?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+    </svg>
+  );
+}
 function ChevronRightIcon({ size = 16 }: { size?: number }) { return <Ico d="M9 18l6-6-6-6" size={size} sw={2.5} />; }
 function ChevronLeftIcon({ size = 20 }: { size?: number }) { return <Ico d="M15 18l-6-6 6-6" size={size} />; }
-function XIcon({ size = 24 }: { size?: number }) { return <Ico d="M18 6L6 18M6 6l12 12" size={size} />; }
 function PlusIcon() { return <Ico d="M12 5v14M5 12h14" size={18} />; }
 function MinusIcon() { return <Ico d="M5 12h14" size={18} />; }
 function TrashIcon() { return <Ico d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" size={18} />; }
@@ -129,16 +136,29 @@ function ImgPlaceholder({ bg, fg }: { bg: string; fg: string }) {
 
 /* ═══ PRODUCT CARD ═══ */
 function ProductCard({
-  product, colors, cardFont, onView, onAddCart,
+  product, colors, cardFont, wishlisted, onView, onAddCart, onToggleWish,
 }: {
   product: CatalogProduct;
   colors: CatalogColors;
   cardFont: string;
+  wishlisted: boolean;
   onView: () => void;
   onAddCart: () => void;
+  onToggleWish: () => void;
 }) {
   return (
-    <div style={{ background: colors.card_bg, borderRadius: 16, padding: 10 }}>
+    <div style={{ background: colors.card_bg, borderRadius: 16, padding: 10, position: "relative" }}>
+      <button
+        onClick={onToggleWish}
+        aria-label={wishlisted ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        style={{
+          position: "absolute", top: 16, right: 16, zIndex: 2, width: 32, height: 32, borderRadius: "50%",
+          border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(255,255,255,.85)", color: wishlisted ? "#e11d48" : colors.card_text,
+        }}
+      >
+        <HeartIcon size={18} filled={wishlisted} />
+      </button>
       <button onClick={onView} style={{ display: "block", width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
         {product.image ? (
           <img src={product.image} alt={product.name} loading="lazy" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12, display: "block", background: colors.card_bg }} />
@@ -158,40 +178,81 @@ function ProductCard({
 }
 
 function ProductGrid({
-  products, colors, cardFont, onView, onAddCart,
+  products, colors, cardFont, wishlist, onView, onAddCart, onToggleWish,
 }: {
   products: CatalogProduct[];
   colors: CatalogColors;
   cardFont: string;
+  wishlist: string[];
   onView: (id: string) => void;
   onAddCart: (p: CatalogProduct) => void;
+  onToggleWish: (p: CatalogProduct) => void;
 }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px 14px" }}>
       {products.map((p) => (
-        <ProductCard key={p.id} product={p} colors={colors} cardFont={cardFont} onView={() => onView(p.id)} onAddCart={() => onAddCart(p)} />
+        <ProductCard key={p.id} product={p} colors={colors} cardFont={cardFont} wishlisted={wishlist.includes(p.id)}
+          onView={() => onView(p.id)} onAddCart={() => onAddCart(p)} onToggleWish={() => onToggleWish(p)} />
       ))}
+    </div>
+  );
+}
+
+/* ═══ CATEGORY CHIPS ═══ */
+function CategoryChips({
+  categories, colors, bodyFont, active, onSelect,
+}: {
+  categories: { name: string; color: string }[];
+  colors: CatalogColors;
+  bodyFont: string;
+  active?: string;
+  onSelect: (name?: string) => void;
+}) {
+  if (categories.length === 0) return null;
+  const chip = (label: string, value: string | undefined) => {
+    const on = active === value;
+    return (
+      <button key={label} onClick={() => onSelect(value)}
+        style={{
+          flex: "0 0 auto", padding: "8px 16px", borderRadius: 40, cursor: "pointer",
+          border: `1px solid ${on ? colors.button_bg : colors.body_text}`,
+          background: on ? colors.button_bg : "transparent",
+          color: on ? colors.button_text : colors.body_text,
+          fontSize: 13, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap",
+        }}>
+        {label}
+      </button>
+    );
+  };
+  return (
+    <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
+      {chip("Todos", undefined)}
+      {categories.map((c) => chip(c.name, c.name))}
     </div>
   );
 }
 
 /* ═══ PRODUCTS LIST ═══ */
 function ProductsListView({
-  products, colors, headingFont, cardFont, bodyFont, initialCategory,
-  onView, onAddCart,
+  products, categories, colors, headingFont, cardFont, bodyFont, wishlist,
+  initialCategory, onView, onAddCart, onToggleWish,
 }: {
   products: CatalogProduct[];
+  categories: { name: string; color: string }[];
   colors: CatalogColors;
   headingFont: string;
   cardFont: string;
   bodyFont: string;
+  wishlist: string[];
   initialCategory?: string;
   onView: (id: string) => void;
   onAddCart: (p: CatalogProduct) => void;
+  onToggleWish: (p: CatalogProduct) => void;
 }) {
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState<string | undefined>(initialCategory);
   const filtered = products.filter((p) => {
-    if (initialCategory && p.category !== initialCategory) return false;
+    if (cat && p.category !== cat) return false;
     if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
@@ -199,20 +260,52 @@ function ProductsListView({
   return (
     <section style={{ padding: "0 16px" }}>
       <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.heading, marginBottom: 16 }}>
-        {initialCategory || "Todos os produtos"}
+        {cat || "Todos os produtos"}
       </h2>
       <input
         type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="O que você procura ?" aria-label="Pesquisar produtos"
         style={{
           width: "100%", height: 42, borderRadius: 40, border: "none", background: colors.card_bg,
-          padding: "0 18px", fontSize: 15, color: colors.body_text, outline: "none", marginBottom: 20, boxSizing: "border-box",
+          padding: "0 18px", fontSize: 15, color: colors.body_text, outline: "none", marginBottom: 16, boxSizing: "border-box",
           fontFamily: bodyFont,
         }}
       />
+      <div style={{ margin: "0 -16px 20px" }}>
+        <CategoryChips categories={categories} colors={colors} bodyFont={bodyFont} active={cat} onSelect={setCat} />
+      </div>
       {filtered.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.body_text, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>Nenhum produto encontrado.</p>
       ) : (
-        <ProductGrid products={filtered} colors={colors} cardFont={cardFont} onView={onView} onAddCart={onAddCart} />
+        <ProductGrid products={filtered} colors={colors} cardFont={cardFont} wishlist={wishlist} onView={onView} onAddCart={onAddCart} onToggleWish={onToggleWish} />
+      )}
+    </section>
+  );
+}
+
+/* ═══ WISHLIST ═══ */
+function WishlistView({
+  products, colors, headingFont, cardFont, bodyFont, wishlist, onView, onAddCart, onToggleWish,
+}: {
+  products: CatalogProduct[];
+  colors: CatalogColors;
+  headingFont: string;
+  cardFont: string;
+  bodyFont: string;
+  wishlist: string[];
+  onView: (id: string) => void;
+  onAddCart: (p: CatalogProduct) => void;
+  onToggleWish: (p: CatalogProduct) => void;
+}) {
+  const items = products.filter((p) => wishlist.includes(p.id));
+  return (
+    <section style={{ padding: "0 16px" }}>
+      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.heading, marginBottom: 16 }}>Favoritos</h2>
+      {items.length === 0 ? (
+        <p style={{ textAlign: "center", color: colors.body_text, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>
+          Você ainda não favoritou nenhum produto. Toque na estrelinha dos produtos que mais gostou.
+        </p>
+      ) : (
+        <ProductGrid products={items} colors={colors} cardFont={cardFont} wishlist={wishlist} onView={onView} onAddCart={onAddCart} onToggleWish={onToggleWish} />
       )}
     </section>
   );
@@ -289,7 +382,7 @@ function CartView({
 
 /* ═══ PRODUCT DETAIL ═══ */
 function ProductDetailView({
-  product, related, colors, headingFont, bodyFont, phone, whatsappMsg, onBack, onAddCart, onView,
+  product, related, colors, headingFont, bodyFont, phone, whatsappMsg, wishlisted, onBack, onAddCart, onView, onToggleWish,
 }: {
   product: CatalogProduct;
   related: CatalogProduct[];
@@ -298,20 +391,28 @@ function ProductDetailView({
   bodyFont: string;
   phone: string | null;
   whatsappMsg: string;
+  wishlisted: boolean;
   onBack: () => void;
   onAddCart: () => void;
   onView: (id: string) => void;
+  onToggleWish: () => void;
 }) {
   return (
     <section style={{ padding: "0 16px" }}>
       <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: colors.body_text, fontSize: 14, marginBottom: 12, padding: 0, fontFamily: bodyFont }}>
         <ChevronLeftIcon size={20} /> Voltar
       </button>
-      {product.image ? (
-        <img src={product.image} alt={product.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 16, background: colors.card_bg }} />
-      ) : (
-        <ImgPlaceholder bg={colors.card_bg} fg={colors.card_text} />
-      )}
+      <div style={{ position: "relative" }}>
+        {product.image ? (
+          <img src={product.image} alt={product.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 16, background: colors.card_bg }} />
+        ) : (
+          <ImgPlaceholder bg={colors.card_bg} fg={colors.card_text} />
+        )}
+        <button onClick={onToggleWish} aria-label={wishlisted ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          style={{ position: "absolute", top: 12, right: 12, width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,.85)", color: wishlisted ? "#e11d48" : colors.card_text }}>
+          <HeartIcon size={22} filled={wishlisted} />
+        </button>
+      </div>
       <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.heading, marginTop: 16 }}>{product.name}</h1>
       <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.button_bg, marginTop: 8 }}>{brl(product.price)}</p>
       {product.description && (
@@ -384,13 +485,48 @@ export default function CatalogApp({
   const [view, setView] = useState<View>({ type: "home" });
   const [dark, setDark] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const mainRef = useRef<HTMLDivElement>(null);
 
+  /* ─── restore persisted state ─── */
   useEffect(() => {
-    try { if (localStorage.getItem("catalog_dark") === "1") setDark(true); } catch { /* noop */ }
-  }, []);
+    try {
+      if (localStorage.getItem("catalog_dark") === "1") setDark(true);
+      const rawCart = localStorage.getItem("catalog_cart");
+      if (rawCart) {
+        const parsed = JSON.parse(rawCart) as { id: string; qty: number }[];
+        const restored: CartItem[] = [];
+        for (const it of parsed) {
+          const p = products.find((x) => x.id === it.id);
+          if (p) restored.push({ product: p, qty: Math.max(1, it.qty) });
+        }
+        setCart(restored);
+      }
+      const rawWish = localStorage.getItem("catalog_wishlist");
+      if (rawWish) {
+        const ids = JSON.parse(rawWish) as string[];
+        setWishlist(ids.filter((id) => products.some((p) => p.id === id)));
+      }
+    } catch { /* noop */ }
+    setHydrated(true);
+  }, [products]);
+
+  /* ─── persist cart ─── */
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem("catalog_cart", JSON.stringify(cart.map((i) => ({ id: i.product.id, qty: i.qty }))));
+    } catch { /* noop */ }
+  }, [cart, hydrated]);
+
+  /* ─── persist wishlist ─── */
+  useEffect(() => {
+    if (!hydrated) return;
+    try { localStorage.setItem("catalog_wishlist", JSON.stringify(wishlist)); } catch { /* noop */ }
+  }, [wishlist, hydrated]);
 
   useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }, [view]);
 
@@ -416,6 +552,14 @@ export default function CatalogApp({
   const removeFromCart = useCallback((id: string) => {
     setCart((prev) => prev.filter((i) => i.product.id !== id));
   }, []);
+
+  const toggleWish = useCallback((p: CatalogProduct) => {
+    setWishlist((prev) => {
+      const has = prev.includes(p.id);
+      showToast(has ? `${p.name} removido dos favoritos` : `${p.name} adicionado aos favoritos`);
+      return has ? prev.filter((id) => id !== p.id) : [...prev, p.id];
+    });
+  }, [showToast]);
 
   const toggleDark = useCallback(() => {
     setDark((prev) => {
@@ -447,6 +591,12 @@ export default function CatalogApp({
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button onClick={() => setView({ type: "products" })} aria-label="Pesquisar" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: C.heading }}><SearchIcon size={26} /></button>
+          <button onClick={() => setView({ type: "wishlist" })} aria-label="Favoritos" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: C.heading }}>
+            <HeartIcon size={26} filled={wishlist.length > 0} />
+            {wishlist.length > 0 && (
+              <span style={{ position: "absolute", top: -6, right: -8, fontSize: 10, fontWeight: 700, background: C.header_bg, color: C.heading, borderRadius: "50%", minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.heading}` }}>{wishlist.length}</span>
+            )}
+          </button>
           <button onClick={() => setView({ type: "cart" })} aria-label="Carrinho" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", color: C.heading }}>
             <CartIcon size={26} />
             <span style={{ position: "absolute", top: -6, right: -8, fontSize: 10, fontWeight: 700, background: C.header_bg, color: C.heading, borderRadius: "50%", minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.heading}` }}>{cartCount}</span>
@@ -465,52 +615,68 @@ export default function CatalogApp({
                   <img src={settings.hero_image} alt="Banner" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: dark ? "linear-gradient(to right, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.1) 100%)" : "linear-gradient(to right, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.1) 100%)" }} />
-                <div style={{ position: "relative", zIndex: 1, padding: "32px 20px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ position: "relative", zIndex: 1, padding: "32px 20px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start" }}>
                   {settings.hero_title && (
-                    <h2 style={{ fontFamily: headingFont, fontSize: 36, fontWeight: 800, color: dark ? "#fff" : C.heading, lineHeight: 1.0, textTransform: "uppercase" }}>{settings.hero_title}</h2>
-                  )}
-                  {settings.hero_subtitle && (
-                    <h3 style={{ fontFamily: headingFont, fontSize: 34, fontWeight: 800, color: dark ? "#fff" : C.heading, lineHeight: 1.0, textTransform: "uppercase", marginTop: 2 }}>{settings.hero_subtitle}</h3>
+                    <h2 style={{ fontFamily: headingFont, fontSize: 36, fontWeight: 800, color: dark ? "#fff" : C.heading, lineHeight: 1.05, textTransform: "uppercase" }}>{settings.hero_title}</h2>
                   )}
                   <div style={{ width: 60, height: 3, background: C.button_bg, margin: "18px 0 10px" }} />
                   {settings.hero_description && (
                     <p style={{ fontFamily: bodyFont, fontSize: 16, color: dark ? "#ddd" : C.body_text, lineHeight: 1.4 }}>{settings.hero_description}</p>
                   )}
-                  <button onClick={() => setView({ type: "products" })} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: 200, height: 42, borderRadius: 40, border: "none", cursor: "pointer", background: C.button_bg, color: C.button_text, fontSize: 13, fontWeight: 700, paddingLeft: 16, paddingRight: 4, marginTop: 16, fontFamily: bodyFont }}>
-                    <span>{settings.hero_button_text}</span>
-                    <span style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,.25)", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRightIcon size={16} /></span>
+                  <button onClick={() => setView({ type: "products" })} style={{ display: "inline-flex", alignItems: "center", gap: 10, maxWidth: "100%", minHeight: 44, borderRadius: 40, border: "none", cursor: "pointer", background: C.button_bg, color: C.button_text, fontSize: 13, fontWeight: 700, padding: "6px 6px 6px 18px", marginTop: 16, fontFamily: bodyFont }}>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{settings.hero_button_text}</span>
+                    <span style={{ width: 32, height: 32, flexShrink: 0, borderRadius: "50%", background: "rgba(0,0,0,.25)", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRightIcon size={16} /></span>
                   </button>
                 </div>
               </div>
             </section>
 
-            {/* BENEFITS */}
+            {/* BENEFITS — carrossel horizontal */}
             {settings.benefits.length > 0 && (
-              <section style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "36px 16px" }}>
-                {settings.benefits.map((b: Benefit, i: number) => (
-                  <div key={i} style={{ display: "contents" }}>
-                    {i > 0 && <div style={{ width: 1, height: 80, background: C.body_text, margin: "0 20px", flexShrink: 0, opacity: 0.4 }} />}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", flex: 1 }}>
+              <section style={{ marginTop: 28 }}>
+                <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+                  {settings.benefits.map((b: Benefit, i: number) => (
+                    <div key={i} style={{ flex: "0 0 auto", width: 150, scrollSnapAlign: "start", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "18px 12px", borderRadius: 16, background: C.card_bg }}>
                       <BenefitIcon name={b.icon} size={40} color={C.heading} />
-                      <p style={{ fontFamily: headingFont, fontSize: 13, fontWeight: 700, color: C.heading, marginTop: 8 }}>{b.title}</p>
-                      <p style={{ fontFamily: bodyFont, fontSize: 11, color: C.body_text, marginTop: 2 }}>{b.description}</p>
+                      <p style={{ fontFamily: headingFont, fontSize: 14, fontWeight: 700, color: C.heading, marginTop: 10 }}>{b.title}</p>
+                      {b.description && <p style={{ fontFamily: bodyFont, fontSize: 12, color: C.body_text, marginTop: 4 }}>{b.description}</p>}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* CATEGORIAS */}
+            {categories.length > 0 && (
+              <section style={{ marginTop: 28 }}>
+                <h2 style={{ fontFamily: headingFont, fontSize: 22, fontWeight: 700, color: C.heading, margin: "0 16px 14px" }}>Categorias</h2>
+                <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollbarWidth: "none" }}>
+                  {categories.map((c) => (
+                    <button key={c.name} onClick={() => setView({ type: "products", category: c.name })}
+                      style={{ flex: "0 0 auto", padding: "10px 18px", borderRadius: 40, cursor: "pointer", border: `1px solid ${C.body_text}`, background: C.card_bg, color: C.card_text, fontSize: 14, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap" }}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
               </section>
             )}
 
             {/* ALL PRODUCTS */}
             <div style={{ marginTop: 28 }}>
-              <ProductsListView products={products} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont}
-                onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} />
+              <ProductsListView products={products} categories={categories} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
+                onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
             </div>
           </>
         )}
 
         {view.type === "products" && (
-          <ProductsListView products={products} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont}
-            initialCategory={view.category} onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} />
+          <ProductsListView products={products} categories={categories} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
+            initialCategory={view.category} onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
+        )}
+
+        {view.type === "wishlist" && (
+          <WishlistView products={products} colors={C} headingFont={headingFont} cardFont={cardFont} bodyFont={bodyFont} wishlist={wishlist}
+            onView={(id) => setView({ type: "product", id })} onAddCart={addToCart} onToggleWish={toggleWish} />
         )}
 
         {view.type === "cart" && (
@@ -525,7 +691,8 @@ export default function CatalogApp({
           return (
             <ProductDetailView product={p} related={related} colors={C} headingFont={headingFont} bodyFont={bodyFont}
               phone={settings.phone} whatsappMsg={settings.whatsapp_message || "Olá! Gostaria de fazer um pedido:"}
-              onBack={() => setView({ type: "home" })} onAddCart={() => addToCart(p)} onView={(id) => setView({ type: "product", id })} />
+              wishlisted={wishlist.includes(p.id)}
+              onBack={() => setView({ type: "home" })} onAddCart={() => addToCart(p)} onView={(id) => setView({ type: "product", id })} onToggleWish={() => toggleWish(p)} />
           );
         })()}
       </div>

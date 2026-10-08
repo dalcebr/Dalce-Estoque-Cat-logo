@@ -98,7 +98,6 @@ ALTER TABLE customers ADD CONSTRAINT customers_name_not_empty CHECK (trim(name) 
 
 -- Limite de tamanho de imagem (500KB) para prevenir DoS
 ALTER TABLE products ADD CONSTRAINT products_image_size CHECK (image IS NULL OR length(image) < 512000);
-ALTER TABLE catalog_settings ADD CONSTRAINT catalog_logo_size CHECK (logo IS NULL OR length(logo) < 512000);
 ```
 
 ## 3. Security Headers

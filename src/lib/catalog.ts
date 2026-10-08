@@ -27,7 +27,11 @@ export type CatalogColors = {
  * Fontes do catálogo. Duas fontes disponíveis; cada bloco de texto
  * escolhe qual usar (permite mesclar).
  */
-export type FontKey = "inter" | "poppins" | "playfair" | "montserrat" | "lora" | "roboto";
+export type FontKey =
+  | "inter" | "poppins" | "playfair" | "montserrat" | "lora" | "roboto"
+  | "opensans" | "raleway" | "nunito" | "worksans" | "dmsans" | "quicksand"
+  | "josefin" | "cormorant" | "merriweather" | "bebas" | "oswald" | "dancing"
+  | "pacifico" | "greatvibes" | "cinzel" | "abril" | "righteous" | "satisfy";
 
 export type CatalogFonts = {
   font_1: FontKey;        // fonte 1
@@ -48,7 +52,6 @@ export type CatalogSettings = {
   stock_mode: StockMode;
   // Banner principal
   hero_title: string;
-  hero_subtitle: string;
   hero_description: string;
   hero_image: string;
   hero_button_text: string;
@@ -78,8 +81,26 @@ export const FONTS: { k: FontKey; n: string; stack: string }[] = [
   { k: "poppins", n: "Poppins", stack: "var(--font-poppins), Arial, Helvetica, sans-serif" },
   { k: "montserrat", n: "Montserrat", stack: "var(--font-montserrat), Arial, Helvetica, sans-serif" },
   { k: "roboto", n: "Roboto", stack: "var(--font-roboto), Arial, Helvetica, sans-serif" },
+  { k: "opensans", n: "Open Sans", stack: "var(--font-opensans), Arial, Helvetica, sans-serif" },
+  { k: "raleway", n: "Raleway", stack: "var(--font-raleway), Arial, Helvetica, sans-serif" },
+  { k: "nunito", n: "Nunito", stack: "var(--font-nunito), Arial, Helvetica, sans-serif" },
+  { k: "worksans", n: "Work Sans", stack: "var(--font-worksans), Arial, Helvetica, sans-serif" },
+  { k: "dmsans", n: "DM Sans", stack: "var(--font-dmsans), Arial, Helvetica, sans-serif" },
+  { k: "quicksand", n: "Quicksand", stack: "var(--font-quicksand), Arial, Helvetica, sans-serif" },
+  { k: "josefin", n: "Josefin Sans", stack: "var(--font-josefin), Arial, Helvetica, sans-serif" },
+  { k: "oswald", n: "Oswald", stack: "var(--font-oswald), Arial, Helvetica, sans-serif" },
+  { k: "bebas", n: "Bebas Neue", stack: "var(--font-bebas), Impact, sans-serif" },
+  { k: "righteous", n: "Righteous", stack: "var(--font-righteous), Arial, sans-serif" },
   { k: "playfair", n: "Playfair Display", stack: "var(--font-playfair), Georgia, serif" },
   { k: "lora", n: "Lora", stack: "var(--font-lora), Georgia, serif" },
+  { k: "cormorant", n: "Cormorant Garamond", stack: "var(--font-cormorant), Georgia, serif" },
+  { k: "merriweather", n: "Merriweather", stack: "var(--font-merriweather), Georgia, serif" },
+  { k: "cinzel", n: "Cinzel", stack: "var(--font-cinzel), Georgia, serif" },
+  { k: "abril", n: "Abril Fatface", stack: "var(--font-abril), Georgia, serif" },
+  { k: "dancing", n: "Dancing Script", stack: "var(--font-dancing), cursive" },
+  { k: "pacifico", n: "Pacifico", stack: "var(--font-pacifico), cursive" },
+  { k: "greatvibes", n: "Great Vibes", stack: "var(--font-greatvibes), cursive" },
+  { k: "satisfy", n: "Satisfy", stack: "var(--font-satisfy), cursive" },
 ];
 
 export const fontStack = (k: FontKey): string =>
@@ -134,7 +155,6 @@ export const DEFAULTS: CatalogSettings = {
   instagram: "",
   stock_mode: "all",
   hero_title: "",
-  hero_subtitle: "",
   hero_description: "",
   hero_image: "",
   hero_button_text: "VER PRODUTOS",

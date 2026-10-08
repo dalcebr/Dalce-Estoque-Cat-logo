@@ -109,10 +109,16 @@ O Dalce Estoque atualmente nao possui testes automatizados. Este documento descr
 - [ ] Modo `hide`: produtos sem estoque nao aparecem
 - [ ] Modo `unavailable`: produtos sem estoque mostram "indisponivel"
 - [ ] Modo `all`: todos os produtos aparecem
-- [ ] Logo aparece corretamente
-- [ ] Links de redes sociais funcionam
-- [ ] Temas visuais aplicam corretamente (azul, noite, vibrante, floresta)
-- [ ] Google Analytics ID e validado (formato `G-XXXXXXXXXX`)
+- [ ] Nome, e-mail, numero e Instagram da loja aparecem no catalogo
+- [ ] Banner principal: imagem, titulo, descricao e botao
+- [ ] Botao do banner se ajusta ao texto (sem quebra de linha)
+- [ ] Beneficios aparecem em carrossel horizontal (deslizar)
+- [ ] Cores personalizadas aplicam em cada elemento
+- [ ] Fontes 1 e 2 aplicam nos blocos escolhidos
+- [ ] Modo escuro alterna e persiste
+- [ ] Carrinho persiste apos recarregar a pagina (localStorage)
+- [ ] Favoritos (estrelinha) persistem apos recarregar a pagina
+- [ ] Categorias aparecem e filtram os produtos
 - [ ] Desativar catalogo torna `/c/slug` inacessivel
 
 ### Checklist: Fiado

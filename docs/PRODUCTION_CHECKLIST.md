@@ -45,7 +45,7 @@ Itens a verificar antes de colocar o Dalce Estoque em producao.
 
 ### Obrigatorio
 
-- [ ] **Migrations na ordem correta**: schema.sql -> 003 -> 004 -> 005 -> 006 -> 007 -> 008
+- [ ] **Migrations na ordem correta**: schema.sql -> 003 -> 004 -> 005 -> 006 -> 007 -> 008 -> 009 -> 010 -> 011 -> 012 -> 013
 - [ ] **Indices criados**: Verificar que indices de performance existem:
   ```sql
   SELECT indexname FROM pg_indexes WHERE schemaname = 'public' ORDER BY indexname;
