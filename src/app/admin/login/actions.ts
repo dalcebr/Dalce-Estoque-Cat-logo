@@ -37,10 +37,12 @@ export async function adminSignIn(
   // Papel via função security definer (não depende de RLS).
   // Fallback: leitura direta de `profiles` caso a função ainda não exista.
   let role: string | null = null;
+  let rpcFailed = false;
   const { data: rpcRole, error: rpcError } = await supabase.rpc("current_role_name");
   if (!rpcError) {
     role = rpcRole;
   } else {
+    rpcFailed = true;
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -52,7 +54,17 @@ export async function adminSignIn(
   if (role !== "admin") {
     // Conta de loja não entra no painel: encerra a sessão criada agora.
     await supabase.auth.signOut();
-    return { error: "Esta conta não é de administrador." };
+    // Mensagem detalhada para facilitar o diagnóstico.
+    if (role === null) {
+      return {
+        error: rpcFailed
+          ? "Login ok, mas não foi possível ler seu papel (perfil ausente ou função current_role_name() não existe). Rode supabase/023_admin_role_helper.sql e supabase/021_promote_admin.sql."
+          : "Login ok, mas seu perfil não tem papel definido. Rode supabase/021_promote_admin.sql para promover esta conta a admin.",
+      };
+    }
+    return {
+      error: `Esta conta não é de administrador (papel atual: "${role}"). Rode supabase/021_promote_admin.sql para promovê-la a admin.`,
+    };
   }
 
   return { redirectTo: "/admin" };
