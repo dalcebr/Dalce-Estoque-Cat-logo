@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { Download, KeyRound, Lock, LockOpen, Trash2, User } from "lucide-react";
 import type { AdminStore } from "@/lib/admin";
-import { freezeStore, unfreezeStore, deleteStore, resetPassword, exportStoreJson } from "../../actions";
+import { freezeStore, unfreezeStore, deleteStore, resetPassword, exportStoreJson } from "../actions";
 
 const fmtDate = (iso: string | null) => {
   if (!iso) return "";

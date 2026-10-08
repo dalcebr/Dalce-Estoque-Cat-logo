@@ -1,6 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import SubmitButton from "@/components/SubmitButton";
-import { createAccess } from "../../actions";
+import { createAccess } from "../actions";
 
 export const dynamic = "force-dynamic";
 

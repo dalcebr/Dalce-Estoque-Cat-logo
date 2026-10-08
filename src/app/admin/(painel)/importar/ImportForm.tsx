@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { FileJson, Upload } from "lucide-react";
 import SubmitButton from "@/components/SubmitButton";
-import { importStoreJson } from "../../actions";
+import { importStoreJson } from "../actions";
 
 const field = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
 
