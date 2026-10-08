@@ -272,26 +272,6 @@ function CategoryCard({
   );
 }
 
-function CategoryChips({
-  categories, colors, bodyFont, active, onSelect,
-}: {
-  categories: Category[];
-  colors: CatalogColors;
-  bodyFont: string;
-  active?: string;
-  onSelect: (name?: string) => void;
-}) {
-  if (categories.length === 0) return null;
-  return (
-    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
-      <CategoryCard label="Todos" colors={colors} bodyFont={bodyFont} active={active === undefined} onClick={() => onSelect(undefined)} />
-      {categories.map((c) => (
-        <CategoryCard key={c.name} label={c.name} image={c.image} colors={colors} bodyFont={bodyFont} active={active === c.name} onClick={() => onSelect(c.name)} />
-      ))}
-    </div>
-  );
-}
-
 /* ═══ PRODUCTS LIST ═══ */
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "relevance", label: "Relevância" },
@@ -409,10 +389,6 @@ function ProductsListView({
             </div>
           )}
         </div>
-      </div>
-
-      <div style={{ margin: "0 -16px 20px" }}>
-        <CategoryChips categories={categories} colors={colors} bodyFont={bodyFont} active={cat} onSelect={setCat} />
       </div>
 
       {sorted.length === 0 ? (
