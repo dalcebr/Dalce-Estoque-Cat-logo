@@ -3,7 +3,7 @@ import { ShieldCheck, UserPlus } from "lucide-react";
 import { getAdminUserId, listAdmins } from "@/lib/admin";
 import { adminConfigured } from "@/lib/supabase/admin";
 import SubmitButton from "@/components/SubmitButton";
-import { createAdmin } from "../actions";
+import { createAdmin } from "../../actions";
 
 export const dynamic = "force-dynamic";
 

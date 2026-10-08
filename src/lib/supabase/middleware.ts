@@ -48,6 +48,7 @@ export async function updateSession(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isPublic = pathname.startsWith("/c/");
   const isLogin = pathname === "/login";
+  const isAdminLogin = pathname === "/admin/login";
   const isFrozenPage = pathname === "/congelado";
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
 
@@ -60,9 +61,13 @@ export async function updateSession(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isLogin)
+  // O painel tem login próprio: quem não está autenticado e tenta acessar
+  // /admin/* vai para /admin/login (e não para o login da loja).
+  if (!user && !isLogin && !isAdminLogin)
     return applySecurityHeaders(
-      NextResponse.redirect(new URL("/login", req.url)),
+      NextResponse.redirect(
+        new URL(isAdminArea ? "/admin/login" : "/login", req.url),
+      ),
     );
 
   // Descobre o papel do usuario (admin ou loja).
@@ -96,14 +101,30 @@ export async function updateSession(req: NextRequest) {
   }
 
   // O admin tem uma area separada: nunca entra no sistema de catalogo.
-  if (user && isAdmin && !isAdminArea) {
+  // Exceção: a própria tela de login do painel (para não criar loop).
+  if (user && isAdmin && !isAdminArea && !isLogin) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL("/admin", req.url)),
     );
   }
 
-  // Rotas do painel exigem admin.
-  if (user && isAdminArea && !isAdmin) {
+  // Rotas do painel exigem admin. A tela de login do painel é acessível
+  // apenas por quem NÃO está logado como admin (senão vai para o painel).
+  if (user && isAdminArea && !isAdmin && !isAdminLogin) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/", req.url)),
+    );
+  }
+
+  // Já logado como admin tentando abrir o login do painel: manda para o painel.
+  if (user && isAdmin && isAdminLogin) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/admin", req.url)),
+    );
+  }
+
+  // Já logado como loja tentando abrir o login do painel: manda para a loja.
+  if (user && !isAdmin && isAdminLogin) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL("/", req.url)),
     );

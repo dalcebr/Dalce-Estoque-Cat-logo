@@ -17,11 +17,16 @@ function getClientIp(req: NextRequest): string {
 }
 
 export function middleware(req: NextRequest) {
-  // Rate-limit login attempts.
-  // O POST em /login é a Server Action de autenticação: aplicamos apenas o
-  // rate-limit e deixamos a requisição seguir sem rodar a lógica de sessão
-  // (o usuário ainda não está autenticado neste ponto).
-  if (req.nextUrl.pathname === "/login" && req.method === "POST") {
+  const { pathname } = req.nextUrl;
+
+  // Rate-limit login attempts (loja e painel de administração).
+  // O POST é a Server Action de autenticação: aplicamos apenas o rate-limit e
+  // deixamos a requisição seguir sem rodar a lógica de sessão (o usuário ainda
+  // não está autenticado neste ponto).
+  const isLoginPost =
+    req.method === "POST" && (pathname === "/login" || pathname === "/admin/login");
+
+  if (isLoginPost) {
     const ip = getClientIp(req);
     const { success, remaining } = loginLimiter.check(ip);
 

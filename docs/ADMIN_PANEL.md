@@ -3,10 +3,18 @@
 O painel de administrador permite gerenciar os acessos (lojas) do sistema:
 criar, congelar, excluir e fazer backup/restauracao dos dados.
 
-Acesse em **`/admin`**. A area e **separada do sistema de catalogo**: ao fazer
-login com um usuario `role = 'admin'`, voce e redirecionado automaticamente
-para o painel e nao ve o menu da loja. Usuarios comuns que tentarem abrir
-`/admin` sao enviados de volta para o sistema (`/`).
+Acesse em **`/admin`**. A area e **totalmente separada do sistema de catalogo**,
+inclusive com **tela de login propria** em **`/admin/login`**:
+
+- Quem nao esta logado e tenta abrir qualquer rota `/admin/*` vai para
+  **`/admin/login`** (e nao para o login da loja).
+- O login do painel so aceita contas com `role = 'admin'`. Se a conta for de
+  loja, a sessao e encerrada e aparece a mensagem "Esta conta nao e de
+  administrador".
+- Ao entrar, o admin vai direto para `/admin` e **nunca ve o menu da loja**.
+- Usuarios comuns que tentarem abrir `/admin` sao enviados de volta para `/`.
+- O login da loja (`/login`) continua existindo para as lojas; se um admin
+  entrar por ele, e redirecionado para `/admin`.
 
 ## Pre-requisitos
 
@@ -49,11 +57,12 @@ update profiles
 
 ### Acesso separado
 
-- **Login de admin** → redireciona direto para `/admin`.
+- **Login do painel** em `/admin/login` → redireciona direto para `/admin`.
 - **Admin logado** tentando abrir qualquer rota do sistema → volta para `/admin`.
 - **Usuario comum** tentando abrir `/admin` → volta para `/`.
+- **Nao autenticado** tentando abrir `/admin/*` → vai para `/admin/login`.
 - O painel tem layout proprio (cabecalho com titulo e botao **Sair**), sem o
-  menu da loja.
+  menu da loja. A tela de login do painel tem layout proprio, sem esse cabecalho.
 
 ### Administradores
 
