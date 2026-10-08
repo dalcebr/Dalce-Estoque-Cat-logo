@@ -226,7 +226,52 @@ function ProductGrid({
   );
 }
 
-/* ═══ CATEGORY CHIPS ═══ */
+/* ═══ CATEGORY CARDS ═══ */
+function CategoryCard({
+  label, image, colors, bodyFont, active, onClick,
+}: {
+  label: string;
+  image?: string | null;
+  colors: CatalogColors;
+  bodyFont: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const [hover, setHover] = useState(false);
+  const bg = active ? colors.category_active_bg : hover ? colors.category_hover_bg : colors.category_bg;
+  const fg = active ? colors.category_active_text : hover ? colors.category_hover_text : colors.category_text;
+  const bd = active ? colors.category_active_border : hover ? colors.category_hover_border : colors.category_border;
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        flex: "0 0 auto", width: 140, scrollSnapAlign: "start", padding: 0, cursor: "pointer",
+        display: "flex", flexDirection: "column", overflow: "hidden",
+        borderRadius: 14, border: `1px solid ${bd}`, background: bg,
+        boxShadow: hover ? `0 6px 18px ${withAlpha(colors.card_shadow, 22)}` : `0 2px 8px ${withAlpha(colors.card_shadow, 10)}`,
+        transform: hover ? "translateY(-2px)" : "none", transition: "transform .15s, box-shadow .15s, background .15s, border-color .15s",
+      }}
+    >
+      <div style={{ width: "100%", height: 110, background: colors.placeholder_bg, overflow: "hidden" }}>
+        {image ? (
+          <img src={image} alt={label} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={colors.placeholder_icon} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+            </svg>
+          </div>
+        )}
+      </div>
+      <span style={{ fontFamily: bodyFont, fontSize: 13, fontWeight: 600, color: fg, padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%", boxSizing: "border-box" }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
 function CategoryChips({
   categories, colors, bodyFont, active, onSelect,
 }: {
@@ -237,29 +282,12 @@ function CategoryChips({
   onSelect: (name?: string) => void;
 }) {
   if (categories.length === 0) return null;
-  const chip = (label: string, value: string | undefined, image?: string | null) => {
-    const on = active === value;
-    return (
-      <button key={label} onClick={() => onSelect(value)}
-        style={{
-          flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 8,
-          padding: image ? "5px 16px 5px 5px" : "8px 16px", borderRadius: 40, cursor: "pointer",
-          border: `1px solid ${on ? colors.filter_active_border : colors.filter_border}`,
-          background: on ? colors.filter_active_bg : colors.filter_bg,
-          color: on ? colors.filter_active_text : colors.filter_text,
-          fontSize: 13, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap",
-        }}>
-        {image && (
-          <img src={image} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-        )}
-        {label}
-      </button>
-    );
-  };
   return (
-    <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
-      {chip("Todos", undefined)}
-      {categories.map((c) => chip(c.name, c.name, c.image))}
+    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+      <CategoryCard label="Todos" colors={colors} bodyFont={bodyFont} active={active === undefined} onClick={() => onSelect(undefined)} />
+      {categories.map((c) => (
+        <CategoryCard key={c.name} label={c.name} image={c.image} colors={colors} bodyFont={bodyFont} active={active === c.name} onClick={() => onSelect(c.name)} />
+      ))}
     </div>
   );
 }
@@ -773,15 +801,10 @@ export default function CatalogApp({
             {categories.length > 0 && (
               <section style={{ marginTop: 28 }}>
                 <h2 style={{ fontFamily: headingFont, fontSize: 22, fontWeight: 700, color: C.category_title, margin: "0 16px 14px" }}>Categorias</h2>
-                <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollbarWidth: "none" }}>
+                <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                   {categories.map((c) => (
-                    <button key={c.name} onClick={() => setView({ type: "products", category: c.name })}
-                      style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 8, padding: c.image ? "5px 18px 5px 5px" : "10px 18px", borderRadius: 40, cursor: "pointer", border: `1px solid ${C.category_border}`, background: C.category_bg, color: C.category_text, fontSize: 14, fontWeight: 600, fontFamily: bodyFont, whiteSpace: "nowrap" }}>
-                      {c.image && (
-                        <img src={c.image} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-                      )}
-                      {c.name}
-                    </button>
+                    <CategoryCard key={c.name} label={c.name} image={c.image} colors={C} bodyFont={bodyFont} active={false}
+                      onClick={() => setView({ type: "products", category: c.name })} />
                   ))}
                 </div>
               </section>
