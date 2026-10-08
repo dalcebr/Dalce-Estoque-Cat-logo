@@ -6,7 +6,7 @@
 
 create or replace function public_catalog(p_slug text)
 returns jsonb
-language sql
+language sql 
 stable
 security definer
 set search_path = public
