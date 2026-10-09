@@ -23,6 +23,15 @@ export type CatalogColors = {
   text_tertiary: string;
   text_muted: string;
 
+  // Títulos das seções (Categorias, Todos os produtos, Favoritos, Carrinho…)
+  section_title: string;
+
+  // Avisos (pop-up de produto adicionado ao carrinho / favoritos)
+  toast_bg: string;
+  toast_text: string;
+  toast_button_bg: string;
+  toast_button_text: string;
+
   // Cabeçalho
   header_bg: string;
   header_text: string;
@@ -85,21 +94,49 @@ export type CatalogColors = {
   filter_bg: string;
   filter_text: string;
   filter_border: string;
+  filter_icon: string;
   filter_active_bg: string;
   filter_active_text: string;
   filter_active_border: string;
   filter_hover_bg: string;
   filter_hover_text: string;
   filter_hover_border: string;
+  filter_list_bg: string;
+  filter_list_text: string;
+  filter_list_check: string;
+  filter_list_selected_bg: string;
 
   // Cards de produtos
   card_bg: string;
   card_border: string;
   card_shadow: string;
   card_name: string;
+  card_subtitle: string;
   card_price: string;
   card_cart_icon: string;
   card_cart_icon_hover: string;
+  card_button_bg: string;
+  card_button_text: string;
+  card_button_border: string;
+  card_gradient: string;
+  card_gradient_opacity: string;
+  card_gradient_fill: string;
+
+  // Página de produto
+  product_title: string;
+  product_price: string;
+  product_description: string;
+  product_info_bg: string;
+  product_info_text: string;
+  product_cart_btn_bg: string;
+  product_cart_btn_text: string;
+  product_whats_btn_bg: string;
+  product_whats_btn_text: string;
+
+  // Seção carrinho
+  cart_card_bg: string;
+  cart_card_border: string;
+  cart_title: string;
 
   // Favorito do produto
   fav_bg: string;
@@ -237,23 +274,164 @@ export type ColorGroup = { id: string; n: string; icon: string; step: number; fi
 
 export const COLOR_GROUPS: ColorGroup[] = [
   {
-    id: "header", n: "Cabeçalho", icon: "🔝", step: 1, fields: [
-      { k: "header_bg", n: "Fundo do cabeçalho" },
-      { k: "header_text", n: "Texto do cabeçalho" },
-      { k: "header_search_icon", n: "Ícone de busca" },
-      { k: "header_wish_icon", n: "Ícone de favoritos" },
-      { k: "header_cart_icon", n: "Ícone de carrinho" },
-      { k: "header_wish_badge_bg", n: "Fundo do badge de favoritos" },
-      { k: "header_wish_badge_text", n: "Texto do badge de favoritos" },
-      { k: "header_cart_badge_bg", n: "Fundo do badge de carrinho" },
-      { k: "header_cart_badge_text", n: "Texto do badge de carrinho" },
-      { k: "header_icon_hover", n: "Ícone do cabeçalho (hover)" },
-      { k: "header_wish_active", n: "Favorito ativo" },
-      { k: "header_wish_inactive", n: "Favorito inativo" },
+    id: "general", n: "Cores gerais", icon: "🎨", step: 1, fields: [
+      { k: "section_title", n: "Títulos das seções (Categorias, Todos os produtos, Favoritos, Carrinho…)" },
+      { k: "page_bg", n: "Fundo do catálogo" },
+      { k: "section_bg", n: "Fundo das seções" },
+      { k: "divider", n: "Divisor / separador" },
     ],
   },
   {
-    id: "hero", n: "Banner / Hero", icon: "🖼️", step: 2, fields: [
+    id: "toast", n: "Avisos (pop-up)", icon: "🔔", step: 2, fields: [
+      { k: "toast_bg", n: "Fundo do pop-up de aviso" },
+      { k: "toast_text", n: "Texto do pop-up de aviso" },
+      { k: "toast_button_bg", n: "Fundo do botão do aviso" },
+      { k: "toast_button_text", n: "Texto do botão do aviso" },
+    ],
+  },
+  {
+    id: "product_page", n: "Página de produto", icon: "📄", step: 3, fields: [
+      { k: "product_title", n: "Título da página de produto" },
+      { k: "product_price", n: "Valor da página de produto" },
+      { k: "product_description", n: "Descrição da página de produto" },
+      { k: "product_info_bg", n: "Fundo da informação de categoria" },
+      { k: "product_info_text", n: "Texto da informação de categoria" },
+      { k: "product_cart_btn_bg", n: "Fundo do botão Adicionar ao carrinho" },
+      { k: "product_cart_btn_text", n: "Texto do botão Adicionar ao carrinho" },
+      { k: "product_whats_btn_bg", n: "Fundo do botão de WhatsApp" },
+      { k: "product_whats_btn_text", n: "Texto do botão de WhatsApp" },
+    ],
+  },
+  {
+    id: "header", n: "Cabeçalho", icon: "🔝", step: 4, fields: [
+      { k: "header_bg", n: "Fundo do cabeçalho" },
+      { k: "header_text", n: "Nome da loja" },
+      { k: "header_search_icon", n: "Ícone de lupa" },
+      { k: "header_wish_icon", n: "Ícone de coração" },
+      { k: "header_wish_badge_text", n: "Texto de quantidade (coração)" },
+      { k: "header_wish_badge_bg", n: "Círculo de quantidade (coração)" },
+      { k: "header_cart_icon", n: "Ícone de carrinho" },
+      { k: "header_cart_badge_text", n: "Texto de quantidade (carrinho)" },
+      { k: "header_cart_badge_bg", n: "Círculo de quantidade (carrinho)" },
+      { k: "header_icon_hover", n: "Ícone do cabeçalho (hover)" },
+      { k: "header_wish_active", n: "Coração ativo" },
+      { k: "header_wish_inactive", n: "Coração inativo" },
+    ],
+  },
+  {
+    id: "card", n: "Cards de produtos", icon: "🃏", step: 5, fields: [
+      { k: "card_gradient", n: "Cor do gradiente do card" },
+      { k: "card_gradient_opacity", n: "Transparência do gradiente (0–100)", opacity: true },
+      { k: "card_gradient_fill", n: "Preenchimento do gradiente (0–100)", opacity: true },
+      { k: "card_bg", n: "Fundo do card" },
+      { k: "card_border", n: "Borda do card" },
+      { k: "card_shadow", n: "Sombra do card" },
+      { k: "card_name", n: "Título do card" },
+      { k: "card_subtitle", n: "Subtítulo do card" },
+      { k: "card_price", n: "Valor do card" },
+      { k: "card_cart_icon", n: "Ícone de carrinho do card" },
+      { k: "card_cart_icon_hover", n: "Ícone de carrinho do card (hover)" },
+      { k: "card_button_bg", n: "Fundo do botão do card" },
+      { k: "card_button_text", n: "Texto do botão do card" },
+      { k: "card_button_border", n: "Borda do botão do card" },
+    ],
+  },
+  {
+    id: "benefit", n: "Benefícios", icon: "⭐", step: 6, fields: [
+      { k: "benefit_icon", n: "Ícones dos benefícios" },
+      { k: "benefit_title", n: "Títulos dos benefícios" },
+      { k: "benefit_description", n: "Subtítulos dos benefícios" },
+      { k: "benefit_bg", n: "Fundo do benefício" },
+      { k: "benefit_border", n: "Borda do benefício" },
+      { k: "benefit_hover_bg", n: "Fundo (hover)" },
+      { k: "benefit_hover_icon", n: "Ícone (hover)" },
+    ],
+  },
+  {
+    id: "category", n: "Categorias", icon: "🏷️", step: 7, fields: [
+      { k: "category_title", n: "Título da seção de categorias" },
+      { k: "category_text", n: "Título do card das categorias" },
+      { k: "category_bg", n: "Fundo do card das categorias" },
+      { k: "category_border", n: "Borda do card das categorias" },
+      { k: "category_active_bg", n: "Fundo ativo" },
+      { k: "category_active_text", n: "Texto ativo" },
+      { k: "category_active_border", n: "Borda ativa" },
+      { k: "category_hover_bg", n: "Fundo (hover)" },
+      { k: "category_hover_text", n: "Texto (hover)" },
+      { k: "category_hover_border", n: "Borda (hover)" },
+    ],
+  },
+  {
+    id: "search", n: "Todos os produtos · Barra de pesquisa", icon: "🔍", step: 8, fields: [
+      { k: "search_bg", n: "Fundo da barra de pesquisa" },
+      { k: "search_border", n: "Borda da barra de pesquisa" },
+      { k: "search_text", n: "Texto da barra de pesquisa" },
+      { k: "search_placeholder", n: "Placeholder da barra de pesquisa" },
+      { k: "search_icon", n: "Ícone da barra de pesquisa" },
+      { k: "search_border_focus", n: "Borda da barra de pesquisa (foco)" },
+    ],
+  },
+  {
+    id: "filter", n: "Todos os produtos · Filtro", icon: "🎚️", step: 9, fields: [
+      { k: "filter_icon", n: "Ícone do filtro" },
+      { k: "filter_text", n: "Texto do filtro" },
+      { k: "filter_bg", n: "Fundo do filtro" },
+      { k: "filter_border", n: "Borda do filtro" },
+      { k: "filter_active_bg", n: "Fundo ativo" },
+      { k: "filter_active_text", n: "Texto ativo" },
+      { k: "filter_active_border", n: "Borda ativa" },
+      { k: "filter_hover_bg", n: "Fundo (hover)" },
+      { k: "filter_hover_text", n: "Texto (hover)" },
+      { k: "filter_hover_border", n: "Borda (hover)" },
+      { k: "filter_list_bg", n: "Fundo da lista de opções" },
+      { k: "filter_list_text", n: "Texto da lista de opções" },
+      { k: "filter_list_check", n: "Check da lista de opções" },
+      { k: "filter_list_selected_bg", n: "Fundo do item selecionado" },
+    ],
+  },
+  {
+    id: "products", n: "Todos os produtos · Seção", icon: "📦", step: 10, fields: [
+      { k: "products_section_bg", n: "Fundo da seção de produtos" },
+      { k: "products_title", n: "Título da seção de produtos" },
+    ],
+  },
+  {
+    id: "fav", n: "Favorito do produto", icon: "❤️", step: 11, fields: [
+      { k: "fav_bg", n: "Fundo do ícone de coração" },
+      { k: "fav_icon", n: "Ícone de coração" },
+      { k: "fav_active_bg", n: "Fundo ativo" },
+      { k: "fav_active_icon", n: "Ícone ativo" },
+      { k: "fav_hover_bg", n: "Fundo (hover)" },
+      { k: "fav_hover_icon", n: "Ícone (hover)" },
+    ],
+  },
+  {
+    id: "cart", n: "Seção carrinho", icon: "🛒", step: 12, fields: [
+      { k: "cart_card_bg", n: "Fundo do card do carrinho" },
+      { k: "cart_card_border", n: "Borda do card do carrinho" },
+      { k: "cart_title", n: "Título da seção carrinho" },
+    ],
+  },
+  {
+    id: "footer", n: "Rodapé", icon: "🔻", step: 13, fields: [
+      { k: "footer_bg", n: "Fundo da seção rodapé" },
+      { k: "footer_title", n: "Título do rodapé" },
+      { k: "footer_text", n: "Textos normais do rodapé" },
+      { k: "footer_link", n: "Links do rodapé" },
+      { k: "footer_link_hover", n: "Links do rodapé (hover)" },
+      { k: "footer_copyright", n: "Copyright" },
+    ],
+  },
+  {
+    id: "theme", n: "Botão Modo Escuro / Claro", icon: "🌗", step: 14, fields: [
+      { k: "theme_btn_bg", n: "Fundo do botão" },
+      { k: "theme_btn_text", n: "Texto do botão" },
+      { k: "theme_btn_icon", n: "Ícone do botão" },
+      { k: "theme_btn_border", n: "Borda do botão" },
+    ],
+  },
+  {
+    id: "hero", n: "Banner / Hero", icon: "🖼️", step: 15, fields: [
       { k: "hero_overlay", n: "Cor do overlay" },
       { k: "hero_overlay_opacity", n: "Opacidade do overlay", opacity: true },
       { k: "hero_title", n: "Título do banner" },
@@ -266,114 +444,14 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "benefit", n: "Benefícios", icon: "⭐", step: 3, fields: [
-      { k: "benefit_bg", n: "Fundo do benefício" },
-      { k: "benefit_icon", n: "Ícone do benefício" },
-      { k: "benefit_title", n: "Título do benefício" },
-      { k: "benefit_description", n: "Descrição do benefício" },
-      { k: "benefit_border", n: "Borda do benefício" },
-      { k: "benefit_hover_bg", n: "Fundo (hover)" },
-      { k: "benefit_hover_icon", n: "Ícone (hover)" },
-    ],
-  },
-  {
-    id: "category", n: "Categorias", icon: "🏷️", step: 4, fields: [
-      { k: "category_title", n: "Título das categorias" },
-      { k: "category_bg", n: "Fundo da categoria" },
-      { k: "category_text", n: "Texto da categoria" },
-      { k: "category_border", n: "Borda da categoria" },
-      { k: "category_active_bg", n: "Fundo ativo" },
-      { k: "category_active_text", n: "Texto ativo" },
-      { k: "category_active_border", n: "Borda ativa" },
-      { k: "category_hover_bg", n: "Fundo (hover)" },
-      { k: "category_hover_text", n: "Texto (hover)" },
-      { k: "category_hover_border", n: "Borda (hover)" },
-    ],
-  },
-  {
-    id: "search", n: "Pesquisa", icon: "🔍", step: 5, fields: [
-      { k: "search_bg", n: "Fundo da busca" },
-      { k: "search_text", n: "Texto da busca" },
-      { k: "search_placeholder", n: "Placeholder da busca" },
-      { k: "search_icon", n: "Ícone da busca" },
-      { k: "search_border", n: "Borda da busca" },
-      { k: "search_border_focus", n: "Borda da busca (foco)" },
-    ],
-  },
-  {
-    id: "filter", n: "Filtros de produtos", icon: "🎚️", step: 6, fields: [
-      { k: "filter_bg", n: "Fundo do filtro" },
-      { k: "filter_text", n: "Texto do filtro" },
-      { k: "filter_border", n: "Borda do filtro" },
-      { k: "filter_active_bg", n: "Fundo ativo" },
-      { k: "filter_active_text", n: "Texto ativo" },
-      { k: "filter_active_border", n: "Borda ativa" },
-      { k: "filter_hover_bg", n: "Fundo (hover)" },
-      { k: "filter_hover_text", n: "Texto (hover)" },
-      { k: "filter_hover_border", n: "Borda (hover)" },
-    ],
-  },
-  {
-    id: "products", n: "Seção de produtos", icon: "📦", step: 7, fields: [
-      { k: "products_section_bg", n: "Fundo da seção de produtos" },
-      { k: "products_title", n: "Título dos produtos" },
-    ],
-  },
-  {
-    id: "card", n: "Cards de produtos", icon: "🃏", step: 8, fields: [
-      { k: "card_bg", n: "Fundo do card" },
-      { k: "card_border", n: "Borda do card" },
-      { k: "card_shadow", n: "Sombra do card" },
-      { k: "card_name", n: "Nome do produto" },
-      { k: "card_price", n: "Preço do produto" },
-      { k: "card_cart_icon", n: "Ícone do carrinho" },
-      { k: "card_cart_icon_hover", n: "Ícone do carrinho (hover)" },
-    ],
-  },
-  {
-    id: "fav", n: "Favorito do produto", icon: "❤️", step: 9, fields: [
-      { k: "fav_bg", n: "Fundo do favorito" },
-      { k: "fav_icon", n: "Ícone do favorito" },
-      { k: "fav_active_bg", n: "Fundo ativo" },
-      { k: "fav_active_icon", n: "Ícone ativo" },
-      { k: "fav_hover_bg", n: "Fundo (hover)" },
-      { k: "fav_hover_icon", n: "Ícone (hover)" },
-    ],
-  },
-  {
-    id: "placeholder", n: "Produto sem imagem", icon: "🚫", step: 10, fields: [
+    id: "placeholder", n: "Produto sem imagem", icon: "🚫", step: 16, fields: [
       { k: "placeholder_bg", n: "Fundo do placeholder" },
       { k: "placeholder_icon", n: "Ícone do placeholder" },
       { k: "placeholder_text", n: "Texto do placeholder" },
     ],
   },
   {
-    id: "footer", n: "Rodapé", icon: "🔻", step: 11, fields: [
-      { k: "footer_bg", n: "Fundo do rodapé" },
-      { k: "footer_title", n: "Título do rodapé" },
-      { k: "footer_text", n: "Texto do rodapé" },
-      { k: "footer_link", n: "Link do rodapé" },
-      { k: "footer_link_hover", n: "Link do rodapé (hover)" },
-      { k: "footer_copyright", n: "Copyright" },
-    ],
-  },
-  {
-    id: "theme", n: "Botão Modo Claro / Escuro", icon: "🌗", step: 12, fields: [
-      { k: "theme_btn_bg", n: "Fundo do botão" },
-      { k: "theme_btn_text", n: "Texto do botão" },
-      { k: "theme_btn_icon", n: "Ícone do botão" },
-      { k: "theme_btn_border", n: "Borda do botão" },
-    ],
-  },
-  {
-    id: "bg", n: "Fundo geral", icon: "🎨", step: 13, fields: [
-      { k: "page_bg", n: "Fundo do catálogo" },
-      { k: "section_bg", n: "Fundo da seção" },
-      { k: "divider", n: "Divisor" },
-    ],
-  },
-  {
-    id: "text", n: "Textos gerais", icon: "✍️", step: 14, fields: [
+    id: "text", n: "Textos gerais", icon: "✍️", step: 17, fields: [
       { k: "text_primary", n: "Texto principal" },
       { k: "text_secondary", n: "Texto secundário" },
       { k: "text_tertiary", n: "Texto terciário" },
@@ -381,7 +459,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     ],
   },
   {
-    id: "state", n: "Estados de interação", icon: "⚡", step: 15, fields: [
+    id: "state", n: "Estados de interação", icon: "⚡", step: 18, fields: [
       { k: "state_hover", n: "Hover" },
       { k: "state_focus", n: "Foco" },
       { k: "state_selection", n: "Seleção" },
@@ -405,6 +483,13 @@ export const DEFAULT_COLORS: CatalogColors = {
   text_secondary: "#444444",
   text_tertiary: "#666666",
   text_muted: "#999999",
+
+  section_title: "#111111",
+
+  toast_bg: "#111111",
+  toast_text: "#FFFFFF",
+  toast_button_bg: "#C9852B",
+  toast_button_text: "#FFFFFF",
 
   header_bg: "#FFFFFF",
   header_text: "#111111",
@@ -461,20 +546,46 @@ export const DEFAULT_COLORS: CatalogColors = {
   filter_bg: "#F7F7F7",
   filter_text: "#444444",
   filter_border: "#E5E5E5",
+  filter_icon: "#444444",
   filter_active_bg: "#C9852B",
   filter_active_text: "#FFFFFF",
   filter_active_border: "#C9852B",
   filter_hover_bg: "#F0F0F0",
   filter_hover_text: "#111111",
   filter_hover_border: "#C9852B",
+  filter_list_bg: "#FFFFFF",
+  filter_list_text: "#444444",
+  filter_list_check: "#C9852B",
+  filter_list_selected_bg: "#C9852B",
 
   card_bg: "#F7F7F7",
   card_border: "#EEEEEE",
   card_shadow: "#000000",
   card_name: "#111111",
+  card_subtitle: "#666666",
   card_price: "#111111",
   card_cart_icon: "#111111",
   card_cart_icon_hover: "#C9852B",
+  card_button_bg: "#C9852B",
+  card_button_text: "#FFFFFF",
+  card_button_border: "#C9852B",
+  card_gradient: "#000000",
+  card_gradient_opacity: "0",
+  card_gradient_fill: "0",
+
+  product_title: "#111111",
+  product_price: "#111111",
+  product_description: "#444444",
+  product_info_bg: "#F7F7F7",
+  product_info_text: "#444444",
+  product_cart_btn_bg: "#C9852B",
+  product_cart_btn_text: "#FFFFFF",
+  product_whats_btn_bg: "#25D366",
+  product_whats_btn_text: "#FFFFFF",
+
+  cart_card_bg: "#F7F7F7",
+  cart_card_border: "#EEEEEE",
+  cart_title: "#111111",
 
   fav_bg: "#FFFFFF",
   fav_icon: "#111111",
@@ -517,6 +628,13 @@ export const DEFAULT_COLORS_DARK: CatalogColors = {
   text_secondary: "#B8B0A8",
   text_tertiary: "#8A8A8A",
   text_muted: "#6B6B6B",
+
+  section_title: "#F5F0EB",
+
+  toast_bg: "#F5F0EB",
+  toast_text: "#0A0A0A",
+  toast_button_bg: "#C9852B",
+  toast_button_text: "#FFFFFF",
 
   header_bg: "#0A0A0A",
   header_text: "#F5F0EB",
@@ -573,20 +691,46 @@ export const DEFAULT_COLORS_DARK: CatalogColors = {
   filter_bg: "#1A1A1A",
   filter_text: "#B8B0A8",
   filter_border: "#2A2A2A",
+  filter_icon: "#B8B0A8",
   filter_active_bg: "#C9852B",
   filter_active_text: "#FFFFFF",
   filter_active_border: "#C9852B",
   filter_hover_bg: "#222222",
   filter_hover_text: "#F5F0EB",
   filter_hover_border: "#C9852B",
+  filter_list_bg: "#1A1A1A",
+  filter_list_text: "#B8B0A8",
+  filter_list_check: "#C9852B",
+  filter_list_selected_bg: "#C9852B",
 
   card_bg: "#1A1A1A",
   card_border: "#2A2A2A",
   card_shadow: "#000000",
   card_name: "#F5F0EB",
+  card_subtitle: "#B8B0A8",
   card_price: "#F5F0EB",
   card_cart_icon: "#F5F0EB",
   card_cart_icon_hover: "#C9852B",
+  card_button_bg: "#C9852B",
+  card_button_text: "#FFFFFF",
+  card_button_border: "#C9852B",
+  card_gradient: "#000000",
+  card_gradient_opacity: "0",
+  card_gradient_fill: "0",
+
+  product_title: "#F5F0EB",
+  product_price: "#F5F0EB",
+  product_description: "#B8B0A8",
+  product_info_bg: "#1A1A1A",
+  product_info_text: "#B8B0A8",
+  product_cart_btn_bg: "#C9852B",
+  product_cart_btn_text: "#FFFFFF",
+  product_whats_btn_bg: "#25D366",
+  product_whats_btn_text: "#FFFFFF",
+
+  cart_card_bg: "#1A1A1A",
+  cart_card_border: "#2A2A2A",
+  cart_title: "#F5F0EB",
 
   fav_bg: "#1A1A1A",
   fav_icon: "#F5F0EB",

@@ -216,8 +216,14 @@ function ProductCard({
   const favBg = wishlisted ? colors.fav_active_bg : favHover ? colors.fav_hover_bg : colors.fav_bg;
   const favFg = wishlisted ? colors.fav_active_icon : favHover ? colors.fav_hover_icon : colors.fav_icon;
   const hasVariations = (product.variations?.length ?? 0) > 0;
+  const gradOpacity = Math.min(100, Math.max(0, Number(colors.card_gradient_opacity) || 0)) / 100;
+  const gradFill = Math.min(100, Math.max(0, Number(colors.card_gradient_fill) || 0));
+  const hasGradient = gradOpacity > 0 && gradFill > 0;
   return (
-    <div style={{ background: colors.card_bg, border: `1px solid ${colors.card_border}`, boxShadow: `0 2px 10px ${withAlpha(colors.card_shadow, 12)}`, borderRadius: 16, padding: 10, position: "relative" }}>
+    <div style={{ background: colors.card_bg, border: `1px solid ${colors.card_border}`, boxShadow: `0 2px 10px ${withAlpha(colors.card_shadow, 12)}`, borderRadius: 16, padding: 10, position: "relative", overflow: "hidden" }}>
+      {hasGradient && (
+        <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", background: `linear-gradient(to top, ${withAlpha(colors.card_gradient, gradFill)} 0%, ${withAlpha(colors.card_gradient, 0)} ${gradFill}%)`, opacity: gradOpacity }} />
+      )}
       <button
         onClick={onToggleWish}
         onMouseEnter={() => setFavHover(true)}
@@ -231,27 +237,37 @@ function ProductCard({
       >
         <HeartIcon size={18} filled={wishlisted} />
       </button>
-      <button onClick={onView} style={{ display: "block", width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+      <button onClick={onView} style={{ display: "block", width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", position: "relative", zIndex: 1 }}>
         {product.image ? (
           <img src={product.image} alt={product.name} loading="lazy" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12, display: "block", background: colors.card_bg }} />
         ) : (
           <ImgPlaceholder bg={colors.placeholder_bg} fg={colors.placeholder_icon} />
         )}
       </button>
-      <p style={{ fontFamily: cardFont, fontSize: 16, fontWeight: 500, color: colors.card_name, marginTop: 8, lineHeight: 1.2 }}>{product.name}</p>
+      <p style={{ fontFamily: cardFont, fontSize: 16, fontWeight: 500, color: colors.card_name, marginTop: 8, lineHeight: 1.2, position: "relative", zIndex: 1 }}>{product.name}</p>
       {product.description && (
-        <p style={{ fontFamily: cardFont, fontSize: 12, color: colors.text_secondary, marginTop: 3, lineHeight: 1.35, whiteSpace: "pre-line", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{product.description}</p>
+        <p style={{ fontFamily: cardFont, fontSize: 12, color: colors.card_subtitle, marginTop: 3, lineHeight: 1.35, whiteSpace: "pre-line", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", position: "relative", zIndex: 1 }}>{product.description}</p>
       )}
       {hasVariations && (
-        <p style={{ fontFamily: cardFont, fontSize: 11, color: colors.text_muted, marginTop: 2 }}>Escolha as opções</p>
+        <p style={{ fontFamily: cardFont, fontSize: 11, color: colors.text_muted, marginTop: 2, position: "relative", zIndex: 1 }}>Escolha as opções</p>
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, position: "relative", zIndex: 1 }}>
         <p style={{ fontFamily: cardFont, fontSize: 15, fontWeight: 700, color: colors.card_price }}>{brl(product.price)}</p>
         <button onClick={onAddCart} onMouseEnter={() => setCartHover(true)} onMouseLeave={() => setCartHover(false)}
           aria-label={hasVariations ? "Escolher opções" : "Adicionar ao carrinho"} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: cartHover ? colors.card_cart_icon_hover : colors.card_cart_icon, transition: "color .15s" }}>
           <AddCartIcon size={22} />
         </button>
       </div>
+      <button
+        onClick={onAddCart}
+        style={{
+          width: "100%", marginTop: 8, padding: "9px 12px", borderRadius: 10, cursor: "pointer",
+          border: `1px solid ${colors.card_button_border}`, background: colors.card_button_bg, color: colors.card_button_text,
+          fontFamily: cardFont, fontSize: 13, fontWeight: 700, position: "relative", zIndex: 1,
+        }}
+      >
+        {hasVariations ? "Escolher opções" : "Adicionar"}
+      </button>
     </div>
   );
 }
@@ -388,23 +404,28 @@ function ProductsListView({
   return (
     <section style={{ padding: "0 16px", background: colors.products_section_bg }}>
       {onBack && <BackButton onClick={onBack} colors={colors} font={bodyFont} />}
-      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>
+      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.section_title, marginBottom: 16 }}>
         {cat || "Todos os produtos"}
       </h2>
 
       {/* busca + filtro */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <input
-          type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="O que você procura ?" aria-label="Pesquisar produtos"
-          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
-          style={{
-            flex: 1, minWidth: 0, height: 42, borderRadius: 40,
-            border: `1px solid ${focus ? colors.search_border_focus : colors.search_border}`,
-            background: colors.search_bg,
-            padding: "0 18px", fontSize: 15, color: colors.search_text, outline: "none", boxSizing: "border-box",
-            fontFamily: bodyFont,
-          }}
-        />
+        <div style={{ position: "relative", flex: 1, minWidth: 0, display: "flex", alignItems: "center" }}>
+          <span style={{ position: "absolute", left: 14, display: "flex", color: colors.search_icon, pointerEvents: "none" }}>
+            <SearchIcon size={18} />
+          </span>
+          <input
+            type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="O que você procura ?" aria-label="Pesquisar produtos"
+            onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+            style={{
+              width: "100%", height: 42, borderRadius: 40,
+              border: `1px solid ${focus ? colors.search_border_focus : colors.search_border}`,
+              background: colors.search_bg,
+              padding: "0 18px 0 40px", fontSize: 15, color: colors.search_text, outline: "none", boxSizing: "border-box",
+              fontFamily: bodyFont,
+            }}
+          />
+        </div>
         <div ref={filterRef} style={{ position: "relative", flexShrink: 0 }}>
           <button
             onClick={() => setFilterOpen((v) => !v)}
@@ -414,7 +435,7 @@ function ProductsListView({
               display: "flex", alignItems: "center", justifyContent: "center",
               border: `1px solid ${sort !== "relevance" ? colors.filter_active_border : colors.filter_border}`,
               background: sort !== "relevance" ? colors.filter_active_bg : colors.filter_bg,
-              color: sort !== "relevance" ? colors.filter_active_text : colors.filter_text,
+              color: sort !== "relevance" ? colors.filter_active_text : colors.filter_icon,
             }}
           >
             <FilterIcon size={20} />
@@ -422,7 +443,7 @@ function ProductsListView({
           {filterOpen && (
             <div style={{
               position: "absolute", top: 50, right: 0, zIndex: 50, minWidth: 190,
-              background: colors.card_bg, border: `1px solid ${colors.card_border}`,
+              background: colors.filter_list_bg, border: `1px solid ${colors.filter_border}`,
               borderRadius: 14, padding: 6, boxShadow: `0 8px 24px ${withAlpha(colors.card_shadow, 25)}`,
             }}>
               {SORT_OPTIONS.map((o) => (
@@ -432,13 +453,13 @@ function ProductsListView({
                   style={{
                     width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                     gap: 10, padding: "10px 12px", borderRadius: 10, border: "none", cursor: "pointer",
-                    background: sort === o.key ? colors.filter_active_bg : "transparent",
-                    color: sort === o.key ? colors.filter_active_text : colors.filter_text,
+                    background: sort === o.key ? colors.filter_list_selected_bg : "transparent",
+                    color: sort === o.key ? colors.filter_active_text : colors.filter_list_text,
                     fontSize: 13, fontWeight: 600, fontFamily: bodyFont, textAlign: "left",
                   }}
                 >
                   {o.label}
-                  {sort === o.key && <CheckIcon size={15} />}
+                  {sort === o.key && <span style={{ display: "flex", color: colors.filter_list_check }}><CheckIcon size={15} /></span>}
                 </button>
               ))}
             </div>
@@ -481,7 +502,7 @@ function WishlistView({
   return (
     <section style={{ padding: "0 16px" }}>
       <BackButton onClick={onBack} colors={colors} font={bodyFont} />
-      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>Favoritos</h2>
+      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.section_title, marginBottom: 16 }}>Favoritos</h2>
       {items.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.text_secondary, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>
           Você ainda não favoritou nenhum produto. Toque na estrelinha dos produtos que mais gostou.
@@ -525,14 +546,14 @@ function CartView({
   return (
     <section style={{ padding: "0 16px" }}>
       <BackButton onClick={onBack} colors={colors} font={bodyFont} />
-      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.products_title, marginBottom: 16 }}>Carrinho</h2>
+      <h2 style={{ fontFamily: headingFont, fontSize: 26, fontWeight: 700, color: colors.cart_title, marginBottom: 16 }}>Carrinho</h2>
       {cart.length === 0 ? (
         <p style={{ textAlign: "center", color: colors.text_secondary, padding: "40px 0", fontSize: 15, fontFamily: bodyFont }}>Seu carrinho está vazio.</p>
       ) : (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {cart.map((item) => (
-              <div key={item.key} style={{ display: "flex", gap: 12, padding: 12, borderRadius: 14, background: colors.card_bg, border: `1px solid ${colors.card_border}` }}>
+              <div key={item.key} style={{ display: "flex", gap: 12, padding: 12, borderRadius: 14, background: colors.cart_card_bg, border: `1px solid ${colors.cart_card_border}` }}>
                 {item.product.image ? (
                   <img src={item.product.image} alt={item.product.name} style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover" }} />
                 ) : (
@@ -650,10 +671,10 @@ function ProductDetailView({
           ))}
         </div>
       )}
-      <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.products_title, marginTop: 16 }}>{product.name}</h1>
-      <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(price)}</p>
+      <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.product_title, marginTop: 16 }}>{product.name}</h1>
+      <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.product_price, marginTop: 8 }}>{brl(price)}</p>
       {product.description && (
-        <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.text_secondary, lineHeight: 1.6, marginTop: 12, whiteSpace: "pre-line" }}>{product.description}</p>
+        <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.product_description, lineHeight: 1.6, marginTop: 12, whiteSpace: "pre-line" }}>{product.description}</p>
       )}
       {variationGroups.length > 0 && (
         <div style={{ marginTop: 18 }}>
@@ -704,9 +725,9 @@ function ProductDetailView({
             product.material && ["Material", product.material],
             product.collection && ["Coleção", product.collection],
           ].filter(Boolean).map((row, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${colors.divider}`, background: i % 2 === 0 ? colors.card_bg : "transparent" }}>
-              <span style={{ fontFamily: bodyFont, fontSize: 13, color: colors.text_secondary }}>{(row as string[])[0]}</span>
-              <span style={{ fontFamily: bodyFont, fontSize: 13, fontWeight: 500, color: colors.card_name }}>{(row as string[])[1]}</span>
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${colors.divider}`, background: i % 2 === 0 ? colors.product_info_bg : "transparent" }}>
+              <span style={{ fontFamily: bodyFont, fontSize: 13, color: colors.product_info_text }}>{(row as string[])[0]}</span>
+              <span style={{ fontFamily: bodyFont, fontSize: 13, fontWeight: 500, color: colors.product_info_text }}>{(row as string[])[1]}</span>
             </div>
           ))}
         </div>
@@ -715,7 +736,7 @@ function ProductDetailView({
         <button
           onClick={() => ready && onAddCart(chosen)}
           disabled={!ready}
-          style={{ flex: 1, height: 48, borderRadius: 14, border: "none", cursor: ready ? "pointer" : "not-allowed", background: colors.hero_button_bg, color: colors.hero_button_text, fontSize: 15, fontWeight: 700, fontFamily: bodyFont, opacity: ready ? 1 : 0.5 }}
+          style={{ flex: 1, height: 48, borderRadius: 14, border: "none", cursor: ready ? "pointer" : "not-allowed", background: colors.product_cart_btn_bg, color: colors.product_cart_btn_text, fontSize: 15, fontWeight: 700, fontFamily: bodyFont, opacity: ready ? 1 : 0.5 }}
         >
           Adicionar ao carrinho
         </button>
@@ -727,13 +748,13 @@ function ProductDetailView({
             const msg = `${whatsappMsg}\n\n${product.name}${label} — ${brl(price)}`;
             window.open(waLink(phone, msg), "_blank");
           }}
-          style={{ width: "100%", height: 48, borderRadius: 14, border: "none", cursor: "pointer", background: "#25D366", color: "#fff", fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, fontFamily: bodyFont }}>
+          style={{ width: "100%", height: 48, borderRadius: 14, border: "none", cursor: "pointer", background: colors.product_whats_btn_bg, color: colors.product_whats_btn_text, fontSize: 15, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, fontFamily: bodyFont }}>
           Perguntar pelo WhatsApp
         </button>
       )}
       {related.length > 0 && (
         <div style={{ marginTop: 32 }}>
-          <h3 style={{ fontFamily: headingFont, fontSize: 18, fontWeight: 700, color: colors.products_title, marginBottom: 14 }}>Você também pode gostar</h3>
+          <h3 style={{ fontFamily: headingFont, fontSize: 18, fontWeight: 700, color: colors.section_title, marginBottom: 14 }}>Você também pode gostar</h3>
           <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
             {related.map((r) => (
               <button key={r.id} onClick={() => onView(r.id)} style={{ flex: "0 0 auto", width: 120, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
@@ -963,7 +984,7 @@ export default function CatalogApp({
             {/* CATEGORIAS */}
             {categories.length > 0 && (
               <section style={{ marginTop: 28 }}>
-                <h2 style={{ fontFamily: headingFont, fontSize: 22, fontWeight: 700, color: C.category_title, margin: "0 16px 14px" }}>Categorias</h2>
+                <h2 style={{ fontFamily: headingFont, fontSize: 22, fontWeight: 700, color: C.section_title, margin: "0 16px 14px" }}>Categorias</h2>
                 <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 8px", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                   {categories.map((c) => (
                     <CategoryCard key={c.name} label={c.name} image={c.image} colors={C} bodyFont={bodyFont} active={false}
@@ -1029,9 +1050,9 @@ export default function CatalogApp({
 
       {/* ═══ TOAST ═══ */}
       {toast && (
-        <div style={{ position: "fixed", bottom: 24, left: 16, right: 16, zIndex: 1000, background: C.text_primary, color: C.page_bg, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", animation: "fadeUp .3s ease-out" }}>
+        <div style={{ position: "fixed", bottom: 24, left: 16, right: 16, zIndex: 1000, background: C.toast_bg, color: C.toast_text, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", animation: "fadeUp .3s ease-out" }}>
           <span style={{ fontSize: 13, fontFamily: bodyFont }}>{toast}</span>
-          <button onClick={() => go({ type: "cart" })} style={{ background: C.hero_button_bg, color: C.hero_button_text, border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: bodyFont }}>Ver carrinho</button>
+          <button onClick={() => go({ type: "cart" })} style={{ background: C.toast_button_bg, color: C.toast_button_text, border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: bodyFont }}>Ver carrinho</button>
         </div>
       )}
     </div>

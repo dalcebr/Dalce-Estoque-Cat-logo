@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, ExternalLink, Eye, EyeOff, Info, Image, Save, Sun, Moon, MessageCircle, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2, Palette, Type, ChevronDown } from "lucide-react";
+import { Check, ExternalLink, Eye, EyeOff, Info, Image, Save, Sun, Moon, MessageCircle, Gift, Truck, Headphones, Shield, Star, Clock, Heart, CheckCircle, Plus, Trash2, Type, ChevronDown, Search, RotateCcw } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { saveCatalog } from "@/app/catalogo/actions";
 import {
-  BENEFIT_ICONS, DEFAULT_BENEFITS, COLOR_GROUPS, FONTS,
+  BENEFIT_ICONS, DEFAULT_BENEFITS, COLOR_GROUPS, FONTS, DEFAULT_COLORS, DEFAULT_COLORS_DARK,
   type CatalogSettings, type StockMode, type Benefit, type CatalogColors, type CatalogFonts,
 } from "@/lib/catalog";
 import { createBrowserSupabase } from "@/lib/supabase/client";
@@ -41,6 +41,7 @@ export default function CatalogForm({ initial, open, storeId, supabaseUrl, supab
   const [host, setHost] = useState("");
   const [colorTheme, setColorTheme] = useState<ThemeKey>("light");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [colorQuery, setColorQuery] = useState("");
   const heroFile = useRef<HTMLInputElement>(null);
   useEffect(() => setHost(location.host), []);
   const set = <K extends keyof CatalogSettings>(k: K, x: CatalogSettings[K]) => setV((s) => ({ ...s, [k]: x }));
@@ -53,6 +54,26 @@ export default function CatalogForm({ initial, open, storeId, supabaseUrl, supab
     return { ...s, [key]: { ...s[key], [k]: x } };
   });
   const toggleGroup = (id: string) => setOpenGroups((g) => ({ ...g, [id]: !g[id] }));
+
+  /** Restaura as cores padrão do grupo (apenas do tema selecionado). */
+  const resetGroup = (fields: { k: keyof CatalogColors }[]) => {
+    const defaults = colorTheme === "dark" ? DEFAULT_COLORS_DARK : DEFAULT_COLORS;
+    setV((s) => {
+      const key = colorTheme === "dark" ? "colors_dark" : "colors";
+      const next = { ...s[key] };
+      for (const f of fields) next[f.k] = defaults[f.k];
+      return { ...s, [key]: next };
+    });
+  };
+
+  /** Grupos filtrados pela busca de cores. */
+  const q = colorQuery.trim().toLowerCase();
+  const visibleGroups = q
+    ? COLOR_GROUPS.map((g) => ({
+        ...g,
+        fields: g.fields.filter((f) => f.n.toLowerCase().includes(q) || g.n.toLowerCase().includes(q)),
+      })).filter((g) => g.fields.length > 0)
+    : COLOR_GROUPS;
 
   // Benefits helpers
   const benefits: Benefit[] = Array.isArray(v.benefits) && v.benefits.length > 0 ? v.benefits : DEFAULT_BENEFITS;
@@ -188,7 +209,7 @@ export default function CatalogForm({ initial, open, storeId, supabaseUrl, supab
       <p className="mb-4 px-1 text-sm text-soft">Escolha a cor de cada elemento. Personalize o tema claro e o tema escuro separadamente.</p>
       <p className="mb-4 flex items-start gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-soft">
         <Info size={16} className="mt-0.5 shrink-0 text-brand" />
-        <span>Os grupos seguem a ordem em que aparecem na vitrine, de cima para baixo — começando pelo <b className="text-brand">cabeçalho</b>.</span>
+        <span>Os grupos seguem a ordem em que aparecem na vitrine, de cima para baixo — começando pelas <b className="text-brand">cores gerais</b>.</span>
       </p>
 
       {/* Seletor de tema */}
@@ -204,9 +225,20 @@ export default function CatalogForm({ initial, open, storeId, supabaseUrl, supab
         })}
       </div>
 
+      {/* Busca de cores */}
+      <div className="mb-4 flex items-center gap-2 rounded-3xl border border-line bg-surface px-4 py-3 focus-within:border-brand">
+        <Search size={18} className="shrink-0 text-soft" />
+        <input value={colorQuery} onChange={(e) => setColorQuery(e.target.value)} placeholder="Buscar cor (ex: botão, fundo, título…)"
+          className="min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:text-soft" />
+        {colorQuery && <button onClick={() => setColorQuery("")} className="shrink-0 text-sm font-bold text-brand">Limpar</button>}
+      </div>
+
       <div className="space-y-2.5">
-        {COLOR_GROUPS.map((g) => {
-          const isOpen = !!openGroups[g.id];
+        {visibleGroups.length === 0 && (
+          <p className="rounded-3xl border border-line bg-surface px-4 py-6 text-center text-base text-soft">Nenhuma cor encontrada para “{colorQuery}”.</p>
+        )}
+        {visibleGroups.map((g) => {
+          const isOpen = q ? true : !!openGroups[g.id];
           return (
             <div key={g.id} className="overflow-hidden rounded-3xl border border-line bg-surface">
               <button onClick={() => toggleGroup(g.id)} aria-expanded={isOpen}
@@ -233,6 +265,10 @@ export default function CatalogForm({ initial, open, storeId, supabaseUrl, supab
                         className="w-24 rounded-2xl border border-line bg-surface px-3 py-2 text-center font-mono text-base font-bold outline-none focus:border-brand" />
                     </div>
                   ))}
+                  <button onClick={() => resetGroup(g.fields)}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-line bg-page py-3 text-sm font-bold text-soft">
+                    <RotateCcw size={15} /> Restaurar padrão deste grupo
+                  </button>
                 </div>
               )}
             </div>
