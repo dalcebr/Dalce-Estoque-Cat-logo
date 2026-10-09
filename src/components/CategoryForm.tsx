@@ -12,7 +12,7 @@ export type CategoryInit = { id?: string; name: string; color: string; image: st
 const BUCKET = "product-images";
 const COLORS = ["#0f8b83", "#2563eb", "#d97706", "#be123c", "#0e7490", "#4d7c0f", "#7c3aed", "#475569"];
 
-export default function CategoryForm({ c, storeId }: { c: CategoryInit; storeId: string }) {
+export default function CategoryForm({ c, storeId, supabaseUrl, supabaseKey }: { c: CategoryInit; storeId: string; supabaseUrl: string; supabaseKey: string }) {
   // `image` guarda o caminho no Storage ("{storeId}/{uuid}.webp") ou base64 legado.
   const [image, setImage] = useState<string | null>(c.image);
   const [uploading, setUploading] = useState(false);
@@ -20,12 +20,11 @@ export default function CategoryForm({ c, storeId }: { c: CategoryInit; storeId:
   const [cropping, setCropping] = useState<{ file: File; url: string } | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const src = (v: string) => resolveImageUrl(supabaseUrl, BUCKET, v);
 
   /** Envia um blob já processado (recortado ou não) para o Storage. */
   async function uploadBlob(blob: Blob, originalName: string) {
-    const supabase = createBrowserSupabase();
+    const supabase = createBrowserSupabase(supabaseUrl, supabaseKey);
     const asFile = new File([blob], originalName.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
     return uploadImage(supabase, BUCKET, storeId, asFile, MAX_IMAGE_PX);
   }

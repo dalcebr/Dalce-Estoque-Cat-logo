@@ -5,6 +5,7 @@ import ProductForm, { type ProductInit } from "@/components/ProductForm";
 import DeleteButton from "@/components/DeleteButton";
 import { normalizeImages } from "@/lib/products";
 import { normalizeVariations, type VariationGroup } from "@/lib/variations";
+import { getSupabasePublicConfig } from "@/lib/supabase/public";
 import { archiveProduct, deleteProduct } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function Produto({ params, searchParams }: { params: Promis
   const { data: profile } = await supabase.from("profiles").select("store_id").eq("id", user.id).single();
   if (!profile) redirect("/login");
   const storeId = profile.store_id as string;
+  const { url: supabaseUrl, anonKey: supabaseKey } = getSupabasePublicConfig();
   const [{ data: cats }, { data: vgs }] = await Promise.all([
     supabase.from("categories").select("id, name").order("name"),
     supabase.from("variation_groups").select("id, name, options").order("name"),
@@ -60,7 +62,7 @@ export default async function Produto({ params, searchParams }: { params: Promis
           Não foi possível excluir o produto. Tente novamente.
         </p>
       )}
-      <ProductForm p={init} cats={cats ?? []} groups={groups} storeId={storeId} />
+      <ProductForm p={init} cats={cats ?? []} groups={groups} storeId={storeId} supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />
       {!isNew && (
         <div className="mt-6 space-y-3 border-t border-line pt-6">
           <DeleteButton action={archiveProduct.bind(null, id)} label="Arquivar produto" confirmText="Arquivar este produto? Ele some das listas e do PDV, mas as vendas antigas continuam." />

@@ -60,25 +60,28 @@ Se ao enviar foto de produto/categoria aparece:
 
 significa que as variáveis `NEXT_PUBLIC_SUPABASE_URL` e
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` **não chegaram ao bundle do navegador**. No
-Cloudflare (OpenNext) elas **não** são embutidas automaticamente como na Vercel.
+Cloudflare (OpenNext) elas **não** são embutidas automaticamente como na Vercel,
+então **nunca leia `process.env.NEXT_PUBLIC_*` dentro de componentes
+`"use client"`** — o valor chega como `undefined` no navegador.
 
-Para corrigir, garanta as duas coisas:
+A solução adotada no projeto é ler as variáveis **no servidor** e passá-las para
+os client components via props:
 
-1. **`next.config.ts`** injeta os valores no bundle do cliente (já configurado):
+1. `src/lib/supabase/public.ts` lê `NEXT_PUBLIC_SUPABASE_URL` e
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` no servidor (`getSupabasePublicConfig()`).
+2. As páginas (Server Components) chamam esse helper e passam `supabaseUrl` /
+   `supabaseKey` como props para `ProductForm`, `CategoryForm` e `CatalogForm`.
+3. `createBrowserSupabase(url, anonKey)` recebe os valores por parâmetro.
 
-   ```ts
-   env: {
-     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-   },
-   ```
+Assim o upload funciona em qualquer host (Cloudflare, Vercel, etc.), sem depender
+de injeção de `NEXT_PUBLIC_*` no bundle.
 
-2. **`wrangler.jsonc`** define as `vars` (para o runtime do Worker) **ou** as
-   variáveis estão no painel do Cloudflare (Settings > Variables and Secrets),
-   disponíveis no momento do **build**.
+Garanta também que as variáveis existam no **runtime do Worker**:
 
-Depois de definir, faça um **novo build/deploy** (`npm run deploy`) — mudar a
-variável sem rebuildar não atualiza o bundle do cliente.
+- `wrangler.jsonc` > `vars` (já configurado), **ou**
+- painel do Cloudflare (Settings > Variables and Secrets).
+
+Depois de alterar, faça um **novo build/deploy** (`npm run deploy`).
 
 
 ## 5. Lockfile sincronizado (causa do erro ETARGET)

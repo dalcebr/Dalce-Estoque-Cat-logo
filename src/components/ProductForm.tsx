@@ -19,7 +19,7 @@ const BUCKET = "product-images";
 /** Fila de arquivos aguardando recorte. */
 type Pending = { file: File; url: string };
 
-export default function ProductForm({ p, cats, groups, storeId }: { p: ProductInit; cats: { id: string; name: string }[]; groups: VariationGroup[]; storeId: string }) {
+export default function ProductForm({ p, cats, groups, storeId, supabaseUrl, supabaseKey }: { p: ProductInit; cats: { id: string; name: string }[]; groups: VariationGroup[]; storeId: string; supabaseUrl: string; supabaseKey: string }) {
   // `images` holds storage paths like "{storeId}/{uuid}.webp" (or legacy base64).
   // A primeira posição é a capa (foto principal).
   const [images, setImages] = useState<string[]>(p.images);
@@ -33,7 +33,6 @@ export default function ProductForm({ p, cats, groups, storeId }: { p: ProductIn
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const src = (v: string) => resolveImageUrl(supabaseUrl, BUCKET, v);
   const full = images.length >= MAX_PRODUCT_IMAGES;
 
@@ -44,7 +43,7 @@ export default function ProductForm({ p, cats, groups, storeId }: { p: ProductIn
 
   /** Envia um blob já processado (recortado ou não) para o Storage. */
   async function uploadBlob(blob: Blob, originalName: string) {
-    const supabase = createBrowserSupabase();
+    const supabase = createBrowserSupabase(supabaseUrl, supabaseKey);
     const asFile = new File([blob], originalName.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
     return uploadImage(supabase, BUCKET, storeId, asFile, MAX_IMAGE_PX);
   }

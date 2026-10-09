@@ -35,16 +35,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
-  // No Cloudflare Workers (OpenNext) as variaveis NEXT_PUBLIC_* NAO sao
-  // embutidas no bundle do cliente automaticamente. Sem isso, o cliente
-  // Supabase criado no navegador (upload de fotos) recebe `undefined` e
-  // lanca: "@supabase/ssr: Your project's URL and API key are required".
-  // Injetamos os valores em tempo de build para o bundle do browser.
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  },
-
   images: {
     formats: ["image/webp", "image/avif"],
   },

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import CatalogForm from "@/components/CatalogForm";
 import { DEFAULTS, slugify, type CatalogSettings } from "@/lib/catalog";
+import { getSupabasePublicConfig } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,7 @@ export default async function Catalogo() {
   if (!initial.slug) initial.slug = slugify(st?.name ?? "");
   if (!initial.store_name) initial.store_name = st?.name ?? "";
 
-  return <CatalogForm initial={initial as unknown as CatalogSettings} open={!!c?.active && !!c?.slug} storeId={p!.store_id as string} />;
+  const { url: supabaseUrl, anonKey: supabaseKey } = getSupabasePublicConfig();
+
+  return <CatalogForm initial={initial as unknown as CatalogSettings} open={!!c?.active && !!c?.slug} storeId={p!.store_id as string} supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />;
 }

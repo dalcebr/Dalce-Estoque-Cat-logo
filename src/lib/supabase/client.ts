@@ -3,23 +3,20 @@ import { createBrowserClient } from "@supabase/ssr";
 /**
  * Cliente Supabase para uso no navegador (upload de fotos, etc.).
  *
- * IMPORTANTE (Cloudflare Workers / OpenNext): as variaveis NEXT_PUBLIC_* sao
- * injetadas em tempo de build via `env` no next.config.ts. Se estiverem
- * ausentes, o @supabase/ssr lanca um erro generico — aqui validamos antes para
- * dar uma mensagem clara.
+ * IMPORTANTE (Cloudflare Workers / OpenNext): as variáveis `NEXT_PUBLIC_*`
+ * NÃO são embutidas no bundle do cliente automaticamente. Por isso a URL e a
+ * chave anon são lidas no servidor (ver `@/lib/supabase/public`) e passadas
+ * como props para os client components — nunca leia `process.env` aqui.
  */
-export function createBrowserSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
+export function createBrowserSupabase(url: string, anonKey: string) {
+  if (!url || !anonKey) {
     throw new Error(
-      "Supabase nao configurado no navegador: NEXT_PUBLIC_SUPABASE_URL e/ou " +
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY ausentes. No Cloudflare, defina essas " +
-        "variaveis (wrangler.jsonc > vars ou painel do Cloudflare) e faca um " +
-        "novo build/deploy.",
+      "Supabase não configurado: URL e/ou chave anon ausentes. " +
+        "Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY " +
+        "no ambiente do servidor (wrangler.jsonc > vars ou painel do Cloudflare) " +
+        "e faça um novo build/deploy.",
     );
   }
 
-  return createBrowserClient(url, key);
+  return createBrowserClient(url, anonKey);
 }

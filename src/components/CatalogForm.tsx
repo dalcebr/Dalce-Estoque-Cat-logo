@@ -33,7 +33,7 @@ const ICON_MAP: Record<string, typeof Headphones> = {
 
 type ThemeKey = "light" | "dark";
 
-export default function CatalogForm({ initial, open, storeId }: { initial: CatalogSettings; open: boolean; storeId: string }) {
+export default function CatalogForm({ initial, open, storeId, supabaseUrl, supabaseKey }: { initial: CatalogSettings; open: boolean; storeId: string; supabaseUrl: string; supabaseKey: string }) {
   const [v, setV] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [heroUploading, setHeroUploading] = useState(false);
@@ -67,8 +67,6 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
     setBenefits([...benefits, { icon: "star", title: "", description: "" }]);
   };
   const removeBenefit = (idx: number) => setBenefits(benefits.filter((_, i) => i !== idx));
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   async function save() {
     setBusy(true); setMsg(null);
@@ -126,7 +124,7 @@ export default function CatalogForm({ initial, open, storeId }: { initial: Catal
             if (f) {
               setHeroUploading(true);
               try {
-                const supabase = createBrowserSupabase();
+                const supabase = createBrowserSupabase(supabaseUrl, supabaseKey);
                 const path = await uploadImage(supabase, HERO_BUCKET, storeId, f, HERO_MAX_PX);
                 set("hero_image", path);
               } catch (err) { console.error("Hero upload failed", err); }
