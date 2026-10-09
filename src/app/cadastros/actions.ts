@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getStore, num } from "@/lib/store";
-import { isValidUUID, sanitizeText } from "@/lib/validation";
+import { isValidUUID, sanitizeText, sanitizeMultiline } from "@/lib/validation";
 import { normalizeImages, coverOf } from "@/lib/products";
 import { normalizeVariations } from "@/lib/variations";
 import { deleteImages, isStoragePath } from "@/lib/storage";
@@ -18,6 +18,8 @@ export async function saveProduct(fd: FormData) {
   if (id && !isValidUUID(id)) return;
 
   const name = str(fd, "name", 80);
+  // A descrição preserva quebras de linha e parágrafos (ver sanitizeMultiline).
+  const description = sanitizeMultiline(String(fd.get("description") ?? ""), 600);
   const price = num(fd.get("price")), cost = num(fd.get("cost"));
   if (!name || !Number.isFinite(price) || price <= 0 || !Number.isFinite(cost) || cost < 0) return;
 
@@ -53,6 +55,7 @@ export async function saveProduct(fd: FormData) {
 
   const row = {
     name, price, cost,
+    description: description || null,
     stock,
     min_stock: Math.max(0, Math.trunc(num(fd.get("min_stock"))) || 0),
     image: image || null,

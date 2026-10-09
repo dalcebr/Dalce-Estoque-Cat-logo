@@ -239,6 +239,9 @@ function ProductCard({
         )}
       </button>
       <p style={{ fontFamily: cardFont, fontSize: 16, fontWeight: 500, color: colors.card_name, marginTop: 8, lineHeight: 1.2 }}>{product.name}</p>
+      {product.description && (
+        <p style={{ fontFamily: cardFont, fontSize: 12, color: colors.text_secondary, marginTop: 3, lineHeight: 1.35, whiteSpace: "pre-line", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{product.description}</p>
+      )}
       {hasVariations && (
         <p style={{ fontFamily: cardFont, fontSize: 11, color: colors.text_muted, marginTop: 2 }}>Escolha as opções</p>
       )}
@@ -650,7 +653,7 @@ function ProductDetailView({
       <h1 style={{ fontFamily: headingFont, fontSize: 24, fontWeight: 700, color: colors.products_title, marginTop: 16 }}>{product.name}</h1>
       <p style={{ fontFamily: bodyFont, fontSize: 22, fontWeight: 700, color: colors.card_price, marginTop: 8 }}>{brl(price)}</p>
       {product.description && (
-        <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.text_secondary, lineHeight: 1.6, marginTop: 12 }}>{product.description}</p>
+        <p style={{ fontFamily: bodyFont, fontSize: 14, color: colors.text_secondary, lineHeight: 1.6, marginTop: 12, whiteSpace: "pre-line" }}>{product.description}</p>
       )}
       {variationGroups.length > 0 && (
         <div style={{ marginTop: 18 }}>

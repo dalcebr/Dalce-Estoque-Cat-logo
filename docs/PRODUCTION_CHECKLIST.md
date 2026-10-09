@@ -103,6 +103,7 @@ Itens a verificar antes de colocar o Dalce Estoque em producao.
 - [ ] Criar venda completa (com estoque, pagamento, cliente)
 - [ ] Cancelar venda (verifica restauracao de estoque)
 - [ ] CRUD de produtos, categorias, clientes
+- [ ] Descricao do produto salva e aparece no catalogo publico (com quebras de linha/paragrafos preservados)
 - [ ] Catalogo publico funciona e nao expoe dados sensiveis
 - [ ] Fiado: registrar venda e recebimento
 - [ ] Formatacao BRL correta em todos os valores

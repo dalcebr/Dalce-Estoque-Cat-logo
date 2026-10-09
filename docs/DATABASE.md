@@ -30,6 +30,8 @@ Execute os arquivos SQL no SQL Editor do Supabase, nesta ordem:
 | 20 | `021_promote_admin.sql` | Promove um usuario existente a administrador (edite o username antes de rodar) |
 | 21 | `022_store_cascade.sql` | `ON DELETE CASCADE` em `store_id` (permite excluir a loja com todos os dados) |
 | 22 | `023_admin_role_helper.sql` | Funcao `current_role_name()` (security definer) para o login/middleware e `store_id` nulo para admins |
+| 23 | `024_diagnostico_admin.sql` | Consultas de diagnostico do painel admin |
+| 24 | `025_product_description.sql` | Garante a coluna `description` em `products` e recria `public_catalog()` expondo-a |
 
 > `002_payment_method.sql` e uma migracao de compatibilidade para instalacoes antigas.
 
@@ -197,6 +199,7 @@ Vincula um usuario do Supabase Auth a uma loja.
 | `store_id` | uuid | NOT NULL | | FK para `stores(id)` |
 | `category_id` | uuid | NULL | | FK para `categories(id)` ON DELETE SET NULL |
 | `name` | text | NOT NULL | | Nome do produto |
+| `description` | text | NULL | | Descricao exibida na vitrine (pagina do produto e card) |
 | `price` | numeric(12,2) | NOT NULL | | Preco de venda |
 | `cost` | numeric(12,2) | NOT NULL | `0` | Custo |
 | `stock` | int | NOT NULL | `0` | Estoque atual (pode ser negativo) |
@@ -231,6 +234,18 @@ Vincula um usuario do Supabase Auth a uma loja.
   recortar novamente uma foto ja enviada (o arquivo antigo e substituido).
 
 **RLS**: `produtos da loja` - ALL onde `store_id = current_store_id()`
+
+**Descricao**:
+- Campo opcional (`description`), com ate **600 caracteres**.
+- Editado no cadastro do produto (Cadastros → Produtos → Descricao).
+- Exibido na **pagina de detalhe** do produto no catalogo e, resumido em ate
+  2 linhas, no **card** da vitrine.
+- **Aceita quebras de linha e paragrafos**: o texto e gravado com `\n` e
+  renderizado com `white-space: pre-line` na vitrine. Linhas em branco
+  consecutivas sao reduzidas a uma (um paragrafo por linha vazia).
+- O texto passa por `sanitizeMultiline` (remove `<`, `>`, `&`, colapsa espacos
+  e tabs, normaliza `\r\n` para `\n` e limita linhas em branco) antes de ser
+  gravado.
 
 **Arquivar x Excluir**:
 - **Arquivar** (`active = false`): o produto some das listas, do estoque e do

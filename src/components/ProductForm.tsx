@@ -10,7 +10,7 @@ import { type ProductVariation, type VariationGroup } from "@/lib/variations";
 import ImageCropper from "@/components/ImageCropper";
 import VariationPicker from "@/components/VariationPicker";
 
-export type ProductInit = { id?: string; name: string; price: string; cost: string; stock: string; min_stock: string; category_id: string; images: string[]; variations: ProductVariation[] };
+export type ProductInit = { id?: string; name: string; description: string; price: string; cost: string; stock: string; min_stock: string; category_id: string; images: string[]; variations: ProductVariation[] };
 const f = "w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-lg outline-none focus:border-brand";
 const L = ({ t }: { t: string }) => <span className="mb-1 block px-1 text-xs font-bold uppercase tracking-[0.15em] text-soft">{t}</span>;
 
@@ -256,6 +256,18 @@ export default function ProductForm({ p, cats, groups, storeId, supabaseUrl, sup
         </div>
 
         <label className="block"><L t="Nome" /><input name="name" required defaultValue={p.name} className={f} /></label>
+        <label className="block">
+          <L t="Descrição (catálogo)" />
+          <textarea
+            name="description"
+            defaultValue={p.description}
+            rows={4}
+            maxLength={600}
+            placeholder="Detalhes que aparecem na página do produto no catálogo: medidas, material, cuidados…"
+            className={f + " resize-y"}
+          />
+          <span className="mt-1 block px-1 text-xs text-soft">Opcional · até 600 caracteres. Use Enter para separar parágrafos — as quebras de linha aparecem na vitrine pública.</span>
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block"><L t="Preço de venda (R$)" /><input name="price" required inputMode="decimal" defaultValue={p.price} className={f} /></label>
           <label className="block"><L t="Custo (R$)" /><input name="cost" inputMode="decimal" defaultValue={p.cost} className={f} /></label>

@@ -28,9 +28,9 @@ export default async function Produto({ params, searchParams }: { params: Promis
     supabase.from("variation_groups").select("id, name, options").order("name"),
   ]);
   const groups = (vgs ?? []) as VariationGroup[];
-  let init: ProductInit = { name: "", price: "", cost: "", stock: "0", min_stock: "0", category_id: "", images: [], variations: [] };
+  let init: ProductInit = { name: "", description: "", price: "", cost: "", stock: "0", min_stock: "0", category_id: "", images: [], variations: [] };
   if (!isNew) {
-    const { data: p } = await supabase.from("products").select("id, name, price, cost, stock, min_stock, category_id, image, images").eq("id", id).maybeSingle();
+    const { data: p } = await supabase.from("products").select("id, name, description, price, cost, stock, min_stock, category_id, image, images").eq("id", id).maybeSingle();
     if (!p) notFound();
     const { data: vars } = await supabase
       .from("product_variations")
@@ -40,6 +40,7 @@ export default async function Produto({ params, searchParams }: { params: Promis
     init = {
       id: p.id,
       name: p.name,
+      description: p.description ?? "",
       price: dec(Number(p.price)),
       cost: dec(Number(p.cost)),
       stock: String(p.stock),

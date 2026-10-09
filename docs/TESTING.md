@@ -67,6 +67,10 @@ O Dalce Estoque atualmente nao possui testes automatizados. Este documento descr
 ### Checklist: Cadastros - Produtos
 
 - [ ] Criar produto com todos os campos
+- [ ] Criar produto com descricao (aparece na vitrine)
+- [ ] Descricao vazia e aceita (campo opcional)
+- [ ] Descricao limitada a 600 caracteres
+- [ ] Descricao com quebras de linha e paragrafos e preservada (Enter no campo)
 - [ ] Criar produto com imagem (upload + resize)
 - [ ] Imagem e redimensionada automaticamente
 - [ ] Editar produto existente
@@ -121,6 +125,9 @@ O Dalce Estoque atualmente nao possui testes automatizados. Este documento descr
 - [ ] Carrinho persiste apos recarregar a pagina (localStorage)
 - [ ] Favoritos (estrelinha) persistem apos recarregar a pagina
 - [ ] Categorias aparecem e filtram os produtos
+- [ ] Descricao do produto aparece na pagina de detalhe
+- [ ] Descricao resumida (ate 2 linhas) aparece no card do produto
+- [ ] Descricao com paragrafos mantem as quebras de linha na pagina de detalhe
 - [ ] Desativar catalogo torna `/c/slug` inacessivel
 
 ### Checklist: Fiado
@@ -197,10 +204,11 @@ DELETE FROM sales WHERE store_id = 'UUID_DA_LOJA_B';
 ### Testes unitarios prioritarios
 
 1. `sanitizeText()` - verificar remoção de XSS
-2. `isValidUUID()` - verificar UUIDs validos e invalidos
-3. `isValidPaymentMethod()` - verificar metodos aceitos
-4. `parseDecimal()` - formato brasileiro e internacional
-5. Funcoes de formatacao BRL
+2. `sanitizeMultiline()` - preservar `\n`/paragrafos e remover XSS
+3. `isValidUUID()` - verificar UUIDs validos e invalidos
+4. `isValidPaymentMethod()` - verificar metodos aceitos
+5. `parseDecimal()` - formato brasileiro e internacional
+6. Funcoes de formatacao BRL
 
 ### Testes E2E prioritarios
 

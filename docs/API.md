@@ -185,6 +185,7 @@ O Dalce Estoque usa Server Actions do Next.js para todas as mutacoes. Nao existe
 - **Parametros** (FormData):
   - `id` (string, opcional): UUID para edicao. Vazio para criacao
   - `name` (string): Nome do produto (max 80 chars)
+  - `description` (string, opcional): Descricao exibida na vitrine (max 600 chars). Aceita quebras de linha e paragrafos (gravados como `\n` e renderizados com `white-space: pre-line`); passa por `sanitizeMultiline`
   - `price` (string): Preco (formato BR, > 0)
   - `cost` (string): Custo (formato BR, >= 0)
   - `stock` (string): Estoque
@@ -288,4 +289,4 @@ Chamadas via `supabase.rpc()`:
 - **Seguranca**: SECURITY DEFINER (acesso publico intencional)
 - **Acesso**: Concedido a roles `anon` e `authenticated`
 - **Retorno**: JSONB com `{ name, settings, products }` ou null
-- **Nota**: Cada produto inclui `variations: [{ group, option, stock, price }]`. Na vitrine, o cliente escolhe uma opcao por grupo antes de adicionar ao carrinho; o preco da opcao (quando definido) substitui o preco do produto e as escolhas vao na mensagem do WhatsApp.
+- **Nota**: Cada produto inclui `description` (texto exibido na pagina do produto e resumido no card) e `variations: [{ group, option, stock, price }]`. Na vitrine, o cliente escolhe uma opcao por grupo antes de adicionar ao carrinho; o preco da opcao (quando definido) substitui o preco do produto e as escolhas vao na mensagem do WhatsApp.
