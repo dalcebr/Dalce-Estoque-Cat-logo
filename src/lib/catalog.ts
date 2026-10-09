@@ -115,9 +115,6 @@ export type CatalogColors = {
   card_price: string;
   card_cart_icon: string;
   card_cart_icon_hover: string;
-  card_button_bg: string;
-  card_button_text: string;
-  card_button_border: string;
   card_gradient: string;
   card_gradient_opacity: string;
   card_gradient_fill: string;
@@ -331,9 +328,6 @@ export const COLOR_GROUPS: ColorGroup[] = [
       { k: "card_price", n: "Valor do card" },
       { k: "card_cart_icon", n: "Ícone de carrinho do card" },
       { k: "card_cart_icon_hover", n: "Ícone de carrinho do card (hover)" },
-      { k: "card_button_bg", n: "Fundo do botão do card" },
-      { k: "card_button_text", n: "Texto do botão do card" },
-      { k: "card_button_border", n: "Borda do botão do card" },
     ],
   },
   {
@@ -566,9 +560,6 @@ export const DEFAULT_COLORS: CatalogColors = {
   card_price: "#111111",
   card_cart_icon: "#111111",
   card_cart_icon_hover: "#C9852B",
-  card_button_bg: "#C9852B",
-  card_button_text: "#FFFFFF",
-  card_button_border: "#C9852B",
   card_gradient: "#000000",
   card_gradient_opacity: "0",
   card_gradient_fill: "0",
@@ -711,9 +702,6 @@ export const DEFAULT_COLORS_DARK: CatalogColors = {
   card_price: "#F5F0EB",
   card_cart_icon: "#F5F0EB",
   card_cart_icon_hover: "#C9852B",
-  card_button_bg: "#C9852B",
-  card_button_text: "#FFFFFF",
-  card_button_border: "#C9852B",
   card_gradient: "#000000",
   card_gradient_opacity: "0",
   card_gradient_fill: "0",

@@ -258,16 +258,6 @@ function ProductCard({
           <AddCartIcon size={22} />
         </button>
       </div>
-      <button
-        onClick={onAddCart}
-        style={{
-          width: "100%", marginTop: 8, padding: "9px 12px", borderRadius: 10, cursor: "pointer",
-          border: `1px solid ${colors.card_button_border}`, background: colors.card_button_bg, color: colors.card_button_text,
-          fontFamily: cardFont, fontSize: 13, fontWeight: 700, position: "relative", zIndex: 1,
-        }}
-      >
-        {hasVariations ? "Escolher opções" : "Adicionar"}
-      </button>
     </div>
   );
 }
