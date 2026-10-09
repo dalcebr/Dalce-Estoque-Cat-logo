@@ -50,6 +50,37 @@ npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 > `NEXT_PUBLIC_*` são embutidas no bundle em tempo de build. Se mudarem, é
 > preciso **rebuildar** o Worker.
 
+### ⚠️ Erro "Your project's URL and API key are required" (upload de fotos)
+
+Se ao enviar foto de produto/categoria aparece:
+
+```
+@supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+```
+
+significa que as variáveis `NEXT_PUBLIC_SUPABASE_URL` e
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` **não chegaram ao bundle do navegador**. No
+Cloudflare (OpenNext) elas **não** são embutidas automaticamente como na Vercel.
+
+Para corrigir, garanta as duas coisas:
+
+1. **`next.config.ts`** injeta os valores no bundle do cliente (já configurado):
+
+   ```ts
+   env: {
+     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+   },
+   ```
+
+2. **`wrangler.jsonc`** define as `vars` (para o runtime do Worker) **ou** as
+   variáveis estão no painel do Cloudflare (Settings > Variables and Secrets),
+   disponíveis no momento do **build**.
+
+Depois de definir, faça um **novo build/deploy** (`npm run deploy`) — mudar a
+variável sem rebuildar não atualiza o bundle do cliente.
+
+
 ## 5. Lockfile sincronizado (causa do erro ETARGET)
 
 O Cloudflare roda `npm clean-install`, que **exige** que o `package-lock.json`

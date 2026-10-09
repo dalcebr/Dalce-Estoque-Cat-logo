@@ -7,6 +7,10 @@
     "nodejs_compat",
     "nodejs_compat_populate_process_env"
   ],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://ungcqbjxgpkxwdwczmxy.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuZ2NxYmp4Z3BreHdkd2N6bXh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzOTM5NjMsImV4cCI6MjEwNjk2OTk2M30.4MGCeNrk7BgbnT_8TZ79IB11go93Ucg7a1NLiU34ipw"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
